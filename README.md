@@ -10,45 +10,53 @@ Proyecto PHP migrado para funcionar en Vercel con funciones serverless.
 
 ## 🚀 Pasos para Deploy en Vercel
 
-### 1. Subir el proyecto a GitHub
+### 1. Configurar Base de Datos en Supabase
+
+El proyecto ahora usa **PostgreSQL** con Supabase:
+
+1. **Accede a tu proyecto en Supabase**: https://supabase.com/dashboard/project/vxmggzvypaipbegeroxy
+
+2. **Ejecutar Script de Migración:**
+   - Ve a **SQL Editor** (ícono de base de datos en el menú lateral)
+   - Abre el archivo [migrate-to-postgresql.sql](migrate-to-postgresql.sql)
+   - Copia todo el contenido
+   - Pégalo en el SQL Editor de Supabase
+   - Click en **Run** o presiona Ctrl+Enter
+   - Esto creará todas las tablas necesarias
+
+3. **Migrar tus datos existentes:**
+   - Exporta tus datos de MySQL actual usando phpMyAdmin o mysqldump
+   - Convierte los datos al formato de PostgreSQL
+   - Impórtalos usando el SQL Editor de Supabase
+
+### 2. Subir el proyecto a GitHub
+
+Si aún no lo has hecho:
 
 ```bash
-# Inicializar repositorio Git (si no existe)
+# Configurar tu identidad de Git
+git config --global user.name "bryg97"
+git config --global user.email "b.arroyaveg@gmail.com"
+
+# Inicializar el repositorio
 cd c:\plataforma-planillas
 git init
 
 # Agregar todos los archivos
 git add .
 
-# Crear primer commit
-git commit -m "Proyecto configurado para Vercel"
+# Crear el primer commit
+git commit -m "Proyecto configurado para Vercel con PostgreSQL"
 
-# Crear repositorio en GitHub (desde web o CLI)
-# Luego conectar el repositorio local
+# Conectar con tu repositorio de GitHub
+git remote add origin https://github.com/bryg97/planillas_cootaxconsota.git
 
-git remote add origin https://github.com/TU_USUARIO/TU_REPOSITORIO.git
+# Subir el código
 git branch -M main
 git push -u origin main
 ```
 
-### 2. Configurar Base de Datos
-
-Tu base de datos actual necesita ser accesible desde internet. Opciones:
-
-**Opción A: Usar tu hosting actual**
-- Asegúrate de permitir conexiones remotas desde cualquier IP (o específicamente desde Vercel)
-- Obtén la IP/hostname público de tu base de datos
-
-**Opción B: Migrar a un servicio de BD en la nube**
-- [Railway](https://railway.app) - Gratis para empezar
-- [PlanetScale](https://planetscale.com) - MySQL serverless
-- [Supabase](https://supabase.com) - PostgreSQL (requiere adaptar código)
-
-**Opción C: Mantener tu BD actual de Hostinger**
-- Verifica que tu plan permita conexiones remotas
-- Anota el host (usualmente algo como: sql123.hostinger.com)
-
-### 3. Conectar con Vercel
+### 3. Configurar Vercel
 
 1. **Accede a [Vercel](https://vercel.com)** e inicia sesión
 
@@ -68,14 +76,13 @@ Tu base de datos actual necesita ser accesible desde internet. Opciones:
    En la sección "Environment Variables", agrega:
    
    ```
-   DB_HOST=tu_host_de_base_de_datos
-   DB_USER=u406926550_planillas
-   DB_PASS=!AwbD$3k
-   DB_NAME=u406926550_planillas
-   TZ=America/Bogota
+   DB_HOST = db.vxmggzvypaipbegeroxy.supabase.co
+   DB_PORT = 5432
+   DB_USER = postgres.vxmggzvypaipbegeroxy
+   DB_PASS = 7906aVxM1Jg7VXbP
+   DB_NAME = postgres
+   TZ = America/Bogota
    ```
-   
-   ⚠️ **IMPORTANTE**: Cambia estos valores por los reales de tu base de datos en producción
 
 5. **Deploy:**
    - Click en "Deploy"
