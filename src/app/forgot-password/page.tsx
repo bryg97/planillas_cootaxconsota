@@ -17,8 +17,13 @@ export default function ForgotPasswordPage() {
     setLoading(true)
 
     try {
+      // Usar la URL de producción si está disponible, sino localhost
+      const redirectUrl = process.env.NEXT_PUBLIC_SITE_URL || 
+                          (typeof window !== 'undefined' && window.location.origin) || 
+                          'https://planillas-cootaxconsota.vercel.app'
+      
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/reset-password`,
+        redirectTo: `${redirectUrl}/reset-password`,
       })
 
       if (error) throw error
