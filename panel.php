@@ -53,7 +53,7 @@ if (!isset($_SESSION['usuario'])) {
 // ==========================
 // Conexión y datos usuario
 // ==========================
-include __DIR__ . '/../../config_planillas/config.php';
+include __DIR__ . '/config_planillas/config.php';
 
 $usuario = $_SESSION['usuario'];
 $rol = $_SESSION['rol'] ?? 'operador';

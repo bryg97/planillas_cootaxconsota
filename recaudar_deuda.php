@@ -8,7 +8,7 @@ header('Content-Type: application/json; charset=utf-8');
 ob_clean();
 
 session_start();
-include __DIR__ . '/../../config_planillas/config.php';
+include __DIR__ . '/config_planillas/config.php';
 date_default_timezone_set('America/Bogota');
 
 if (!isset($_SESSION['rol'])) {

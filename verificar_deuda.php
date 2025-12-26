@@ -7,7 +7,7 @@ error_reporting(E_ALL);
 session_start();
 header('Content-Type: application/json; charset=utf-8');
 
-include __DIR__ . '/../../config_planillas/config.php';
+include __DIR__ . '/config_planillas/config.php';
 date_default_timezone_set('America/Bogota');
 
 if (!isset($_SESSION['rol'])) {

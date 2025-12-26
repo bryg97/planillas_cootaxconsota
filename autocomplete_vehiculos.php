@@ -1,5 +1,5 @@
 <?php
-include __DIR__ . '/../../config_planillas/config.php';
+include __DIR__ . '/config_planillas/config.php';
 
 $term = $_GET['term'] ?? '';
 

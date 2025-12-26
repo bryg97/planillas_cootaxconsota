@@ -4,7 +4,7 @@ ini_set('display_startup_errors',1);
 error_reporting(E_ALL);
 
 session_start();
-include __DIR__ . '/../../config_planillas/config.php';
+include __DIR__ . '/config_planillas/config.php';
 
 // Solo admin
 if(!isset($_SESSION['rol']) || $_SESSION['rol']!='admin'){

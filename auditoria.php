@@ -2,7 +2,7 @@
 // auditoria.php
 ini_set('display_errors',1); ini_set('display_startup_errors',1); error_reporting(E_ALL);
 session_start();
-include __DIR__ . '/../../config_planillas/config.php';
+include __DIR__ . '/config_planillas/config.php';
 if(!isset($_SESSION['rol']) || $_SESSION['rol'] !== 'admin'){ header("Location: login.php"); exit(); }
 
 $res = $conn->query("SELECT * FROM auditoria_ia ORDER BY fecha DESC LIMIT 200");

@@ -20,7 +20,7 @@ function validarCSRF($t){
 }
 
 // --------------------- CONFIG ---------------------
-include __DIR__ . '/../../config_planillas/config.php';
+include __DIR__ . '/config_planillas/config.php';
 date_default_timezone_set('America/Bogota');
 
 $rol = $_SESSION['rol'];

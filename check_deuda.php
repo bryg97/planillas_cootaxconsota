@@ -1,5 +1,5 @@
 <?php
-include __DIR__ . '/../../config_planillas/config.php';
+include __DIR__ . '/config_planillas/config.php';
 header('Content-Type: application/json');
 
 $vehiculo_id = intval($_POST['vehiculo_id'] ?? 0);

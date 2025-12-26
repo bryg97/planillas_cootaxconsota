@@ -1,5 +1,5 @@
 <?php
-include __DIR__ . '/../../config_planillas/config.php';
+include __DIR__ . '/config_planillas/config.php';
 if(!isset($_SESSION['rol'])){ header('Location: login.php'); exit(); }
 $id = intval($_GET['id'] ?? 0);
 if ($id <= 0) { header('Location: planillas.php'); exit(); }

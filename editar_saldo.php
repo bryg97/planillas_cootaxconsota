@@ -1,5 +1,5 @@
 <?php
-include __DIR__ . '/../../config_planillas/config.php';
+include __DIR__ . '/config_planillas/config.php';
 if(!isset($_POST['vehiculo_id'], $_POST['saldo'])) exit('error');
 $vehiculo_id = intval($_POST['vehiculo_id']);
 $saldo = floatval($_POST['saldo']);

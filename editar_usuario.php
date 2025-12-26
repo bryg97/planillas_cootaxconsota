@@ -1,5 +1,5 @@
 <?php
-include __DIR__ . '/../../config_planillas/config.php';
+include __DIR__ . '/config_planillas/config.php';
  if(!isset($_SESSION['rol']) || $_SESSION['rol']!=='admin'){ header('Location: login.php'); exit(); }
 $id=intval($_GET['id']??0); if(!$id) header('Location: usuarios.php');
 $msg=''; if($_SERVER['REQUEST_METHOD']==='POST'){ $pass=trim($_POST['password']); if($pass){ $h=password_hash($pass,PASSWORD_BCRYPT); $s=$conn->prepare('UPDATE usuarios SET clave=? WHERE id=?'); $s->bind_param('si',$h,$id); $s->execute(); $msg='Contraseña actualizada.'; registrar_auditoria('Actualizó clave usuario '.$id,'Usuarios'); } }

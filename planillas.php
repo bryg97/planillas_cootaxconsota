@@ -34,7 +34,7 @@ ini_set('display_errors',1);
 ini_set('display_startup_errors',1);
 error_reporting(E_ALL);
 
-include __DIR__ . '/../../config_planillas/config.php';
+include __DIR__ . '/config_planillas/config.php';
 date_default_timezone_set('America/Bogota');
 
 $rol = $_SESSION['rol'];

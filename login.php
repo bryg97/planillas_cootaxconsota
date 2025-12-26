@@ -21,7 +21,7 @@ if (isset($_SESSION['usuario'])) {
 // ==========================
 // Configuración externa y logs
 // ==========================
-include __DIR__ . '/../../config_planillas/config.php';
+include __DIR__ . '/config_planillas/config.php';
 ini_set('display_errors', 0);
 ini_set('log_errors', 1);
 ini_set('error_log', __DIR__ . '/../../logs/php_errors.log');
