@@ -8,20 +8,24 @@ if ($timezone && $timezone !== ':UTC') {
 }
 
 // Obtener variables de entorno (Vercel usa getenv)
-$db_host = getenv('DB_HOST') ?: 'aws-0-us-east-1.pooler.supabase.com';
-$db_port = getenv('DB_PORT') ?: '6543';
-$db_user = getenv('DB_USER') ?: 'postgres.vxmggzvypaipbegeroxy';
+$db_host = getenv('DB_HOST') ?: 'db.vxmggzvypaipbegeroxy.supabase.co';
+$db_port = getenv('DB_PORT') ?: '5432';
+$db_user = getenv('DB_USER') ?: 'postgres';
 $db_pass = getenv('DB_PASS') ?: '7906aVxM1Jg7VXbP';
 $db_name = getenv('DB_NAME') ?: 'postgres';
 
 // Conexión a PostgreSQL usando PDO
 try {
-    $dsn = "pgsql:host=$db_host;port=$db_port;dbname=$db_name;sslmode=require";
-    $conn = new PDO($dsn, $db_user, $db_pass, [
+    $dsn = "pgsql:host=$db_host;port=$db_port;dbname=$db_name";
+    $options = [
         PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
         PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
-        PDO::ATTR_EMULATE_PREPARES => false
-    ]);
+        PDO::ATTR_EMULATE_PREPARES => false,
+        PDO::ATTR_PERSISTENT => false,
+        PDO::ATTR_TIMEOUT => 5
+    ];
+    
+    $conn = new PDO($dsn, $db_user, $db_pass, $options);
     
     // Configurar zona horaria de PostgreSQL
     $conn->exec("SET TIME ZONE 'America/Bogota'");
