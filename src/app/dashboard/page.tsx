@@ -14,8 +14,14 @@ export default async function DashboardPage() {
     redirect('/login')
   }
 
-  // Obtener rol del usuario (por ahora desde metadata, luego desde la tabla usuarios)
-  const rol = user.user_metadata?.rol || 'operador'
+  // Obtener rol del usuario desde la tabla usuarios
+  const { data: userData } = await supabase
+    .from('usuarios')
+    .select('rol')
+    .eq('usuario', user.email)
+    .single()
+
+  const rol = userData?.rol || 'operador'
 
   // Obtener estadísticas básicas
   const { count: totalVehiculos } = await supabase
