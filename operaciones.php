@@ -1,0 +1,391 @@
+<?php
+// operaciones.php — registrar planillas con popup deuda + autopago + telegram
+ini_set('display_errors',1);
+ini_set('display_startup_errors',1);
+error_reporting(E_ALL);
+
+// --------------------- SEGURIDAD SESIÓN ---------------------
+session_start();
+if(!isset($_SESSION['usuario'])){
+    header("Location: login.php");
+    exit();
+}
+
+if(empty($_SESSION['csrf_token'])){
+    $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+}
+
+function validarCSRF($t){
+    return isset($_SESSION['csrf_token']) && hash_equals($_SESSION['csrf_token'], $t);
+}
+
+// --------------------- CONFIG ---------------------
+include __DIR__ . '/../../config_planillas/config.php';
+date_default_timezone_set('America/Bogota');
+
+$rol = $_SESSION['rol'];
+$usuario = $_SESSION['usuario'];
+$user_id = $_SESSION['id_usuario'];
+
+if(!in_array($rol,['operador','tesorera','admin'])) die("No autorizado");
+
+// Configuración general
+$cfg = $conn->query("SELECT valor_base, telegram_token, telegram_chatid FROM configuracion LIMIT 1")->fetch_assoc();
+$valor_base = floatval($cfg['valor_base']);
+$telegram_token = $cfg['telegram_token'];
+$telegram_chatid = $cfg['telegram_chatid'];
+
+function enviarTelegram($token,$chatid,$txt){
+    if(!$token || !$chatid) return;
+    $url = "https://api.telegram.org/bot$token/sendMessage";
+    $post = ['chat_id'=>$chatid,'text'=>$txt,'parse_mode'=>'Markdown'];
+    $c = curl_init($url);
+    curl_setopt($c, CURLOPT_POST,1);
+    curl_setopt($c, CURLOPT_POSTFIELDS,$post);
+    curl_setopt($c, CURLOPT_RETURNTRANSFER,true);
+    curl_exec($c);
+    curl_close($c);
+}
+
+$ok = "";
+$error = "";
+
+// --------------------- REGISTRAR PLANILLA ---------------------
+if($_SERVER['REQUEST_METHOD']==='POST' && isset($_POST['crear'])){
+    if(!validarCSRF($_POST['csrf_token'] ?? "")) die("CSRF inválido");
+
+    $vehiculo_id     = intval($_POST['vehiculo_id']);
+    $conductor       = trim($_POST['conductor']);
+    $cedula          = trim($_POST['cedula_conductor']);
+    $tipo            = trim($_POST['tipo']);
+    $numero_planilla = trim($_POST['numero_planilla']);
+    $ciudad_origen   = trim($_POST['ciudad_origen']);
+    $ciudad_destino  = trim($_POST['ciudad_destino']);
+
+    if($vehiculo_id<=0 || $conductor==='' || $numero_planilla===''){
+        $error = "Todos los campos obligatorios.";
+    } else {
+
+        // ================= AGREGADO: VALIDAR DUPLICADOS ================
+        $np = $conn->real_escape_string($numero_planilla);
+        $dup = $conn->query("SELECT id FROM planillas WHERE numero_planilla='$np' LIMIT 1")->num_rows;
+        $dup2 = $conn->query("SELECT id FROM planillas_historial WHERE numero_planilla='$np' LIMIT 1")->num_rows;
+
+        if($dup > 0 || $dup2 > 0){
+            $error = "❌ El número de planilla '$numero_planilla' ya fue registrado.";
+        } else {
+
+            $conn->begin_transaction();
+
+            try {
+
+                $veh = $conn->query("SELECT saldo, codigo_vehiculo FROM vehiculos WHERE id=$vehiculo_id FOR UPDATE")->fetch_assoc();
+                if(!$veh) throw new Exception("Vehículo no encontrado");
+
+                $saldo_actual = floatval($veh['saldo']);
+                $codigo_veh = $veh['codigo_vehiculo'];
+
+                if($tipo==='credito'){
+
+                    if($saldo_actual >= $valor_base){
+                        // autopagada
+                        $nuevo_saldo = $saldo_actual - $valor_base;
+                        $conn->query("UPDATE vehiculos SET saldo=$nuevo_saldo WHERE id=$vehiculo_id");
+
+                        $conn->query("INSERT INTO planillas_historial 
+                            (vehiculo_id,conductor,cedula_conductor,tipo,ciudad_origen,ciudad_destino,valor,numero_planilla,operador_id,fecha,pagada,created_at)
+                            VALUES ($vehiculo_id,'".$conn->real_escape_string($conductor)."',".($cedula==''?"NULL":"'".$conn->real_escape_string($cedula)."'").",'credito',".($ciudad_origen==''?"NULL":"'".$conn->real_escape_string($ciudad_origen)."'").",".($ciudad_destino==''?"NULL":"'".$conn->real_escape_string($ciudad_destino)."'").",$valor_base,'".$conn->real_escape_string($numero_planilla)."',$user_id,NOW(),1,NOW())");
+
+                        $ok = "Planilla autopagada con saldo.";
+                    } else {
+                        $nuevo_saldo = $saldo_actual - $valor_base;
+                        $conn->query("UPDATE vehiculos SET saldo=$nuevo_saldo WHERE id=$vehiculo_id");
+
+                        $conn->query("INSERT INTO planillas 
+                            (vehiculo_id,conductor,cedula_conductor,tipo,ciudad_origen,ciudad_destino,valor,numero_planilla,operador_id,fecha,pagada,created_at)
+                            VALUES ($vehiculo_id,'".$conn->real_escape_string($conductor)."',".($cedula==''?"NULL":"'".$conn->real_escape_string($cedula)."'").",'credito',".($ciudad_origen==''?"NULL":"'".$conn->real_escape_string($ciudad_origen)."'").",".($ciudad_destino==''?"NULL":"'".$conn->real_escape_string($ciudad_destino)."'").",$valor_base,'".$conn->real_escape_string($numero_planilla)."',$user_id,NOW(),0,NOW())");
+
+                        $ok = "Planilla crédito registrada. Saldo actual: $".number_format($nuevo_saldo,0,',','.');
+                    }
+
+                    $txt = "📄 *Nueva Planilla Crédito*\n"
+                         . "👤 Operador: *$usuario*\n"
+                         . "🚕 Vehículo: *$codigo_veh*\n"
+                         . "🧑 Conductor: *$conductor*\n"
+                         . "📄 N°: *$numero_planilla*\n"
+                         . "🕒 ".date("d/m/Y h:i a");
+
+                    enviarTelegram($telegram_token,$telegram_chatid,$txt);
+
+                } else {
+                    // EFECTIVO
+                    $conn->query("INSERT INTO planillas 
+                        (vehiculo_id,conductor,cedula_conductor,tipo,ciudad_origen,ciudad_destino,valor,numero_planilla,operador_id,fecha,pagada,created_at)
+                        VALUES ($vehiculo_id,'".$conn->real_escape_string($conductor)."',".($cedula==''?"NULL":"'".$conn->real_escape_string($cedula)."'").",'efectivo',".($ciudad_origen==''?"NULL":"'".$conn->real_escape_string($ciudad_origen)."'").",".($ciudad_destino==''?"NULL":"'".$conn->real_escape_string($ciudad_destino)."'").",$valor_base,'".$conn->real_escape_string($numero_planilla)."',$user_id,NOW(),0,NOW())");
+
+                    $ok = "Planilla creada en efectivo.";
+                }
+
+                $conn->commit();
+
+            } catch(Exception $e){
+                $conn->rollback();
+                $error = $e->getMessage();
+            }
+
+        } // fin validación duplicado
+    }
+}
+// --------------------- OBTENER VEHÍCULOS ---------------------
+$veh = $conn->query("SELECT id,codigo_vehiculo,saldo FROM vehiculos ORDER BY CAST(REPLACE(codigo_vehiculo,'J-','') AS UNSIGNED)");
+?>
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Registrar Planilla</title>
+
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+
+<script src="https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+<style>
+body { background:#f8f9fa }
+.modal-header-warning { background:#ffc107 }
+</style>
+</head>
+<body class="p-4">
+
+<a href="panel.php" class="btn btn-secondary mb-3">⬅ Panel</a>
+
+<h3>Registrar Planilla</h3>
+
+<?php if($ok): ?><div class="alert alert-success"><?=$ok?></div><?php endif;?>
+<?php if($error): ?><div class="alert alert-danger"><?=$error?></div><?php endif;?>
+
+<form method="POST" class="row g-3" id="formPlanilla">
+    <input type="hidden" name="crear" value="1">
+    <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?>">
+
+    <div class="col-md-3">
+        <label>Vehículo</label>
+        <select name="vehiculo_id" id="vehiculo_id" class="form-select">
+            <option value="">Seleccione…</option>
+            <?php while($v=$veh->fetch_assoc()): ?>
+            <option value="<?=$v['id']?>"><?=$v['codigo_vehiculo']?> (<?=number_format($v['saldo'],0,',','.')?>)</option>
+            <?php endwhile; ?>
+        </select>
+    </div>
+
+    <div class="col-md-3">
+        <label>Conductor</label>
+        <input name="conductor" class="form-control" required>
+    </div>
+
+    <div class="col-md-2">
+        <label>Tipo</label>
+        <select name="tipo" class="form-select">
+            <option value="credito">Crédito</option>
+            <option value="efectivo">Efectivo</option>
+        </select>
+    </div>
+
+    <div class="col-md-2">
+        <label>Valor Base</label>
+        <input class="form-control" value="<?=number_format($valor_base,0,',','.')?>" readonly>
+    </div>
+
+    <div class="col-md-2">
+        <label>N° Planilla</label>
+        <input name="numero_planilla" class="form-control" required>
+    </div>
+
+    <div class="col-md-3">
+        <label>Origen</label>
+        <input name="ciudad_origen" class="form-control">
+    </div>
+
+    <div class="col-md-3">
+        <label>Destino</label>
+        <input name="ciudad_destino" class="form-control">
+    </div>
+
+    <div class="col-md-3">
+        <label>Cédula conductor</label>
+        <input name="cedula_conductor" class="form-control">
+    </div>
+
+    <div class="col-12">
+        <button id="btnRegistrar" class="btn btn-primary w-100">Registrar Planilla</button>
+    </div>
+</form>
+
+<!-- ================= MODAL DEUDA ================= -->
+<div class="modal fade" id="modalDeuda">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+
+      <div class="modal-header modal-header-warning">
+        <h5 class="modal-title">🚫 Vehículo con deuda</h5>
+      </div>
+
+      <div class="modal-body">
+        <p>Tiene planillas pendiente por recaudar:</p>
+
+        <table class="table table-sm table-bordered" id="tablaDeuda">
+            <thead>
+              <tr>
+                <th>#</th><th>Fecha</th><th>Planilla</th><th>Conductor</th><th>Valor</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+
+        <h5 class="text-end">
+          Total deuda: <span id="totalDeuda" class="fw-bold text-danger"></span>
+        </h5>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+        <button class="btn btn-success" id="btnRecaudar">💵 Recaudar</button>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+
+<!-- ===================================================== -->
+<!-- === AGREGADO: MODAL BONITO DE CONFIRMACIÓN REGISTRO === -->
+<!-- ===================================================== -->
+<div class="modal fade" id="modalConfirmar" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+
+      <div class="modal-header bg-primary text-white">
+        <h5 class="modal-title">Confirmar Registro</h5>
+      </div>
+
+      <div class="modal-body fs-5 text-center">
+
+          <!-- ICONO ANIMADO -->
+          <div class="mb-3">
+              <svg id="iconAnim" width="70" height="70" viewBox="0 0 130 130">
+                  <circle cx="65" cy="65" r="60" stroke="#0d6efd" stroke-width="10" fill="none" opacity="0.2"/>
+                  <polyline id="checkAnim" points="40,70 58,88 92,48"
+                      style="fill:none;stroke:#0d6efd;stroke-width:10;stroke-linecap:round;stroke-linejoin:round;
+                      stroke-dasharray:100;stroke-dashoffset:100;">
+                  </polyline>
+              </svg>
+          </div>
+
+          <p id="textoConfirmacion"></p>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+        <button class="btn btn-success" id="btnConfirmarModal">Confirmar</button>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- AGREGADO: SONIDO -->
+<audio id="soundConfirm" src="https://cdn.pixabay.com/audio/2022/03/15/audio_91fe8cc523.mp3"></audio>
+<script>
+$(function(){
+
+    $('#vehiculo_id').select2({ width:'100%', placeholder:'Seleccione…' });
+
+    // ====== SOLO OPERADOR TIENE BLOQUEO DE DEUDA ======
+    <?php if($rol === 'operador'): ?>
+
+    $('#vehiculo_id').on('change', function(){
+        let id = $(this).val();
+        if(!id) return;
+
+        $.getJSON('verificar_deuda.php',{veh_id:id},function(resp){
+            if(resp.success && resp.planillas.length > 0){
+
+                let tbody = $("#tablaDeuda tbody").empty();
+                resp.planillas.forEach((p,i)=>{
+                    tbody.append(`<tr>
+                      <td>${i+1}</td>
+                      <td>${p.fecha}</td>
+                      <td>${p.numero_planilla}</td>
+                      <td>${p.conductor}</td>
+                      <td>$${p.valor_fmt}</td>
+                    </tr>`);
+                });
+
+                $("#totalDeuda").text("$"+resp.total.toLocaleString("es-CO"));
+
+                new bootstrap.Modal(document.getElementById('modalDeuda')).show();
+
+                $("#btnRegistrar").prop("disabled", true);
+
+                $("#btnRecaudar").off().on("click", function(){
+
+                    $.post("recaudar_deuda.php",{veh_id:id},function(r){
+                        if(r.success){
+                            alert("Recaudo realizado: $"+r.total.toLocaleString("es-CO"));
+                            location.reload();
+                        } else {
+                            alert("Error: "+r.error);
+                        }
+                    },"json");
+                });
+
+            } else {
+                $("#btnRegistrar").prop("disabled", false);
+            }
+        });
+
+    });
+
+    <?php endif; ?>
+
+
+    // ==============================================
+    // === AGREGADO: ANIMACIÓN + SONIDO MODAL =======
+    // ==============================================
+    function animarIconoConfirmacion() {
+        $("#checkAnim").css("stroke-dashoffset", "100");
+        setTimeout(() => {
+            $("#checkAnim").css("transition", "stroke-dashoffset 0.7s ease");
+            $("#checkAnim").css("stroke-dashoffset", "0");
+        }, 50);
+
+        document.getElementById("soundConfirm").play().catch(()=>{});
+    }
+
+    // ============================================================
+    // CONFIRMAR ANTES DE REGISTRAR PLANILLA
+    // ============================================================
+    $("#formPlanilla").on("submit", function(e){
+        e.preventDefault();
+
+        let tipo = $("select[name='tipo']").val();
+        let texto = `¿Está seguro de registrar una planilla en <b>${tipo.toUpperCase()}</b>?`;
+        $("#textoConfirmacion").html(texto);
+
+        let modal = new bootstrap.Modal(document.getElementById('modalConfirmar'));
+        modal.show();
+        animarIconoConfirmacion();
+
+        $("#btnConfirmarModal").off().on("click", function(){
+            modal.hide();
+            document.getElementById("formPlanilla").submit();
+        });
+    });
+
+});
+</script>
+
+</body>
+</html>

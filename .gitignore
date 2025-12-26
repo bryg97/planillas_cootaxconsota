@@ -1,0 +1,41 @@
+# Dependencias
+node_modules/
+vendor/
+
+# Variables de entorno
+.env
+.env.local
+.env.*.local
+
+# Archivos de configuración con credenciales
+config_planillas/config.php.bak
+
+# Archivos de sistema
+.DS_Store
+Thumbs.db
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Logs
+logs/
+*.log
+error_log
+
+# Archivos de respaldo
+*.sql
+*.bak
+*.old
+*.old.php
+
+# Temporales
+tmp/
+temp/
+cache/
+
+# Vercel
+.vercel

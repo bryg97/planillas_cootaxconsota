@@ -1,0 +1,30 @@
+Options -Indexes
+
+RewriteEngine On
+RewriteBase /planillas/
+
+# Forzar HTTPS
+RewriteCond %{HTTPS} !=on
+RewriteRule ^(.*)$ https://%{HTTP_HOST}/planillas/$1 [R=301,L]
+
+# URLs limpias
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteRule ^([a-zA-Z0-9_-]+)/?$ $1.php [L,QSA]
+
+# Bloquear archivos sensibles
+<FilesMatch "(config\.php|db\.php|\.env)">
+    Require all denied
+</FilesMatch>
+
+<Files ".htaccess">
+    Require all denied
+</Files>
+
+<Directory "logs">
+    Require all denied
+</Directory>
+
+<Directory "uploads/private">
+    Require all denied
+</Directory>

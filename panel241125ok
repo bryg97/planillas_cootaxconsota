@@ -1,0 +1,214 @@
+<?php
+// ==========================
+// 🔒 CONFIGURACIÓN SEGURA
+// ==========================
+
+// Zona horaria
+date_default_timezone_set('America/Bogota');
+
+// Configurar sesión segura
+session_set_cookie_params([
+    'lifetime' => 0,
+    'path' => '/',
+    'domain' => 'pvo.cootaxconsota.com', // fijado al subdominio
+    'secure' => isset($_SERVER['HTTPS']),
+    'httponly' => true,
+    'samesite' => 'Strict'
+]);
+session_start();
+
+// ==========================
+// 🔐 VALIDACIÓN DE SESIÓN
+// ==========================
+include __DIR__ . '/includes/seguridad.php';
+
+// Si no hay usuario logueado → redirige al login
+if (!isset($_SESSION['usuario'])) {
+    header('Location: login.php');
+    exit();
+}
+
+// ==========================
+// 🔗 CONEXIÓN
+// ==========================
+include __DIR__ . '/../../config_planillas/config.php';
+
+// Registro de errores
+ini_set('display_errors', 0);
+ini_set('log_errors', 1);
+ini_set('error_log', __DIR__ . '/../../logs/php_errors.log');
+error_reporting(E_ALL);
+
+// ==========================
+// 👤 DATOS DEL USUARIO
+// ==========================
+$usuario = $_SESSION['usuario'];
+$rol = $_SESSION['rol'] ?? 'operador';
+
+// ==========================
+// 🕒 SALUDO
+// ==========================
+$hora = date('H');
+if ($hora >= 6 && $hora < 12) {
+    $saludo = "Buenos días";
+} elseif ($hora >= 12 && $hora < 18) {
+    $saludo = "Buenas tardes";
+} else {
+    $saludo = "Buenas noches";
+}
+
+// ==========================
+// 📦 MÓDULOS POR ROL (PREVENCIÓN XSS)
+// ==========================
+$modulos = [];
+$stmt = $conn->prepare("
+    SELECT nombre, ruta 
+    FROM modulos
+    INNER JOIN permisos_por_rol ON permisos_por_rol.modulo_id = modulos.id
+    WHERE permisos_por_rol.rol = ? AND permisos_por_rol.permitido = 1
+");
+$stmt->bind_param("s", $rol);
+$stmt->execute();
+$res = $stmt->get_result();
+while ($row = $res->fetch_assoc()) {
+    // Sanitizamos las rutas y nombres
+    $row['nombre'] = htmlspecialchars($row['nombre'], ENT_QUOTES, 'UTF-8');
+    $row['ruta'] = htmlspecialchars($row['ruta'], ENT_QUOTES, 'UTF-8');
+    $modulos[] = $row;
+}
+$stmt->close();
+
+// ==========================
+// 🎨 ICONOS Y COLORES
+// ==========================
+$iconos_modulos = [
+    'Planillas' => 'bi-receipt',
+    'Reportes' => 'bi-bar-chart-line',
+    'Usuarios' => 'bi-people',
+    'Vehículos' => 'bi-truck',
+    'Clientes' => 'bi-person-check',
+    'Cobros' => 'bi-currency-dollar',
+    'Operaciones' => 'bi-gear-wide-connected',
+    'Cartera' => 'bi-wallet2',
+    'Liquidaciones' => 'bi-cash-stack',
+    'Recargas Débito' => 'bi-credit-card-2-back',
+    'Auditoría' => 'bi-search',
+];
+$colores_iconos = [
+    '#007bff', '#28a745', '#ffc107', '#dc3545', '#6610f2',
+    '#fd7e14', '#20c997', '#6f42c1', '#e83e8c', '#17a2b8', '#343a40',
+];
+
+// ==========================
+// 🔐 TOKEN CSRF PARA FORMULARIOS (Opcional)
+// ==========================
+if (empty($_SESSION['csrf_token'])) {
+    $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+}
+$csrf_token = $_SESSION['csrf_token'];
+
+?>
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Panel de Control — Cootaxconsota</title>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+<style>
+/* ===== Estilos conservados del panel original ===== */
+body { background-color: #f8f9fa; }
+.container { margin-top: 40px; }
+.module-card { background: white; border-radius: 15px; box-shadow: 0 3px 10px rgba(0,0,0,0.1); padding: 25px; text-align: center; transition: all .3s; }
+.module-card:hover { transform: translateY(-3px); box-shadow: 0 5px 15px rgba(0,0,0,0.15); }
+.module-card i { font-size: 40px; margin-bottom: 10px; transition: transform 0.3s; }
+.module-card i:hover { transform: scale(1.2); }
+.logout-btn { position: absolute; right: 20px; top: 15px; }
+footer { text-align: center; margin-top: 40px; color: #777; }
+.panel-titulo { font-size: 1.8rem; font-weight: 600; color: #0d6efd; text-shadow: 1px 1px 2px rgba(0,0,0,0.1); display: flex; align-items: center; justify-content: space-between; gap: 15px; }
+.panel-titulo-left { display: flex; align-items: center; gap: 10px; }
+.panel-titulo img { width: 45px; height: 45px; border-radius: 12px; box-shadow: 0 4px 8px rgba(0,0,0,0.2); transition: transform 0.3s, box-shadow 0.3s; }
+.panel-titulo img:hover { transform: scale(1.2); box-shadow: 0 6px 14px rgba(0,0,0,0.25); }
+.bienvenida { font-size: 1.1rem; margin-bottom: 20px; color: #495057; }
+.usuario-nombre { font-weight: 700; color: #007bff; background: rgba(0,123,255,0.1); padding: 3px 8px; border-radius: 12px; }
+#agente-virtual { position: fixed; bottom: 20px; right: 20px; text-align: center; z-index: 9999; cursor: pointer; animation: slideIn 1s ease-out; }
+#agente-virtual img { width: 80px; height: 80px; border-radius: 50%; border: 3px solid #007bff; box-shadow: 0 4px 10px rgba(0,0,0,0.2); transition: transform 0.3s; }
+#agente-virtual img:hover { transform: scale(1.1); }
+#agente-virtual .mensaje { margin-top: 5px; background: rgba(0,123,255,0.85); color: white; padding: 5px 10px; border-radius: 12px; font-size: 0.85rem; display: inline-block; box-shadow: 0 2px 6px rgba(0,0,0,0.2); }
+@keyframes slideIn { 0% { transform: translateY(100px); opacity: 0; } 100% { transform: translateY(0); opacity: 1; } }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap">
+    <h3 class="panel-titulo">
+        <span class="panel-titulo-left">
+            <i class="bi bi-speedometer2"></i>
+            Panel de Control — <?= htmlspecialchars(ucfirst($rol)) ?>
+        </span>
+        <img src="https://cootaxconsota.com/wp-content/uploads/2021/01/cropped-logo-consota-1024x1024-1.png" alt="Escudo Cootaxconsota">
+    </h3>
+    <a href="logout.php" class="btn btn-outline-danger logout-btn"><i class="bi bi-box-arrow-right"></i> Cerrar sesión</a>
+  </div>
+
+  <p class="bienvenida"><?= htmlspecialchars($saludo) ?>, <span class="usuario-nombre"><?= htmlspecialchars($usuario) ?></span></p>
+
+  <div class="row g-4">
+    <?php if(empty($modulos) && $rol != 'admin'): ?>
+      <div class="alert alert-warning">No tienes módulos asignados. Contacta al administrador.</div>
+    <?php endif; ?>
+
+    <?php
+    $i = 0;
+    foreach ($modulos as $mod) {
+        $icono = $iconos_modulos[$mod['nombre']] ?? 'bi-folder';
+        $color = $colores_iconos[$i % count($colores_iconos)];
+        echo '
+        <div class="col-md-3">
+          <div class="module-card">
+            <i class="bi '.$icono.'" style="color: '.$color.';"></i>
+            <h5>'.$mod['nombre'].'</h5>
+            <a href="'.$mod['ruta'].'" class="btn btn-primary btn-sm mt-2">Abrir</a>
+          </div>
+        </div>';
+        $i++;
+    }
+    ?>
+
+    <?php if($rol == 'admin'): ?>
+    <!-- Módulo Supervisor IA -->
+    <div class="col-md-3">
+      <div class="module-card">
+        <i class="bi bi-robot" style="color:#343a40;"></i>
+        <h5>Supervisor IA</h5>
+        <p class="small">Analiza, corrige y supervisa los archivos PHP automáticamente.</p>
+        <a href="diagnostico.php?csrf=<?= $csrf_token ?>" class="btn btn-primary btn-sm mt-2">Abrir</a>
+      </div>
+    </div>
+
+    <!-- Módulo Configuración general -->
+    <div class="col-md-3">
+      <div class="module-card">
+        <i class="bi bi-gear" style="color:#6c757d;"></i>
+        <h5>Configuración</h5>
+        <p class="small">Parámetros, valores base y ajustes del sistema.</p>
+        <a href="configuracion.php?csrf=<?= $csrf_token ?>" class="btn btn-primary btn-sm mt-2">Abrir</a>
+      </div>
+    </div>
+    <?php endif; ?>
+  </div>
+
+  <footer class="mt-5">
+    <p>© <?= date("Y") ?> Cootaxconsota — Sistema de Planillas</p>
+  </footer>
+</div>
+
+<!-- Agente Virtual -->
+<div id="agente-virtual">
+    <img src="https://cootaxconsota.com/wp-content/uploads/2025/11/IMG-20250604-WA0008.jpg" alt="Agente Virtual">
+    <div class="mensaje">¡<?= htmlspecialchars($saludo) ?>, <?= htmlspecialchars($usuario) ?>! 👋</div>
+</div>
+
+</body>
+</html>

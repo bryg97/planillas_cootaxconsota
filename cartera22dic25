@@ -1,0 +1,240 @@
+<?php
+// cartera.php - crédito pendiente por vehículo, con pago total y CSRF
+ini_set('display_errors',1); ini_set('display_startup_errors',1); error_reporting(E_ALL);
+session_start();
+include __DIR__ . '/../../config_planillas/config.php';
+date_default_timezone_set('America/Bogota');
+
+if(!isset($_SESSION['rol'])){ header("Location: login.php"); exit(); }
+$rol = $_SESSION['rol'];
+$usuario = $_SESSION['usuario'] ?? '';
+$user_id = $_SESSION['id_usuario'] ?? null;
+
+// CSRF token
+if(!isset($_SESSION['csrf_token'])) $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+$csrf_token = $_SESSION['csrf_token'];
+
+$ok=''; $error='';
+
+// Asegurar columna pagada
+$conn->query("ALTER TABLE planillas ADD COLUMN IF NOT EXISTS pagada TINYINT(1) DEFAULT 0");
+
+// ---------------------- PAGAR 1 PLANILLA ----------------------
+if($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['pagar_una']) && in_array($rol,['tesorera','admin'])){
+    if(!hash_equals($csrf_token,$_POST['csrf_token'] ?? '')){ $error="Token inválido"; }
+    else {
+        $planilla_id = intval($_POST['planilla_id']);
+        $conn->begin_transaction();
+        try{
+            $p = $conn->query("SELECT * FROM planillas WHERE id = $planilla_id AND tipo='credito' AND (pagada=0 OR pagada IS NULL) LIMIT 1")->fetch_assoc();
+            if(!$p) throw new Exception("Planilla no encontrada.");
+            $veh_id = intval($p['vehiculo_id']);
+            $valor = floatval($p['valor']);
+
+            // saldo actual vehículo
+            $veh = $conn->query("SELECT saldo, codigo_vehiculo FROM vehiculos WHERE id = $veh_id FOR UPDATE")->fetch_assoc();
+            if(!$veh) throw new Exception("Vehículo no encontrado.");
+            $saldo_antes = floatval($veh['saldo']);
+            $saldo_despues = $saldo_antes + $valor;
+
+            // insertar en historial
+            $colsRes=$conn->query("SHOW COLUMNS FROM planillas");
+            $cols=[]; while($c=$colsRes->fetch_assoc()) $cols[]=$c['Field'];
+            $cols_list=implode(",",array_map(fn($c)=>"`$c`",$cols));
+            $values=[];
+            foreach($cols as $col){
+                $values[] = isset($p[$col]) ? "'".$conn->real_escape_string($p[$col])."'" : "NULL";
+            }
+            $vals_list=implode(",", $values);
+            $conn->query("INSERT INTO planillas_historial ($cols_list) VALUES ($vals_list)");
+
+            // marcar pagada
+            $conn->query("UPDATE planillas SET pagada=1 WHERE id=$planilla_id");
+
+            // eliminar
+            $conn->query("DELETE FROM planillas WHERE id=$planilla_id");
+
+            // actualizar saldo vehículo
+            $stmt=$conn->prepare("UPDATE vehiculos SET saldo=? WHERE id=?");
+            $stmt->bind_param("di",$saldo_despues,$veh_id);
+            $stmt->execute(); $stmt->close();
+
+            // auditoría y logs
+            $desc="Pago planilla $planilla_id veh {$veh['codigo_vehiculo']} valor $valor por $usuario";
+            $conn->query("INSERT INTO auditoria(usuario,accion,detalles) VALUES ('".$conn->real_escape_string($usuario)."','Pago planilla','".$conn->real_escape_string($desc)."')");
+            $conn->query("INSERT INTO supervisor_logs(archivo,tipo,descripcion,accion_realizada,usuario) VALUES ('cartera.php','fix','".$conn->real_escape_string($desc)."','pago_individual','".$conn->real_escape_string($usuario)."')");
+
+            // telegram
+            $cfg=$conn->query("SELECT telegram_token, telegram_chatid FROM configuracion LIMIT 1")->fetch_assoc();
+            $telegram_token=$cfg['telegram_token']??''; $telegram_chatid=$cfg['telegram_chatid']??'';
+            if($telegram_token && $telegram_chatid){
+                $fecha_msg=date("d/m/Y h:i a");
+                $msg="✅ *PAGO PLANILLA*\n🚖 Vehículo: *".$veh['codigo_vehiculo']."*\n🧾 Planilla N°: *".$p['numero_planilla']."*\n👤 Conductor: *".$p['conductor']."*\n💸 Valor pagado: $".number_format($valor,0,',','.')."\n💰 Saldo antes: $".number_format($saldo_antes,0,',','.')."\n💰 Saldo después: $".number_format($saldo_despues,0,',','.')."\n🕒 $fecha_msg\n🧾 Registró: *$usuario*";
+                $post=['chat_id'=>$telegram_chatid,'text'=>$msg,'parse_mode'=>'Markdown'];
+                $ch=curl_init("https://api.telegram.org/bot".$telegram_token."/sendMessage");
+                curl_setopt($ch,CURLOPT_POST,true);
+                curl_setopt($ch,CURLOPT_POSTFIELDS,$post);
+                curl_setopt($ch,CURLOPT_RETURNTRANSFER,true);
+                curl_exec($ch); curl_close($ch);
+            }
+
+            $conn->commit(); $ok="Planilla pagada correctamente.";
+        }catch(Exception $e){ $conn->rollback(); $error="Error: ".$e->getMessage(); }
+    }
+    header("Location: cartera.php"); exit();
+}
+
+// ---------------------- PAGAR TODAS PLANILLAS VEHÍCULO ----------------------
+if($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['pagar_veh']) && in_array($rol,['tesorera','admin'])){
+    if(!hash_equals($csrf_token,$_POST['csrf_token'] ?? '')){ $error="Token inválido"; }
+    else {
+        $veh_id=intval($_POST['veh_id']);
+        $conn->begin_transaction();
+        try{
+            // traer planillas pendientes
+            $res=$conn->query("SELECT * FROM planillas WHERE vehiculo_id=$veh_id AND tipo='credito' AND (pagada=0 OR pagada IS NULL) ORDER BY fecha ASC");
+            $planillas=[]; while($r=$res->fetch_assoc()) $planillas[]=$r;
+            if(count($planillas)===0){ $conn->commit(); $ok="No hay deudas"; header("Location: cartera.php"); exit(); }
+
+            $veh=$conn->query("SELECT saldo, codigo_vehiculo FROM vehiculos WHERE id=$veh_id FOR UPDATE")->fetch_assoc();
+            if(!$veh) throw new Exception("Vehículo no encontrado.");
+            $saldo_corriente=floatval($veh['saldo']); $total_pagado=0;
+
+            // columnas planillas
+            $colsRes=$conn->query("SHOW COLUMNS FROM planillas");
+            $cols=[]; while($c=$colsRes->fetch_assoc()) $cols[]=$c['Field'];
+            $cols_list=implode(",",array_map(fn($c)=>"`$c`",$cols));
+
+            foreach($planillas as $p){
+                $valor=floatval($p['valor']);
+                $saldo_antes=$saldo_corriente;
+                $saldo_corriente+=$valor;
+                $saldo_despues=$saldo_corriente;
+
+                // historial
+                $values=[];
+                foreach($cols as $col){ $values[]=isset($p[$col])?"'".$conn->real_escape_string($p[$col])."'":"NULL"; }
+                $vals_list=implode(",",$values);
+                $conn->query("INSERT INTO planillas_historial ($cols_list) VALUES ($vals_list)");
+
+                // marcar pagada
+                $conn->query("UPDATE planillas SET pagada=1 WHERE id=".intval($p['id']));
+
+                // eliminar
+                $conn->query("DELETE FROM planillas WHERE id=".intval($p['id']));
+                $total_pagado+=$valor;
+            }
+
+            // actualizar saldo vehículo
+            $stmt=$conn->prepare("UPDATE vehiculos SET saldo=? WHERE id=?");
+            $stmt->bind_param("di",$saldo_corriente,$veh_id);
+            $stmt->execute(); $stmt->close();
+
+            // auditoría
+            $desc="Pago total veh $veh_id valor $total_pagado por $usuario";
+            $conn->query("INSERT INTO auditoria(usuario,accion,detalles) VALUES('".$conn->real_escape_string($usuario)."','Pago total vehiculo','".$conn->real_escape_string($desc)."')");
+            $conn->query("INSERT INTO supervisor_logs(archivo,tipo,descripcion,accion_realizada,usuario) VALUES ('cartera.php','fix','".$conn->real_escape_string($desc)."','pago_total','".$conn->real_escape_string($usuario)."')");
+
+            // telegram
+            $cfg=$conn->query("SELECT telegram_token, telegram_chatid FROM configuracion LIMIT 1")->fetch_assoc();
+            $telegram_token=$cfg['telegram_token']??''; $telegram_chatid=$cfg['telegram_chatid']??'';
+            if($telegram_token && $telegram_chatid){
+                $fecha_msg=date("d/m/Y h:i a");
+                $msg="✅ *PAGO TOTAL VEHÍCULO*\n🚖 Vehículo: *".$veh['codigo_vehiculo']."*\n👤 Autorizó: *$usuario*\n\n*Planillas pagadas:*\n";
+                foreach($planillas as $p){ $msg.="- N°".$p['numero_planilla']." → $".number_format($p['valor'],0,',','.')."\n"; }
+                $msg.="\n💸 *Total pagado:* $".number_format($total_pagado,0,',','.')."\n🕒 $fecha_msg";
+                $post=['chat_id'=>$telegram_chatid,'text'=>$msg,'parse_mode'=>'Markdown'];
+                $ch=curl_init("https://api.telegram.org/bot".$telegram_token."/sendMessage");
+                curl_setopt($ch,CURLOPT_POST,true);
+                curl_setopt($ch,CURLOPT_POSTFIELDS,$post);
+                curl_setopt($ch,CURLOPT_RETURNTRANSFER,true);
+                curl_exec($ch); curl_close($ch);
+            }
+
+            $conn->commit();
+            $ok="Se pagaron ".count($planillas)." planillas. Total: $".number_format($total_pagado,0,',','.');
+        }catch(Exception $e){ $conn->rollback(); $error="Error: ".$e->getMessage(); }
+    }
+    header("Location: cartera.php"); exit();
+}
+
+// ---------------------- LISTADO VEHÍCULOS CON DEUDA ----------------------
+$res=$conn->query("SELECT v.id veh_id, v.codigo_vehiculo, SUM(p.valor) total_deuda, COUNT(p.id) n_planillas FROM planillas p INNER JOIN vehiculos v ON p.vehiculo_id=v.id WHERE p.tipo='credito' AND (p.pagada=0 OR p.pagada IS NULL) GROUP BY v.id HAVING total_deuda>0 ORDER BY CAST(REPLACE(v.codigo_vehiculo,'J-','') AS UNSIGNED) ASC");
+$veh_rows=[]; while($row=$res->fetch_assoc()) $veh_rows[]=$row;
+?>
+<!doctype html>
+<html lang="es">
+<head><meta charset="utf-8"><title>Cartera</title>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"></head>
+<body class="p-4">
+<a href="panel.php" class="btn btn-secondary mb-3">⬅ Panel</a>
+<h3>Cartera - Créditos pendientes (por vehículo)</h3>
+
+<?php if($ok): ?><div class="alert alert-success"><?=htmlspecialchars($ok)?></div><?php endif;?>
+<?php if($error): ?><div class="alert alert-danger"><?=htmlspecialchars($error)?></div><?php endif;?>
+
+<table class="table table-striped">
+<thead><tr><th>Vehículo</th><th># planillas</th><th>Total deuda</th><th>Acción</th></tr></thead>
+<tbody>
+<?php foreach($veh_rows as $r): ?>
+<tr>
+  <td><?=htmlspecialchars($r['codigo_vehiculo'])?></td>
+  <td><?=intval($r['n_planillas'])?></td>
+  <td><?=number_format($r['total_deuda'],0,',','.')?></td>
+  <td>
+    <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#detModal<?=intval($r['veh_id'])?>">🔍 Ver detalle</button>
+    <?php if($rol==='tesorera'||$rol==='admin'): ?>
+      <form method="POST" style="display:inline" onsubmit="return confirm('¿Pagar deuda total de este vehículo?');">
+        <input type="hidden" name="pagar_veh" value="1">
+        <input type="hidden" name="veh_id" value="<?=intval($r['veh_id'])?>">
+        <input type="hidden" name="csrf_token" value="<?=$csrf_token?>">
+        <button class="btn btn-sm btn-success">Pagar deuda total</button>
+      </form>
+    <?php endif; ?>
+  </td>
+</tr>
+<?php endforeach; ?>
+</tbody>
+</table>
+
+<!-- MODALES DETALLE PLANILLAS -->
+<?php foreach($veh_rows as $r): ?>
+<?php $vehId=intval($r['veh_id']); $det=$conn->query("SELECT * FROM planillas WHERE vehiculo_id=$vehId AND tipo='credito' AND (pagada=0 OR pagada IS NULL) ORDER BY fecha DESC"); ?>
+<div class="modal fade" id="detModal<?=$vehId?>" tabindex="-1" aria-hidden="true">
+<div class="modal-dialog modal-lg"><div class="modal-content">
+<div class="modal-header"><h5 class="modal-title">Detalle planillas crédito - <?=htmlspecialchars($r['codigo_vehiculo'])?></h5>
+<button class="btn-close" data-bs-dismiss="modal"></button></div>
+<div class="modal-body">
+<table class="table table-sm"><thead><tr><th>ID</th><th>Fecha</th><th>N°</th><th>Conductor</th><th>Cédula</th><th>Origen</th><th>Destino</th><th>Valor</th><th>Acción</th></tr></thead>
+<tbody>
+<?php while($d=$det->fetch_assoc()): ?>
+<tr>
+<td><?=intval($d['id'])?></td>
+<td><?=date("d/m/Y h:i a", strtotime($d['fecha']))?></td>
+<td><?=htmlspecialchars($d['numero_planilla'])?></td>
+<td><?=htmlspecialchars($d['conductor'])?></td>
+<td><?=htmlspecialchars($d['cedula_conductor'])?></td>
+<td><?=htmlspecialchars($d['ciudad_origen'])?></td>
+<td><?=htmlspecialchars($d['ciudad_destino'])?></td>
+<td><?=number_format($d['valor'],0,',','.')?></td>
+<td>
+<?php if($rol==='tesorera'||$rol==='admin'): ?>
+<form method="POST" onsubmit="return confirm('¿Pagar esta planilla?');" style="display:inline">
+<input type="hidden" name="pagar_una" value="1">
+<input type="hidden" name="planilla_id" value="<?=intval($d['id'])?>">
+<input type="hidden" name="csrf_token" value="<?=$csrf_token?>">
+<button class="btn btn-sm btn-success">Pagar</button>
+</form>
+<?php else: ?><small>No autorizado</small><?php endif; ?>
+</td>
+</tr>
+<?php endwhile; ?>
+</tbody></table>
+</div>
+<div class="modal-footer"><button class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button></div>
+</div></div>
+</div>
+<?php endforeach; ?>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body></html>
