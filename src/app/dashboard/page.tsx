@@ -1,10 +1,12 @@
 import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 import { redirect } from 'next/navigation'
 import LogoutButton from './LogoutButton'
 import Link from 'next/link'
 
 export default async function DashboardPage() {
   const supabase = await createClient()
+  const adminClient = createAdminClient()
 
   const {
     data: { user },
@@ -14,8 +16,8 @@ export default async function DashboardPage() {
     redirect('/login')
   }
 
-  // Obtener rol del usuario desde la tabla usuarios
-  const { data: userData, error: userError } = await supabase
+  // Obtener rol del usuario desde la tabla usuarios usando cliente admin
+  const { data: userData, error: userError } = await adminClient
     .from('usuarios')
     .select('rol')
     .eq('usuario', user.email)
