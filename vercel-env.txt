@@ -1,0 +1,6 @@
+DB_HOST=aws-0-us-east-1.pooler.supabase.com
+DB_PORT=6543
+DB_USER=postgres.vxmggzvypaipbegeroxy
+DB_PASS=7906aVxM1Jg7VXbP
+DB_NAME=postgres
+TZ=America/Bogota

@@ -8,9 +8,9 @@ if ($timezone && $timezone !== ':UTC') {
 }
 
 // Obtener variables de entorno (Vercel usa getenv)
-// Usar Session Pooler de Supabase para serverless (IPv4)
+// Usar Transaction Pooler de Supabase para serverless (puerto 6543)
 $db_host = getenv('DB_HOST') ?: 'aws-0-us-east-1.pooler.supabase.com';
-$db_port = getenv('DB_PORT') ?: '5432';
+$db_port = getenv('DB_PORT') ?: '6543';
 $db_user = getenv('DB_USER') ?: 'postgres.vxmggzvypaipbegeroxy';
 $db_pass = getenv('DB_PASS') ?: '7906aVxM1Jg7VXbP';
 $db_name = getenv('DB_NAME') ?: 'postgres';
