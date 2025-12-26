@@ -15,13 +15,19 @@ export default async function DashboardPage() {
   }
 
   // Obtener rol del usuario desde la tabla usuarios
-  const { data: userData } = await supabase
+  const { data: userData, error: userError } = await supabase
     .from('usuarios')
     .select('rol')
     .eq('usuario', user.email)
     .single()
 
+  // Log para debug (se verá en los logs de Vercel)
+  console.log('User email:', user.email)
+  console.log('User data from DB:', userData)
+  console.log('Error:', userError)
+
   const rol = userData?.rol || 'operador'
+  console.log('Rol final:', rol)
 
   // Obtener estadísticas básicas
   const { count: totalVehiculos } = await supabase
