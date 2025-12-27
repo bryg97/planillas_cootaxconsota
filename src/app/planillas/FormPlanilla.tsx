@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { createPlanilla, verificarDeudaVehiculo } from './actions';
+import { createPlanilla, verificarDeudaVehiculo, recaudarPlanillas } from './actions';
 
 export default function FormPlanilla({ 
   vehiculos,
@@ -58,11 +58,29 @@ export default function FormPlanilla({
 
   async function handleContinuarConDeuda() {
     if (planillasRecaudar.length === 0) {
-      setError('Debe recaudar al menos una planilla para continuar');
+      setError('Debe seleccionar al menos una planilla para continuar');
       return;
     }
-    // Aquí puedes agregar lógica adicional si es necesario
+
+    setLoading(true);
+    setError('');
+
+    // Llamar a la acción para recaudar las planillas seleccionadas
+    const result = await recaudarPlanillas(planillasRecaudar);
+    
+    if (result.error) {
+      setError(result.error);
+      setLoading(false);
+      return;
+    }
+
+    // Si todo salió bien, cerrar el modal de deuda y permitir continuar
     setMostrarDetalleDeuda(false);
+    setDeudaVehiculo(null);
+    setLoading(false);
+    
+    // Mostrar mensaje de éxito
+    alert(`✅ ${result.cantidad} planilla(s) recaudada(s) exitosamente. Ahora puede continuar con el registro.`);
   }
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {

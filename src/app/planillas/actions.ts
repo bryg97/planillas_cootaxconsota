@@ -29,6 +29,63 @@ export async function verificarDeudaVehiculo(vehiculoId: number) {
   };
 }
 
+export async function recaudarPlanillas(planillaIds: number[]) {
+  if (!planillaIds || planillaIds.length === 0) {
+    return { error: 'Debe seleccionar al menos una planilla' };
+  }
+
+  const adminClient = createAdminClient();
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+
+  if (!user) {
+    return { error: 'Usuario no autenticado' };
+  }
+
+  // Obtener el ID del usuario
+  const { data: userData } = await adminClient
+    .from('usuarios')
+    .select('id')
+    .eq('usuario', user.email)
+    .single();
+
+  if (!userData) {
+    return { error: 'Usuario no encontrado' };
+  }
+
+  // Actualizar el estado de las planillas a 'recaudada'
+  const { error: updateError } = await adminClient
+    .from('planillas')
+    .update({ estado: 'recaudada' })
+    .in('id', planillaIds);
+
+  if (updateError) {
+    return { error: updateError.message };
+  }
+
+  // Crear registros de recaudos
+  const recaudos = planillaIds.map(planillaId => ({
+    planilla_id: planillaId,
+    usuario_id: userData.id,
+    fecha_recaudo: new Date().toISOString()
+  }));
+
+  const { error: recaudoError } = await adminClient
+    .from('recaudos')
+    .insert(recaudos);
+
+  if (recaudoError) {
+    console.error('Error al crear recaudos:', recaudoError);
+    // No retornamos error aquí porque las planillas ya fueron actualizadas
+  }
+
+  revalidatePath('/planillas');
+  revalidatePath('/cartera');
+  revalidatePath('/operaciones');
+  
+  return { success: true, cantidad: planillaIds.length };
+}
+
 export async function createPlanilla(formData: FormData) {
   const vehiculoId = parseInt(formData.get('vehiculo_id') as string);
   const conductor = formData.get('conductor') as string;
