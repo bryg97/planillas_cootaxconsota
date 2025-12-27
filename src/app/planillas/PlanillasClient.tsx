@@ -2,9 +2,13 @@
 
 import { useState } from 'react';
 import FormPlanilla from './FormPlanilla';
+import VerPlanilla from './VerPlanilla';
+import EditarPlanilla from './EditarPlanilla';
 
 export default function PlanillasClient({ planillas, vehiculos, operadores, valorDefecto }: { planillas: any[]; vehiculos: any[]; operadores: any[]; valorDefecto?: number }) {
   const [showForm, setShowForm] = useState(false);
+  const [planillaVer, setPlanillaVer] = useState<any>(null);
+  const [planillaEditar, setPlanillaEditar] = useState<any>(null);
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -80,13 +84,13 @@ export default function PlanillasClient({ planillas, vehiculos, operadores, valo
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                         <button 
-                          onClick={() => alert(`Ver planilla ${planilla.numero_planilla}`)}
+                          onClick={() => setPlanillaVer(planilla)}
                           className="text-blue-600 hover:text-blue-900 mr-3"
                         >
                           Ver
                         </button>
                         <button 
-                          onClick={() => alert(`Editar planilla ${planilla.numero_planilla}`)}
+                          onClick={() => setPlanillaEditar(planilla)}
                           className="text-green-600 hover:text-green-900"
                         >
                           Editar
@@ -113,6 +117,22 @@ export default function PlanillasClient({ planillas, vehiculos, operadores, valo
           operadores={operadores}
           valorDefecto={valorDefecto}
           onClose={() => setShowForm(false)} 
+        />
+      )}
+
+      {planillaVer && (
+        <VerPlanilla 
+          planilla={planillaVer}
+          onClose={() => setPlanillaVer(null)} 
+        />
+      )}
+
+      {planillaEditar && (
+        <EditarPlanilla 
+          planilla={planillaEditar}
+          vehiculos={vehiculos}
+          operadores={operadores}
+          onClose={() => setPlanillaEditar(null)} 
         />
       )}
     </div>

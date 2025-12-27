@@ -114,3 +114,45 @@ export async function createPlanilla(formData: FormData) {
   revalidatePath('/operaciones');
   return { success: true, data };
 }
+
+export async function updatePlanilla(formData: FormData) {
+  const id = parseInt(formData.get('id') as string);
+  const vehiculoId = parseInt(formData.get('vehiculo_id') as string);
+  const conductor = formData.get('conductor') as string;
+  const operadorNombre = formData.get('operador') as string;
+  const valor = parseFloat(formData.get('valor') as string);
+  const numeroPlanilla = formData.get('numero_planilla') as string;
+  const fecha = formData.get('fecha') as string;
+  const tipoPago = formData.get('tipo_pago') as string;
+  const estado = formData.get('estado') as string;
+
+  if (!id || !vehiculoId || !conductor || !valor || !numeroPlanilla || !fecha || !tipoPago || !operadorNombre || !estado) {
+    return { error: 'Todos los campos son requeridos' };
+  }
+
+  const adminClient = createAdminClient();
+  const { data, error } = await adminClient
+    .from('planillas')
+    .update({
+      vehiculo_id: vehiculoId,
+      conductor: conductor,
+      operador: operadorNombre,
+      valor: valor,
+      numero_planilla: numeroPlanilla,
+      fecha: fecha,
+      tipo_pago: tipoPago,
+      estado: estado
+    })
+    .eq('id', id)
+    .select()
+    .single();
+
+  if (error) {
+    return { error: error.message };
+  }
+
+  revalidatePath('/planillas');
+  revalidatePath('/operaciones');
+  revalidatePath('/historico');
+  return { success: true, data };
+}
