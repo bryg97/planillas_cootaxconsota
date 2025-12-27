@@ -29,6 +29,7 @@ export default function ConfiguracionClient({
       setError(result.error);
     } else {
       setMessage('Configuración guardada correctamente');
+      setTimeout(() => window.location.reload(), 1000);
     }
 
     setLoading(false);
