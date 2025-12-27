@@ -5,7 +5,8 @@ ALTER TABLE usuarios ADD CONSTRAINT usuarios_rol_check CHECK (rol IN ('administr
 -- Agregar campos necesarios a planillas
 ALTER TABLE planillas
 ADD COLUMN IF NOT EXISTS tipo_pago VARCHAR(20) DEFAULT 'credito' CHECK (tipo_pago IN ('contado', 'credito')),
-ADD COLUMN IF NOT EXISTS estado VARCHAR(20) DEFAULT 'pendiente' CHECK (estado IN ('pendiente', 'recaudada', 'liquidada', 'pagada'));
+ADD COLUMN IF NOT EXISTS estado VARCHAR(20) DEFAULT 'pendiente' CHECK (estado IN ('pendiente', 'recaudada', 'liquidada', 'pagada')),
+ADD COLUMN IF NOT EXISTS operador VARCHAR(100);
 
 -- Crear tabla de recaudos y pagos
 CREATE TABLE IF NOT EXISTS recaudos (
