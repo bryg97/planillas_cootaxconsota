@@ -13,9 +13,9 @@ export default function VehiculosClient({ vehiculos }: { vehiculos: any[] }) {
   const [searchTerm, setSearchTerm] = useState('');
 
   // Filtrar vehículos por búsqueda
-  const vehiculosFiltrados = vehiculos.filter(v => 
-    v.codigo_vehiculo.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const vehiculosFiltrados = vehiculos?.filter(v => 
+    v.codigo_vehiculo?.toLowerCase().includes(searchTerm.toLowerCase())
+  ) || [];
 
   function handleVer(vehiculo: any) {
     setVehiculoSeleccionado(vehiculo);
