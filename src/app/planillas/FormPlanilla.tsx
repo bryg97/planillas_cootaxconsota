@@ -223,34 +223,6 @@ export default function FormPlanilla({
             </select>
           </div>
 
-          <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Tipo *
-            </label>
-            <select
-              name="tipo"
-              required
-              className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="contado">Contado</option>
-              <option value="credito">Crédito</option>
-            </select>
-          </div>
-
-          <div className="mb-6">
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Valor *
-            </label>
-            <input
-              type="number"
-              name="valor"
-              step="0.01"
-              required
-              className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="0.00"
-            />
-          </div>
-
           <div className="flex gap-3">
             <button
               type="button"
