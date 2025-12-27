@@ -8,6 +8,8 @@ import { notificarDineroEntregado } from '@/lib/telegram';
 export async function getPlanillasParaLiquidar(operadorId?: number) {
   const adminClient = createAdminClient();
   
+  // Solo planillas con tipo_pago contado o estado recaudada (crédito ya cobrado)
+  // Que no estén liquidadas, pagadas o aprobadas
   let query = adminClient
     .from('planillas')
     .select(`
@@ -18,6 +20,7 @@ export async function getPlanillasParaLiquidar(operadorId?: number) {
       conductor,
       operador,
       tipo_pago,
+      estado,
       vehiculo_id,
       vehiculos:vehiculo_id (codigo_vehiculo)
     `)
@@ -29,7 +32,13 @@ export async function getPlanillasParaLiquidar(operadorId?: number) {
   }
 
   const { data } = await query;
-  return data || [];
+  
+  // Filtrar: incluir solo planillas de contado (cualquier estado) o crédito recaudado
+  const planillasFiltradas = data?.filter(p => 
+    p.tipo_pago === 'contado' || (p.tipo_pago === 'credito' && p.estado === 'recaudada')
+  ) || [];
+  
+  return planillasFiltradas;
 }
 
 export async function crearLiquidacion(planillaIds: number[]) {
