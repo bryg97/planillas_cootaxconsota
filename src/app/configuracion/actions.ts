@@ -18,50 +18,25 @@ export async function updateConfiguracion(formData: FormData) {
   const canalTelegram = formData.get('canal_telegram') as string;
   const botTelegram = formData.get('bot_telegram') as string;
 
-  console.log('Guardando configuración:', { valorPlanillaDefecto, canalTelegram, botTelegram });
-
   const adminClient = createAdminClient();
   
-  // Verificar si existe configuración
-  const { data: existing, error: existingError } = await adminClient
+  // Siempre actualizar el registro con id=1, si no existe lo crea
+  const { data, error } = await adminClient
     .from('configuracion')
-    .select('id')
+    .upsert({
+      id: 1,
+      valor_planilla_defecto: valorPlanillaDefecto,
+      canal_telegram: canalTelegram,
+      bot_telegram: botTelegram
+    }, {
+      onConflict: 'id'
+    })
+    .select()
     .single();
 
-  console.log('Existing config:', existing, 'Error:', existingError);
-
-  let result;
-  
-  if (existing) {
-    // Actualizar
-    result = await adminClient
-      .from('configuracion')
-      .update({
-        valor_planilla_defecto: valorPlanillaDefecto,
-        canal_telegram: canalTelegram,
-        bot_telegram: botTelegram
-      })
-      .eq('id', existing.id)
-      .select();
-    
-    console.log('Update result:', result);
-  } else {
-    // Insertar
-    result = await adminClient
-      .from('configuracion')
-      .insert({
-        valor_planilla_defecto: valorPlanillaDefecto,
-        canal_telegram: canalTelegram,
-        bot_telegram: botTelegram
-      })
-      .select();
-    
-    console.log('Insert result:', result);
-  }
-
-  if (result.error) {
-    console.error('Error guardando:', result.error);
-    return { error: result.error.message };
+  if (error) {
+    console.error('Error guardando configuración:', error);
+    return { error: error.message };
   }
 
   revalidatePath('/configuracion');

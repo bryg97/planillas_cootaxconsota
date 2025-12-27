@@ -13,11 +13,12 @@ export default async function ConfiguracionPage() {
 
   const adminClient = createAdminClient();
   
-  // Obtener configuración
+  // Obtener configuración (siempre buscar id=1)
   const { data: configuracion } = await adminClient
     .from('configuracion')
     .select('*')
-    .single();
+    .eq('id', 1)
+    .maybeSingle();
 
   // Obtener operadores (guardados en modulos con descripcion='Operador')
   const { data: operadores } = await adminClient
