@@ -27,5 +27,15 @@ export default async function ConfiguracionPage() {
     .eq('descripcion', 'Operador')
     .order('nombre', { ascending: true });
 
-  return <ConfiguracionClient configuracion={configuracion} operadores={operadores || []} />;
+  // Obtener vehículos para la depuración
+  const { data: vehiculos } = await adminClient
+    .from('vehiculos')
+    .select('id, codigo_vehiculo')
+    .order('codigo_vehiculo', { ascending: true });
+
+  return <ConfiguracionClient 
+    configuracion={configuracion} 
+    operadores={operadores || []} 
+    vehiculos={vehiculos || []}
+  />;
 }

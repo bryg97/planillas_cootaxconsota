@@ -1,20 +1,23 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { updateConfiguracion, createOperador, deleteOperador, depurarVehiculos } from './actions';
+import { updateConfiguracion, createOperador, deleteOperador, depurarVehiculos, eliminarPlanillasVehiculo, eliminarTodasPlanillas } from './actions';
 
 export default function ConfiguracionClient({ 
   configuracion, 
-  operadores 
+  operadores,
+  vehiculos
 }: { 
   configuracion: any; 
-  operadores: any[] 
+  operadores: any[];
+  vehiculos: any[];
 }) {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
   const [showFormOperador, setShowFormOperador] = useState(false);
   const [nuevoOperador, setNuevoOperador] = useState('');
+  const [vehiculoSeleccionado, setVehiculoSeleccionado] = useState('');
 
   async function handleSubmitConfig(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -74,6 +77,60 @@ export default function ConfiguracionClient({
       setError(result.error);
     } else {
       setMessage(result.message || 'Depuración completada');
+    }
+    
+    setLoading(false);
+  }
+
+  async function handleEliminarPlanillasVehiculo() {
+    if (!vehiculoSeleccionado) {
+      setError('Debe seleccionar un vehículo');
+      return;
+    }
+
+    const vehiculo = vehiculos.find(v => v.id === parseInt(vehiculoSeleccionado));
+    if (!confirm(`¿Está seguro de eliminar TODAS las planillas del vehículo ${vehiculo?.codigo_vehiculo}? Esta acción no se puede deshacer.`)) {
+      return;
+    }
+
+    setLoading(true);
+    setError('');
+    setMessage('');
+
+    const result = await eliminarPlanillasVehiculo(parseInt(vehiculoSeleccionado));
+    
+    if (result.error) {
+      setError(result.error);
+    } else {
+      setMessage(result.message || 'Planillas eliminadas correctamente');
+      setVehiculoSeleccionado('');
+      setTimeout(() => window.location.reload(), 1500);
+    }
+    
+    setLoading(false);
+  }
+
+  async function handleEliminarTodasPlanillas() {
+    if (!confirm('⚠️ ADVERTENCIA: ¿Está COMPLETAMENTE SEGURO de eliminar TODAS las planillas de TODOS los vehículos?\n\nEsta acción eliminará TODOS los registros del sistema y NO se puede deshacer.\n\n¿Desea continuar?')) {
+      return;
+    }
+
+    // Segunda confirmación por seguridad
+    if (!confirm('ÚLTIMA CONFIRMACIÓN: Se eliminarán TODOS los registros de planillas. ¿Proceder?')) {
+      return;
+    }
+
+    setLoading(true);
+    setError('');
+    setMessage('');
+
+    const result = await eliminarTodasPlanillas();
+    
+    if (result.error) {
+      setError(result.error);
+    } else {
+      setMessage(result.message || 'Todas las planillas fueron eliminadas');
+      setTimeout(() => window.location.reload(), 2000);
     }
     
     setLoading(false);
@@ -224,20 +281,64 @@ export default function ConfiguracionClient({
 
         {/* Depuración */}
         <div className="mt-6 bg-white rounded-lg shadow p-6">
-          <h2 className="text-xl font-semibold mb-4">Mantenimiento</h2>
+          <h2 className="text-xl font-semibold mb-4">Mantenimiento y Depuración</h2>
           
-          <div className="flex items-center justify-between p-4 bg-yellow-50 rounded">
-            <div>
-              <h3 className="font-medium text-gray-900">Depurar Vehículos</h3>
-              <p className="text-sm text-gray-600">Elimina vehículos que no tienen planillas asociadas</p>
+          <div className="space-y-4">
+            {/* Eliminar planillas de un vehículo específico */}
+            <div className="p-4 bg-blue-50 rounded border border-blue-200">
+              <h3 className="font-medium text-gray-900 mb-2">Eliminar planillas de un vehículo</h3>
+              <p className="text-sm text-gray-600 mb-3">Elimina todas las planillas de un vehículo específico para empezar desde cero</p>
+              
+              <div className="flex gap-2">
+                <select
+                  value={vehiculoSeleccionado}
+                  onChange={(e) => setVehiculoSeleccionado(e.target.value)}
+                  className="flex-1 px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="">Seleccione un vehículo</option>
+                  {vehiculos.map((v) => (
+                    <option key={v.id} value={v.id}>
+                      {v.codigo_vehiculo}
+                    </option>
+                  ))}
+                </select>
+                <button
+                  onClick={handleEliminarPlanillasVehiculo}
+                  disabled={loading || !vehiculoSeleccionado}
+                  className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50"
+                >
+                  Eliminar Planillas
+                </button>
+              </div>
             </div>
-            <button
-              onClick={handleDepurar}
-              disabled={loading}
-              className="px-4 py-2 bg-yellow-600 text-white rounded hover:bg-yellow-700 disabled:opacity-50"
-            >
-              Depurar Ahora
-            </button>
+
+            {/* Eliminar todas las planillas */}
+            <div className="p-4 bg-red-50 rounded border border-red-300">
+              <h3 className="font-medium text-red-900 mb-2">⚠️ Eliminar TODAS las planillas</h3>
+              <p className="text-sm text-red-700 mb-3">
+                <strong>PELIGRO:</strong> Elimina TODOS los registros de planillas de TODOS los vehículos del sistema. Esta acción NO se puede deshacer.
+              </p>
+              <button
+                onClick={handleEliminarTodasPlanillas}
+                disabled={loading}
+                className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 disabled:opacity-50 font-semibold"
+              >
+                🗑️ Eliminar Todo
+              </button>
+            </div>
+
+            {/* Depurar vehículos sin planillas */}
+            <div className="p-4 bg-yellow-50 rounded border border-yellow-300">
+              <h3 className="font-medium text-gray-900 mb-2">Depurar Vehículos</h3>
+              <p className="text-sm text-gray-600 mb-3">Elimina vehículos que no tienen planillas asociadas</p>
+              <button
+                onClick={handleDepurar}
+                disabled={loading}
+                className="px-4 py-2 bg-yellow-600 text-white rounded hover:bg-yellow-700 disabled:opacity-50"
+              >
+                Depurar Ahora
+              </button>
+            </div>
           </div>
         </div>
       </main>

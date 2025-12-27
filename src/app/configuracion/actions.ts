@@ -123,3 +123,45 @@ export async function depurarVehiculos() {
     message: `Se eliminaron ${vehiculosEliminar.length} vehículos sin planillas` 
   };
 }
+
+export async function eliminarPlanillasVehiculo(vehiculoId: number) {
+  const adminClient = createAdminClient();
+  
+  // Eliminar todas las planillas del vehículo
+  const { error } = await adminClient
+    .from('planillas')
+    .delete()
+    .eq('vehiculo_id', vehiculoId);
+
+  if (error) {
+    return { error: error.message };
+  }
+
+  revalidatePath('/configuracion');
+  revalidatePath('/planillas');
+  return { 
+    success: true, 
+    message: 'Todas las planillas del vehículo fueron eliminadas' 
+  };
+}
+
+export async function eliminarTodasPlanillas() {
+  const adminClient = createAdminClient();
+  
+  // Eliminar TODAS las planillas de TODOS los vehículos
+  const { error, count } = await adminClient
+    .from('planillas')
+    .delete()
+    .neq('id', 0); // Condición que siempre es verdadera para eliminar todo
+
+  if (error) {
+    return { error: error.message };
+  }
+
+  revalidatePath('/configuracion');
+  revalidatePath('/planillas');
+  return { 
+    success: true, 
+    message: `Se eliminaron todas las planillas del sistema` 
+  };
+}
