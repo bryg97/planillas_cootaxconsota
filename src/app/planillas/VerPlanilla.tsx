@@ -94,6 +94,28 @@ export default function VerPlanilla({
             </span>
           </div>
 
+          {planilla.origen && (
+            <div>
+              <label className="block text-sm font-medium text-gray-500 mb-1">
+                Origen
+              </label>
+              <p className="text-lg font-semibold text-gray-900">
+                {planilla.origen}
+              </p>
+            </div>
+          )}
+
+          {planilla.destino && (
+            <div>
+              <label className="block text-sm font-medium text-gray-500 mb-1">
+                Destino
+              </label>
+              <p className="text-lg font-semibold text-gray-900">
+                {planilla.destino}
+              </p>
+            </div>
+          )}
+
           <div>
             <label className="block text-sm font-medium text-gray-500 mb-1">
               Estado

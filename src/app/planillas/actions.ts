@@ -37,6 +37,8 @@ export async function createPlanilla(formData: FormData) {
   const numeroPlanilla = formData.get('numero_planilla') as string;
   const fecha = formData.get('fecha') as string;
   const tipoPago = formData.get('tipo_pago') as string;
+  const origen = formData.get('origen') as string;
+  const destino = formData.get('destino') as string;
 
   if (!vehiculoId || !conductor || !valor || !numeroPlanilla || !fecha || !tipoPago || !operadorNombre) {
     return { error: 'Todos los campos son requeridos' };
@@ -81,7 +83,9 @@ export async function createPlanilla(formData: FormData) {
       operador_id: userData.id,
       pagada: 0,
       tipo_pago: tipoPago,
-      estado: 'pendiente'
+      estado: 'pendiente',
+      origen: origen || null,
+      destino: destino || null
     })
     .select()
     .single();
@@ -92,7 +96,8 @@ export async function createPlanilla(formData: FormData) {
 
   // Enviar notificación Telegram solo si es crédito
   if (tipoPago === 'credito') {
-    const fechaFormateada = new Date(fecha).toLocaleDateString('es-CO', {
+    // Usar la fecha/hora actual del sistema para la notificación
+    const fechaFormateada = new Date().toLocaleDateString('es-CO', {
       day: '2-digit',
       month: '2-digit',
       year: 'numeric',
@@ -125,6 +130,8 @@ export async function updatePlanilla(formData: FormData) {
   const fecha = formData.get('fecha') as string;
   const tipoPago = formData.get('tipo_pago') as string;
   const estado = formData.get('estado') as string;
+  const origen = formData.get('origen') as string;
+  const destino = formData.get('destino') as string;
 
   if (!id || !vehiculoId || !conductor || !valor || !numeroPlanilla || !fecha || !tipoPago || !operadorNombre || !estado) {
     return { error: 'Todos los campos son requeridos' };
@@ -141,7 +148,9 @@ export async function updatePlanilla(formData: FormData) {
       numero_planilla: numeroPlanilla,
       fecha: fecha,
       tipo_pago: tipoPago,
-      estado: estado
+      estado: estado,
+      origen: origen || null,
+      destino: destino || null
     })
     .eq('id', id)
     .select()
