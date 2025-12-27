@@ -4,10 +4,12 @@ import { useState, useEffect } from 'react';
 import { createPlanilla } from './actions';
 
 export default function FormPlanilla({ 
-  vehiculos, 
+  vehiculos,
+  operadores,
   onClose 
 }: { 
   vehiculos: any[];
+  operadores: any[];
   onClose: () => void;
 }) {
   const [loading, setLoading] = useState(false);
@@ -105,6 +107,24 @@ export default function FormPlanilla({
               className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
               placeholder="Nombre del conductor"
             />
+          </div>
+
+          <div className="mb-4">
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Operador *
+            </label>
+            <select
+              name="operador"
+              required
+              className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="">Seleccione un operador</option>
+              {operadores.map((op) => (
+                <option key={op.id} value={op.nombre}>
+                  {op.nombre}
+                </option>
+              ))}
+            </select>
           </div>
 
           <div className="mb-4">

@@ -29,5 +29,12 @@ export default async function PlanillasPage() {
     .select('*')
     .order('codigo_vehiculo', { ascending: true });
 
-  return <PlanillasClient planillas={planillas || []} vehiculos={vehiculos || []} />;
+  // Obtener operadores
+  const { data: operadores } = await adminClient
+    .from('modulos')
+    .select('*')
+    .eq('descripcion', 'Operador')
+    .order('nombre', { ascending: true });
+
+  return <PlanillasClient planillas={planillas || []} vehiculos={vehiculos || []} operadores={operadores || []} />;
 }
