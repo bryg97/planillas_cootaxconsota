@@ -143,7 +143,20 @@ export default function FormPlanilla({
             <select
               name="vehiculo_id"
               value={vehiculoSeleccionado}
-              onChDetalleDeuda && deudaVehiculo && (
+              onChange={(e) => handleVehiculoChange(e.target.value)}
+              required
+              className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="">Seleccione un vehículo</option>
+              {vehiculos.map((v) => (
+                <option key={v.id} value={v.id}>
+                  {v.codigo_vehiculo}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {mostrarDetalleDeuda && deudaVehiculo && (
             <div className="mb-4 p-4 bg-red-50 border-2 border-red-400 rounded">
               <div className="flex items-start mb-3">
                 <div className="flex-shrink-0">
@@ -208,20 +221,7 @@ export default function FormPlanilla({
                 {planillasRecaudar.length === 0 
                   ? 'Seleccione al menos una planilla' 
                   : `Confirmar recaudo de ${planillasRecaudar.length} planilla(s)`}
-              </button   className="bg-green-600 text-white px-4 py-2 rounded text-sm hover:bg-green-700 mr-2"
-                    >
-                      Recaudar ahora
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setMostrarAlertaDeuda(false)}
-                      className="bg-gray-500 text-white px-4 py-2 rounded text-sm hover:bg-gray-600"
-                    >
-                      Continuar sin recaudar
-                    </button>
-                  </div>
-                </div>
-              </div>
+              </button>
             </div>
           )}
 
