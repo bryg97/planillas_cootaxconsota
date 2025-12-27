@@ -80,7 +80,7 @@ export async function procesarPagoVehiculo(vehiculoId: number, planillaIds: numb
 
   const { data: planillas } = await adminClient
     .from('planillas')
-    .select('numero_planilla, valor')
+    .select('id, numero_planilla, valor')
     .in('id', planillaIds);
 
   if (!planillas || planillas.length === 0) {
@@ -98,13 +98,16 @@ export async function procesarPagoVehiculo(vehiculoId: number, planillaIds: numb
   }
 
   // Registrar recaudos
-  const recaudos = planillaIds.map(planillaId => ({
-    planilla_id: planillaId,
-    vehiculo_id: vehiculoId,
-    monto: planillas.find(p => p.id === planillaId)?.valor || 0,
-    tipo: 'pago_tesorera',
-    recaudado_por: userData.id
-  }));
+  const recaudos = planillaIds.map(planillaId => {
+    const planilla = planillas.find(p => p.id === planillaId);
+    return {
+      planilla_id: planillaId,
+      vehiculo_id: vehiculoId,
+      monto: planilla?.valor || 0,
+      tipo: 'pago_tesorera',
+      recaudado_por: userData.id
+    };
+  });
 
   const { error: recaudoError } = await adminClient
     .from('recaudos')
