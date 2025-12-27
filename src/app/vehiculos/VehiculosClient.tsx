@@ -21,12 +21,20 @@ export default function VehiculosClient({ vehiculos }: { vehiculos: any[] }) {
         <div className="bg-white rounded-lg shadow">
           <div className="p-6 border-b border-gray-200 flex justify-between items-center">
             <h2 className="text-xl font-semibold">Registro de Vehículos</h2>
-            <button
-              onClick={() => setShowForm(true)}
-              className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
-            >
-              + Nuevo Vehículo
-            </button>
+            <div className="flex gap-3">
+              <a
+                href="/vehiculos/importar"
+                className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
+              >
+                📂 Importar Excel
+              </a>
+              <button
+                onClick={() => setShowForm(true)}
+                className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+              >
+                + Nuevo Vehículo
+              </button>
+            </div>
           </div>
 
           <div className="overflow-x-auto">
