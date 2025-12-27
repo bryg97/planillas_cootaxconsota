@@ -6,15 +6,18 @@ import { createPlanilla } from './actions';
 export default function FormPlanilla({ 
   vehiculos,
   operadores,
+  valorDefecto,
   onClose 
 }: { 
   vehiculos: any[];
   operadores: any[];
+  valorDefecto?: number;
   onClose: () => void;
 }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [numeroPlanilla, setNumeroPlanilla] = useState('');
+  const [valorPlanilla, setValorPlanilla] = useState(valorDefecto || 0);
 
   useEffect(() => {
     // Generar número de planilla automático
@@ -75,6 +78,22 @@ export default function FormPlanilla({
               defaultValue={new Date().toISOString().split('T')[0]}
               required
               className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+
+          <div className="mb-4">
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Valor Planilla *
+            </label>
+            <input
+              type="number"
+              name="valor"
+              step="0.01"
+              value={valorPlanilla}
+              onChange={(e) => setValorPlanilla(parseFloat(e.target.value) || 0)}
+              required
+              className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="0.00"
             />
           </div>
 

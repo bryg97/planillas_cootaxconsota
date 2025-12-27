@@ -36,5 +36,16 @@ export default async function PlanillasPage() {
     .eq('descripcion', 'Operador')
     .order('nombre', { ascending: true });
 
-  return <PlanillasClient planillas={planillas || []} vehiculos={vehiculos || []} operadores={operadores || []} />;
+  // Obtener configuración para valor predeterminado
+  const { data: configuracion } = await adminClient
+    .from('configuracion')
+    .select('valor_planilla_defecto')
+    .single();
+
+  return <PlanillasClient 
+    planillas={planillas || []} 
+    vehiculos={vehiculos || []} 
+    operadores={operadores || []} 
+    valorDefecto={configuracion?.valor_planilla_defecto || 0}
+  />;
 }

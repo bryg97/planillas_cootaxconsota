@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import FormPlanilla from './FormPlanilla';
 
-export default function PlanillasClient({ planillas, vehiculos, operadores }: { planillas: any[]; vehiculos: any[]; operadores: any[] }) {
+export default function PlanillasClient({ planillas, vehiculos, operadores, valorDefecto }: { planillas: any[]; vehiculos: any[]; operadores: any[]; valorDefecto?: number }) {
   const [showForm, setShowForm] = useState(false);
 
   return (
@@ -99,6 +99,7 @@ export default function PlanillasClient({ planillas, vehiculos, operadores }: { 
         <FormPlanilla 
           vehiculos={vehiculos}
           operadores={operadores}
+          valorDefecto={valorDefecto}
           onClose={() => setShowForm(false)} 
         />
       )}

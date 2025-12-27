@@ -37,7 +37,8 @@ export async function updateConfiguracion(formData: FormData) {
         canal_telegram: canalTelegram,
         bot_telegram: botTelegram
       })
-      .eq('id', existing.id);
+      .eq('id', existing.id)
+      .select();
   } else {
     // Insertar
     result = await adminClient
@@ -46,7 +47,8 @@ export async function updateConfiguracion(formData: FormData) {
         valor_planilla_defecto: valorPlanillaDefecto,
         canal_telegram: canalTelegram,
         bot_telegram: botTelegram
-      });
+      })
+      .select();
   }
 
   if (result.error) {
