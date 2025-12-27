@@ -61,9 +61,9 @@ export default function PlanillasClient({ planillas, vehiculos, operadores, valo
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                         <span className={`px-2 py-1 rounded-full text-xs ${
-                          planilla.tipo === 'contado' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
+                          planilla.tipo_pago === 'contado' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
                         }`}>
-                          {planilla.tipo}
+                          {planilla.tipo_pago}
                         </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
@@ -71,14 +71,26 @@ export default function PlanillasClient({ planillas, vehiculos, operadores, valo
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm">
                         <span className={`px-2 py-1 rounded-full text-xs ${
-                          planilla.pagada ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                          planilla.estado === 'recaudada' ? 'bg-blue-100 text-blue-800' :
+                          planilla.estado === 'pagada' ? 'bg-green-100 text-green-800' :
+                          'bg-yellow-100 text-yellow-800'
                         }`}>
-                          {planilla.pagada ? 'Pagada' : 'Pendiente'}
+                          {planilla.estado}
                         </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        <button className="text-blue-600 hover:text-blue-900 mr-3">Ver</button>
-                        <button className="text-green-600 hover:text-green-900">Editar</button>
+                        <button 
+                          onClick={() => alert(`Ver planilla ${planilla.numero_planilla}`)}
+                          className="text-blue-600 hover:text-blue-900 mr-3"
+                        >
+                          Ver
+                        </button>
+                        <button 
+                          onClick={() => alert(`Editar planilla ${planilla.numero_planilla}`)}
+                          className="text-green-600 hover:text-green-900"
+                        >
+                          Editar
+                        </button>
                       </td>
                     </tr>
                   ))

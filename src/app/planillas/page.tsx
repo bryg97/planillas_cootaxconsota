@@ -11,7 +11,7 @@ export default async function PlanillasPage() {
     redirect('/login');
   }
 
-  // Obtener planillas con datos de vehículos
+  // Obtener planillas con datos de vehículos (solo pendientes y recaudadas)
   const adminClient = createAdminClient();
   const { data: planillas } = await adminClient
     .from('planillas')
@@ -20,6 +20,7 @@ export default async function PlanillasPage() {
       vehiculos:vehiculo_id (codigo_vehiculo),
       usuarios:operador_id (usuario)
     `)
+    .in('estado', ['pendiente', 'recaudada'])
     .order('fecha', { ascending: false })
     .limit(50);
 
