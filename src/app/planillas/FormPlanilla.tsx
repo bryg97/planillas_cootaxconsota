@@ -22,6 +22,7 @@ export default function FormPlanilla({
   const [deudaVehiculo, setDeudaVehiculo] = useState<any>(null);
   const [mostrarDetalleDeuda, setMostrarDetalleDeuda] = useState(false);
   const [planillasRecaudar, setPlanillasRecaudar] = useState<number[]>([]);
+  const [tipoPago, setTipoPago] = useState('contado');
 
   useEffect(() => {
     // Generar número de planilla automático
@@ -231,6 +232,8 @@ export default function FormPlanilla({
             </label>
             <select
               name="tipo_pago"
+              value={tipoPago}
+              onChange={(e) => setTipoPago(e.target.value)}
               required
               className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
