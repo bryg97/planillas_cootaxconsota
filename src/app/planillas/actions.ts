@@ -10,10 +10,11 @@ export async function verificarDeudaVehiculo(vehiculoId: number) {
   
   const { data: planillas } = await adminClient
     .from('planillas')
-    .select('id, valor')
+    .select('id, numero_planilla, valor, fecha, conductor')
     .eq('vehiculo_id', vehiculoId)
     .eq('tipo_pago', 'credito')
-    .eq('estado', 'pendiente');
+    .eq('estado', 'pendiente')
+    .order('fecha', { ascending: true });
 
   if (!planillas || planillas.length === 0) {
     return null;
@@ -22,7 +23,8 @@ export async function verificarDeudaVehiculo(vehiculoId: number) {
   const total = planillas.reduce((sum, p) => sum + (p.valor || 0), 0);
 
   return {
-    planillas: planillas.length,
+    planillas: planillas,
+    cantidad: planillas.length,
     total: total
   };
 }
