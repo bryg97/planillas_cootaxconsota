@@ -27,12 +27,13 @@ Haz clic en **"Environment Variables"** y agrega:
 NEXT_PUBLIC_SUPABASE_URL=https://vxmggzvypaipbegeroxy.supabase.co
 ```
 
+
 ```
-NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ4bWdnenZ5cGFpcGJlZ2Vyb3h5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjY3NzgwNjUsImV4cCI6MjA4MjM1NDA2NX0.VH4BG5tsfxRIv29BcbFrTa9D6_WJr4vW_aovByEr6F8
+NEXT_PUBLIC_SUPABASE_ANON_KEY=tu_anon_key
 ```
 
 ```
-SUPABASE_SERVICE_ROLE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ4bWdnenZ5cGFpcGJlZ2Vyb3h5Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc2Njc3ODA2NSwiZXhwIjoyMDgyMzU0MDY1fQ.A5bHXNBd_AlXaPiZJHHIdQdy5N4MNoKXXNc4NFsrBQw
+SUPABASE_SERVICE_ROLE_KEY=tu_service_role_key
 ```
 
 **Importante**: Asegúrate de agregar estas 3 variables para todos los entornos (Production, Preview, Development)
