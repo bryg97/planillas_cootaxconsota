@@ -124,98 +124,98 @@ export default function FormPlanilla({
 
         <form onSubmit={handleSubmit}>
           <div className="mb-4">
-                                <div className="mb-4">
-                                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                                    Conductor *
-                                  </label>
-                                  <input
-                                    type="text"
-                                    name="conductor"
-                                    required
-                                    className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                    placeholder="Nombre del conductor"
-                                  />
-                                </div>
-                      <div className="mb-4">
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                          Operador *
-                        </label>
-                        <select
-                            name="operador"
-                            required
-                            defaultValue={''}
-                            className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-                          >
-                          <option value="">Seleccione un operador</option>
-                          {operadores.map((op) => (
-                            <option key={op.id} value={op.nombre}>
-                              {op.nombre}
-                            </option>
-                          ))}
-                        </select>
-                      </div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Operador *
+            </label>
+            <select
+              name="operador"
+              required
+              defaultValue={''}
+              className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="">Seleccione un operador</option>
+              {operadores.map((op) => (
+                <option key={op.id} value={op.nombre}>
+                  {op.nombre}
+                </option>
+              ))}
+            </select>
+          </div>
 
-                      <div className="mb-4">
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                          Vehículo *
-                        </label>
-                        <select
-                          name="vehiculo_id"
-                          value={vehiculoSeleccionado}
-                          onChange={(e) => handleVehiculoChange(e.target.value)}
-                          required
-                          className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        >
-                          <option value="">Seleccione un vehículo</option>
-                          {vehiculos.map((v) => (
-                            <option key={v.id} value={v.id}>
-                              {v.codigo_vehiculo}
-                            </option>
-                          ))}
-                        </select>
-                      </div>
+          <div className="mb-4">
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Vehículo *
+            </label>
+            <select
+              name="vehiculo_id"
+              value={vehiculoSeleccionado}
+              onChange={(e) => handleVehiculoChange(e.target.value)}
+              required
+              className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="">Seleccione un vehículo</option>
+              {vehiculos.map((v) => (
+                <option key={v.id} value={v.id}>
+                  {v.codigo_vehiculo}
+                </option>
+              ))}
+            </select>
+          </div>
 
-                      <div className="mb-4">
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                          Origen
-                        </label>
-                        <input
-                            type="text"
-                            name="origen"
-                            defaultValue={''}
-                            className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-                            placeholder="Lugar de origen"
-                          />
-                      </div>
+          <div className="mb-4">
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Conductor *
+            </label>
+            <input
+              type="text"
+              name="conductor"
+              required
+              className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="Nombre del conductor"
+            />
+          </div>
 
-                      <div className="mb-4">
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                          Destino
-                        </label>
-                        <input
-                            type="text"
-                            name="destino"
-                            defaultValue={''}
-                            className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-                            placeholder="Lugar de destino"
-                          />
-                      </div>
+          <div className="mb-4">
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Origen
+            </label>
+            <input
+              type="text"
+              name="origen"
+              defaultValue={''}
+              className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="Lugar de origen"
+            />
+          </div>
 
-                      <div className="mb-4">
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                          Tipo de Pago *
-                        </label>
-                        <select
-                            name="tipo_pago"
-                            value={tipoPago}
-                            onChange={e => setTipoPago(e.target.value)}
-                            required
-                            className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-                          >
-                          <option value="contado">Contado</option>
-                          <option value="credito">Crédito</option>
-                        </select>
-                      </div>
+          <div className="mb-4">
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Destino
+            </label>
+            <input
+              type="text"
+              name="destino"
+              defaultValue={''}
+              className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="Lugar de destino"
+            />
+          </div>
+
+          <div className="mb-4">
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Tipo de Pago *
+            </label>
+            <select
+              name="tipo_pago"
+              value={tipoPago}
+              onChange={e => setTipoPago(e.target.value)}
+              required
+              className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="contado">Contado</option>
+              <option value="credito">Crédito</option>
+            </select>
+          </div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Número de Planilla *
             </label>
