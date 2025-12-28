@@ -261,25 +261,6 @@ export default function FormPlanilla({
             />
           </div>
 
-          <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Vehículo *
-            </label>
-            <select
-              name="vehiculo_id"
-              value={vehiculoSeleccionado}
-              onChange={(e) => handleVehiculoChange(e.target.value)}
-              required
-              className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="">Seleccione un vehículo</option>
-              {vehiculos.map((v) => (
-                <option key={v.id} value={v.id}>
-                  {v.codigo_vehiculo}
-                </option>
-              ))}
-            </select>
-          </div>
 
           {mostrarDetalleDeuda && deudaVehiculo && (
             <div className="mb-4 p-4 bg-red-50 border-2 border-red-400 rounded">
