@@ -122,6 +122,63 @@ export default function FormPlanilla({
 
         <form onSubmit={handleSubmit}>
           <div className="mb-4">
+                      <div className="mb-4">
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Operador *
+                        </label>
+                        <select
+                          name="operador"
+                          required
+                          className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        >
+                          <option value="">Seleccione un operador</option>
+                          {operadores.map((op) => (
+                            <option key={op.id} value={op.nombre}>
+                              {op.nombre}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+
+                      <div className="mb-4">
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Origen
+                        </label>
+                        <input
+                          type="text"
+                          name="origen"
+                          className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          placeholder="Lugar de origen"
+                        />
+                      </div>
+
+                      <div className="mb-4">
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Destino
+                        </label>
+                        <input
+                          type="text"
+                          name="destino"
+                          className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          placeholder="Lugar de destino"
+                        />
+                      </div>
+
+                      <div className="mb-4">
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Tipo de Pago *
+                        </label>
+                        <select
+                          name="tipo_pago"
+                          value={tipoPago}
+                          onChange={e => setTipoPago(e.target.value)}
+                          required
+                          className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        >
+                          <option value="contado">Contado</option>
+                          <option value="credito">Crédito</option>
+                        </select>
+                      </div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Número de Planilla *
             </label>
@@ -270,6 +327,13 @@ export default function FormPlanilla({
               </button>
             </div>
           )}
+          <button
+            type="submit"
+            className="w-full bg-blue-600 text-white px-4 py-3 rounded font-semibold hover:bg-blue-700 disabled:opacity-50 mt-4"
+            disabled={loading}
+          >
+            {loading ? 'Guardando...' : 'Guardar Planilla'}
+          </button>
         </form>
       </div>
     </div>
