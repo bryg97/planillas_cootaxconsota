@@ -10,6 +10,7 @@ export default function VehiculosClient({ vehiculos }: { vehiculos: any[] }) {
   const [showVer, setShowVer] = useState(false);
   const [showEditar, setShowEditar] = useState(false);
   const [vehiculoSeleccionado, setVehiculoSeleccionado] = useState<any>(null);
+  const [showRecaudoModal, setShowRecaudoModal] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
 
   // Filtrar vehículos por búsqueda
@@ -23,6 +24,11 @@ export default function VehiculosClient({ vehiculos }: { vehiculos: any[] }) {
   }
 
   function handleEditar(vehiculo: any) {
+    if (vehiculo.saldo_pendiente > 0) {
+      setVehiculoSeleccionado(vehiculo);
+      setShowRecaudoModal(true);
+      return;
+    }
     setVehiculoSeleccionado(vehiculo);
     setShowEditar(true);
   }
@@ -136,6 +142,20 @@ export default function VehiculosClient({ vehiculos }: { vehiculos: any[] }) {
           vehiculo={vehiculoSeleccionado} 
           onClose={() => setShowEditar(false)} 
         />
+      )}
+      {showRecaudoModal && vehiculoSeleccionado && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-8 max-w-md w-full mx-4 text-center">
+            <h2 className="text-2xl font-bold mb-4 text-yellow-700">¡Recaudo Obligatorio!</h2>
+            <p className="mb-4 text-gray-700">El vehículo <b>{vehiculoSeleccionado.codigo_vehiculo}</b> tiene una deuda pendiente de <b>${parseFloat(vehiculoSeleccionado.saldo_pendiente).toLocaleString('es-CO')}</b>.<br/> Debe recaudar la deuda antes de poder editar los datos del vehículo.</p>
+            <button
+              onClick={() => setShowRecaudoModal(false)}
+              className="w-full px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 mt-2"
+            >
+              Entendido
+            </button>
+          </div>
+        </div>
       )}
                     </td>
                   </tr>
