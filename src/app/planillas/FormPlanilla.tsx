@@ -1,3 +1,4 @@
+// Forzar redeploy Vercel - sync visual
 // Cambio menor para forzar redeploy en Vercel
 'use client';
 
