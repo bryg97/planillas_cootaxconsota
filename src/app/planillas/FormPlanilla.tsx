@@ -264,8 +264,14 @@ export default function FormPlanilla({
                 className="w-full bg-green-600 text-white px-4 py-3 rounded font-semibold hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {planillasRecaudar.length === 0 
+
                   ? 'Seleccione al menos una planilla' 
                   : `Confirmar recaudo de ${planillasRecaudar.length} planilla(s)`}
               </button>
             </div>
           )}
+        </form>
+      </div>
+    </div>
+  );
+}
