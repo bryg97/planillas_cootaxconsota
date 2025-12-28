@@ -127,10 +127,11 @@ export default function FormPlanilla({
                           Operador *
                         </label>
                         <select
-                          name="operador"
-                          required
-                          className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        >
+                            name="operador"
+                            required
+                            defaultValue={''}
+                            className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          >
                           <option value="">Seleccione un operador</option>
                           {operadores.map((op) => (
                             <option key={op.id} value={op.nombre}>
@@ -165,11 +166,12 @@ export default function FormPlanilla({
                           Origen
                         </label>
                         <input
-                          type="text"
-                          name="origen"
-                          className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-                          placeholder="Lugar de origen"
-                        />
+                            type="text"
+                            name="origen"
+                            defaultValue={''}
+                            className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            placeholder="Lugar de origen"
+                          />
                       </div>
 
                       <div className="mb-4">
@@ -177,11 +179,12 @@ export default function FormPlanilla({
                           Destino
                         </label>
                         <input
-                          type="text"
-                          name="destino"
-                          className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-                          placeholder="Lugar de destino"
-                        />
+                            type="text"
+                            name="destino"
+                            defaultValue={''}
+                            className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            placeholder="Lugar de destino"
+                          />
                       </div>
 
                       <div className="mb-4">
@@ -189,12 +192,12 @@ export default function FormPlanilla({
                           Tipo de Pago *
                         </label>
                         <select
-                          name="tipo_pago"
-                          value={tipoPago}
-                          onChange={e => setTipoPago(e.target.value)}
-                          required
-                          className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        >
+                            name="tipo_pago"
+                            value={tipoPago}
+                            onChange={e => setTipoPago(e.target.value)}
+                            required
+                            className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          >
                           <option value="contado">Contado</option>
                           <option value="credito">Crédito</option>
                         </select>
