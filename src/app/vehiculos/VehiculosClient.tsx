@@ -132,9 +132,10 @@ export default function VehiculosClient({ vehiculos }: { vehiculos: any[] }) {
                     <td colSpan={5} className="px-6 py-4 text-center text-gray-500">
                       No hay vehículos registrados
       {showVer && vehiculoSeleccionado && (
-        <VerVehiculo 
+        <EditarVehiculo 
           vehiculo={vehiculoSeleccionado} 
           onClose={() => setShowVer(false)} 
+          readOnly={true}
         />
       )}
       {showEditar && vehiculoSeleccionado && (
