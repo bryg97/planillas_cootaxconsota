@@ -23,6 +23,8 @@ export default function FormPlanilla({
   const [mostrarDetalleDeuda, setMostrarDetalleDeuda] = useState(false);
   const [planillasRecaudar, setPlanillasRecaudar] = useState<number[]>([]);
   const [tipoPago, setTipoPago] = useState('contado');
+  const [saldoFavor, setSaldoFavor] = useState(0);
+  const [usarSaldoFavor, setUsarSaldoFavor] = useState(false);
 
   useEffect(() => {
     // Generar número de planilla automático
@@ -35,15 +37,20 @@ export default function FormPlanilla({
     setDeudaVehiculo(null);
     setMostrarDetalleDeuda(false);
     setPlanillasRecaudar([]);
-    
+    setSaldoFavor(0);
+    setUsarSaldoFavor(false);
     if (vehiculoId) {
       // Verificar si el vehículo tiene deudas
       const deuda = await verificarDeudaVehiculo(parseInt(vehiculoId));
       if (deuda && deuda.total > 0) {
         setDeudaVehiculo(deuda);
         setMostrarDetalleDeuda(true);
-        // Por defecto seleccionar todas
         setPlanillasRecaudar(deuda.planillas.map((p: any) => p.id));
+      }
+      // Buscar el saldo a favor del vehículo seleccionado
+      const vehiculo = vehiculos.find((v) => v.id === parseInt(vehiculoId));
+      if (vehiculo && vehiculo.saldo > 0) {
+        setSaldoFavor(vehiculo.saldo);
       }
     }
   }
@@ -89,8 +96,10 @@ export default function FormPlanilla({
     setError('');
 
     const formData = new FormData(e.currentTarget);
+    if (usarSaldoFavor) {
+      formData.append('usar_saldo_favor', '1');
+    }
     const result = await createPlanilla(formData);
-
     if (result.error) {
       setError(result.error);
       setLoading(false);
@@ -126,7 +135,26 @@ export default function FormPlanilla({
             />
           </div>
 
-          <div className="mb-4">
+          {/* Notificación y opción de saldo a favor */}
+          {saldoFavor > 0 && (
+            <div className="mb-4 p-4 bg-green-50 border-2 border-green-400 rounded">
+              <div className="flex items-center mb-2">
+                <svg className="h-6 w-6 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
+                <span className="ml-2 font-bold text-green-800">Este vehículo tiene un saldo a favor de ${saldoFavor.toLocaleString('es-CO')}</span>
+              </div>
+              <label className="flex items-center mt-2">
+                <input
+                  type="checkbox"
+                  checked={usarSaldoFavor}
+                  onChange={() => setUsarSaldoFavor(!usarSaldoFavor)}
+                  className="mr-2"
+                />
+                <span className="text-green-700">Usar saldo a favor para pagar esta planilla</span>
+              </label>
+            </div>
+          )}
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Fecha *
             </label>
@@ -192,7 +220,6 @@ export default function FormPlanilla({
                   </p>
                 </div>
               </div>
-
               <div className="bg-white rounded p-3 mb-3">
                 <p className="text-sm font-semibold text-gray-700 mb-2">Planillas pendientes de pago:</p>
                 <div className="space-y-2 max-h-60 overflow-y-auto">
@@ -218,7 +245,6 @@ export default function FormPlanilla({
                   ))}
                 </div>
               </div>
-
               <div className="bg-yellow-100 p-3 rounded mb-3">
                 <div className="flex justify-between items-center">
                   <span className="font-semibold text-gray-800">Total a recaudar:</span>
@@ -230,7 +256,6 @@ export default function FormPlanilla({
                   </span>
                 </div>
               </div>
-
               <button
                 type="button"
                 onClick={handleContinuarConDeuda}
@@ -242,98 +267,3 @@ export default function FormPlanilla({
                   : `Confirmar recaudo de ${planillasRecaudar.length} planilla(s)`}
               </button>
             </div>
-          )}
-
-          <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Tipo de Pago *
-            </label>
-            <select
-              name="tipo_pago"
-              value={tipoPago}
-              onChange={(e) => setTipoPago(e.target.value)}
-              required
-              className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="contado">Contado</option>
-              <option value="credito">Crédito</option>
-            </select>
-          </div>
-
-          <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Origen
-            </label>
-            <input
-              type="text"
-              name="origen"
-              className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="Lugar de origen"
-            />
-          </div>
-
-          <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Destino
-            </label>
-            <input
-              type="text"
-              name="destino"
-              className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="Lugar de destino"
-            />
-          </div>
-
-          <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Conductor *
-            </label>
-            <input
-              type="text"
-              name="conductor"
-              required
-              className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="Nombre del conductor"
-            />
-          </div>
-
-          <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Operador *
-            </label>
-            <select
-              name="operador"
-              required
-              className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="">Seleccione un operador</option>
-              {operadores.map((op) => (
-                <option key={op.id} value={op.nombre}>
-                  {op.nombre}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div className="flex gap-3">
-            <button
-              type="button"
-              onClick={onClose}
-              className="flex-1 px-4 py-2 border border-gray-300 rounded hover:bg-gray-50"
-              disabled={loading}
-            >
-              Cancelar
-            </button>
-            <button
-              type="submit"
-              className="flex-1 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50"
-              disabled={loading}
-            >
-              {loading ? 'Guardando...' : 'Guardar'}
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
-  );
-}

@@ -87,6 +87,7 @@ export async function recaudarPlanillas(planillaIds: number[]) {
 }
 
 export async function createPlanilla(formData: FormData) {
+    const usarSaldoFavor = formData.get('usar_saldo_favor') === '1';
   const vehiculoId = parseInt(formData.get('vehiculo_id') as string);
   const conductor = formData.get('conductor') as string;
   const operadorNombre = formData.get('operador') as string;
@@ -124,7 +125,7 @@ export async function createPlanilla(formData: FormData) {
   // Obtener datos del vehículo
   const { data: vehiculo } = await adminClient
     .from('vehiculos')
-    .select('codigo_vehiculo')
+    .select('codigo_vehiculo, saldo')
     .eq('id', vehiculoId)
     .single();
 
@@ -138,14 +139,22 @@ export async function createPlanilla(formData: FormData) {
       numero_planilla: numeroPlanilla,
       fecha: fecha,
       operador_id: userData.id,
-      pagada: 0,
+      pagada: usarSaldoFavor ? 1 : 0,
       tipo_pago: tipoPago,
-      estado: 'pendiente',
+      estado: usarSaldoFavor ? 'pagada' : 'pendiente',
       origen: origen || null,
       destino: destino || null
     })
     .select()
     .single();
+
+  // Si se usó saldo a favor, actualizar el saldo del vehículo a 0
+  if (usarSaldoFavor && vehiculo && vehiculo.saldo > 0) {
+    await adminClient
+      .from('vehiculos')
+      .update({ saldo: 0 })
+      .eq('id', vehiculoId);
+  }
 
   if (error) {
     return { error: error.message };
@@ -153,8 +162,9 @@ export async function createPlanilla(formData: FormData) {
 
   // Enviar notificación Telegram solo si es crédito
   if (tipoPago === 'credito') {
-    // Usar la fecha/hora actual del sistema para la notificación
-    const fechaFormateada = new Date().toLocaleDateString('es-CO', {
+    // Usar la fecha/hora actual del sistema para la notificación en zona horaria de Bogotá
+    const fechaFormateada = new Date().toLocaleString('es-CO', {
+      timeZone: 'America/Bogota',
       day: '2-digit',
       month: '2-digit',
       year: 'numeric',
