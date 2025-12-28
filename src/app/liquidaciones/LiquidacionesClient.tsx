@@ -88,6 +88,15 @@ export default function LiquidacionesClient({
     return (
 
       <main>
+        {/* Botón regresar al dashboard */}
+        <div className="mb-4">
+          <a href="/dashboard" className="inline-flex items-center px-4 py-2 bg-gray-200 text-gray-800 rounded hover:bg-gray-300 transition">
+            <svg className="h-5 w-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+            </svg>
+            Regresar al Dashboard
+          </a>
+        </div>
         {/* Encabezado */}
         <div className="flex justify-between items-center mb-4">
           <div>
