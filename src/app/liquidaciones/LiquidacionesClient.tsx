@@ -48,6 +48,7 @@ export default function LiquidacionesClient({
     async function handleCrearLiquidacion() {
       if (planillasSeleccionadas.length === 0) {
         setError("Seleccione al menos una planilla");
+        setMessage("");
         return;
       }
       if (!confirm("¿Crear liquidación con las planillas seleccionadas?")) {
@@ -56,13 +57,20 @@ export default function LiquidacionesClient({
       setLoading(true);
       setError("");
       setMessage("");
-      const result = await crearLiquidacion(planillasSeleccionadas);
-      if (result.error) {
-        setError(result.error);
-      } else {
-        setMessage("Liquidación creada correctamente. Esperando aprobación de tesorera.");
-        setPlanillasSeleccionadas([]);
-        setTimeout(() => window.location.reload(), 2000);
+      try {
+        const result = await crearLiquidacion(planillasSeleccionadas);
+        if (result.error) {
+          setError(result.error);
+          setMessage("");
+        } else {
+          setError("");
+          setMessage("Liquidación creada correctamente. Esperando aprobación de tesorera.");
+          setPlanillasSeleccionadas([]);
+          setTimeout(() => window.location.reload(), 2000);
+        }
+      } catch (e) {
+        setError("Ocurrió un error inesperado. Intenta de nuevo.");
+        setMessage("");
       }
       setLoading(false);
     }
@@ -87,16 +95,19 @@ export default function LiquidacionesClient({
     // --- Aquí va el JSX ---
     return (
 
-      <main>
-        {/* Botón regresar al dashboard */}
-        <div className="mb-4">
-          <a href="/dashboard" className="inline-flex items-center px-4 py-2 bg-gray-200 text-gray-800 rounded hover:bg-gray-300 transition">
-            <svg className="h-5 w-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-            </svg>
-            Regresar al Dashboard
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Botón regresar al dashboard estilo Operaciones */}
+        <div className="flex justify-end mb-4">
+          <a href="/dashboard" className="text-blue-600 hover:text-blue-800">
+            ← Volver al Dashboard
           </a>
         </div>
+        {/* Mensajes de error y éxito */}
+        {(error || message) && (
+          <div className={`mb-4 p-3 rounded text-sm ${error ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}`}>
+            {error || message}
+          </div>
+        )}
         {/* Encabezado */}
         <div className="flex justify-between items-center mb-4">
           <div>
