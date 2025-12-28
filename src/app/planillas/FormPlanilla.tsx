@@ -268,3 +268,4 @@ export default function FormPlanilla({
                   : `Confirmar recaudo de ${planillasRecaudar.length} planilla(s)`}
               </button>
             </div>
+          )}
