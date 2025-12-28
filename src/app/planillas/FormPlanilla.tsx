@@ -1,3 +1,4 @@
+// Forzar redeploy tras corrección de JSX
 // Forzar redeploy Vercel - sync visual
 // Cambio menor para forzar redeploy en Vercel
 'use client';
