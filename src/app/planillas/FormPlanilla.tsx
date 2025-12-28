@@ -1,3 +1,4 @@
+// Cambio menor para forzar redeploy en Vercel
 'use client';
 
 import { useState, useEffect } from 'react';
