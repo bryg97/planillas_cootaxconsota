@@ -131,6 +131,16 @@ export default function VehiculosClient({ vehiculos }: { vehiculos: any[] }) {
                   <tr>
                     <td colSpan={5} className="px-6 py-4 text-center text-gray-500">
                       No hay vehículos registrados
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </main>
+
+      {showForm && <FormVehiculo onClose={() => setShowForm(false)} />}
       {showVer && vehiculoSeleccionado && (
         <EditarVehiculo 
           vehiculo={vehiculoSeleccionado} 
@@ -158,16 +168,6 @@ export default function VehiculosClient({ vehiculos }: { vehiculos: any[] }) {
           </div>
         </div>
       )}
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </main>
-
-      {showForm && <FormVehiculo onClose={() => setShowForm(false)} />}
     </div>
   );
 }
