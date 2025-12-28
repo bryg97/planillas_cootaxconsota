@@ -1,7 +1,10 @@
 'use client';
+  }
 
-import { useState } from 'react';
-import { crearLiquidacion, aprobarLiquidacion } from './actions';
+  // All logic and helper functions above
+  // Return JSX below
+  return (
+    <main>
 
 export default function LiquidacionesClient({ 
   rol,
@@ -13,112 +16,117 @@ export default function LiquidacionesClient({
   liquidacionesPendientes: any[];
 }) {
   const [loading, setLoading] = useState(false);
-  const [message, setMessage] = useState('');
-  const [error, setError] = useState('');
-  const [planillasSeleccionadas, setPlanillasSeleccionadas] = useState<number[]>([]);
-  const [fechaDesde, setFechaDesde] = useState('');
-  const [fechaHasta, setFechaHasta] = useState('');
+  // Archivo reconstruido para corregir errores de sintaxis y estructura
+  "use client";
 
-  function togglePlanilla(planillaId: number) {
-    setPlanillasSeleccionadas(prev =>
-      prev.includes(planillaId)
-        ? prev.filter(id => id !== planillaId)
-        : [...prev, planillaId]
-    );
-  }
+  import { useState } from "react";
+  import { crearLiquidacion, aprobarLiquidacion } from "./actions";
 
-  function seleccionarTodas() {
-    const idsVisibles = planillasFiltradas.map(p => p.id);
-    setPlanillasSeleccionadas(idsVisibles);
-  }
+  export default function LiquidacionesClient({
+    rol,
+    planillas,
+    liquidacionesPendientes,
+  }: {
+    rol: string;
+    planillas: any[];
+    liquidacionesPendientes: any[];
+  }) {
+    const [loading, setLoading] = useState(false);
+    const [message, setMessage] = useState("");
+    const [error, setError] = useState("");
+    const [planillasSeleccionadas, setPlanillasSeleccionadas] = useState<number[]>([]);
+    const [fechaDesde, setFechaDesde] = useState("");
+    const [fechaHasta, setFechaHasta] = useState("");
 
-  function deseleccionarTodas() {
-    setPlanillasSeleccionadas([]);
-  }
-
-  // Filtrar planillas por rango de fechas
-  const planillasFiltradas = planillas.filter(p => {
-    if (!fechaDesde && !fechaHasta) return true;
-    
-    const fechaPlanilla = new Date(p.fecha);
-    const desde = fechaDesde ? new Date(fechaDesde) : null;
-    const hasta = fechaHasta ? new Date(fechaHasta) : null;
-
-    if (desde && hasta) {
-      return fechaPlanilla >= desde && fechaPlanilla <= hasta;
-    } else if (desde) {
-      return fechaPlanilla >= desde;
-    } else if (hasta) {
-      return fechaPlanilla <= hasta;
-    }
-    return true;
-  });
-
-  async function handleCrearLiquidacion() {
-    if (planillasSeleccionadas.length === 0) {
-      setError('Seleccione al menos una planilla');
-      return;
+    function togglePlanilla(planillaId: number) {
+      setPlanillasSeleccionadas((prev) =>
+        prev.includes(planillaId)
+          ? prev.filter((id) => id !== planillaId)
+          : [...prev, planillaId]
+      );
     }
 
-    if (!confirm('¿Crear liquidación con las planillas seleccionadas?')) {
-      return;
+    function seleccionarTodas() {
+      const idsVisibles = planillasFiltradas.map((p) => p.id);
+      setPlanillasSeleccionadas(idsVisibles);
     }
 
-    setLoading(true);
-    setError('');
-    setMessage('');
-
-    const result = await crearLiquidacion(planillasSeleccionadas);
-
-    if (result.error) {
-      setError(result.error);
-    } else {
-      setMessage('Liquidación creada correctamente. Esperando aprobación de tesorera.');
+    function deseleccionarTodas() {
       setPlanillasSeleccionadas([]);
-      setTimeout(() => window.location.reload(), 2000);
     }
 
-    setLoading(false);
-  }
+    const planillasFiltradas = planillas.filter((p) => {
+      if (!fechaDesde && !fechaHasta) return true;
+      const fechaPlanilla = new Date(p.fecha);
+      const desde = fechaDesde ? new Date(fechaDesde) : null;
+      const hasta = fechaHasta ? new Date(fechaHasta) : null;
+      if (desde && hasta) {
+        return fechaPlanilla >= desde && fechaPlanilla <= hasta;
+      } else if (desde) {
+        return fechaPlanilla >= desde;
+      } else if (hasta) {
+        return fechaPlanilla <= hasta;
+      }
+      return true;
+    });
 
-  async function handleAprobarLiquidacion(liquidacionId: number) {
-    if (!confirm('¿Confirmar recepción de dinero?')) {
-      return;
+    async function handleCrearLiquidacion() {
+      if (planillasSeleccionadas.length === 0) {
+        setError("Seleccione al menos una planilla");
+        return;
+      }
+      if (!confirm("¿Crear liquidación con las planillas seleccionadas?")) {
+        return;
+      }
+      setLoading(true);
+      setError("");
+      setMessage("");
+      const result = await crearLiquidacion(planillasSeleccionadas);
+      if (result.error) {
+        setError(result.error);
+      } else {
+        setMessage("Liquidación creada correctamente. Esperando aprobación de tesorera.");
+        setPlanillasSeleccionadas([]);
+        setTimeout(() => window.location.reload(), 2000);
+      }
+      setLoading(false);
     }
 
-    setLoading(true);
-    setError('');
-    setMessage('');
-
-    const result = await aprobarLiquidacion(liquidacionId);
-
-    if (result.error) {
-      setError(result.error);
-    } else {
-      setMessage('Liquidación aprobada y notificación enviada');
-      setTimeout(() => window.location.reload(), 2000);
+    async function handleAprobarLiquidacion(liquidacionId: number) {
+      if (!confirm("¿Confirmar recepción de dinero?")) {
+        return;
+      }
+      setLoading(true);
+      setError("");
+      setMessage("");
+      const result = await aprobarLiquidacion(liquidacionId);
+      if (result.error) {
+        setError(result.error);
+      } else {
+        setMessage("Liquidación aprobada y notificación enviada");
+        setTimeout(() => window.location.reload(), 2000);
+      }
+      setLoading(false);
     }
 
-    setLoading(false);
-  }
-div className="flex justify-between items-center mb-4">
-              <div>
-                <h2 className="text-xl font-semibold">Mis Planillas para Liquidar</h2>
-                <p className="text-sm text-gray-600 mt-1">
-                  Seleccione las planillas que desea liquidar (de contado o crédito ya recaudado)
-                </p>
-              </div>
-            </div>
+    // --- Aquí va el JSX ---
+    return (
+      <main>
+        {/* Encabezado */}
+        <div className="flex justify-between items-center mb-4">
+          <div>
+            <h2 className="text-xl font-semibold">Mis Planillas para Liquidar</h2>
+            <p className="text-sm text-gray-600 mt-1">
+              Seleccione las planillas que desea liquidar (de contado o crédito ya recaudado)
+            </p>
+          </div>
+        </div>
 
-            {/* Filtros de Fecha */}
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
-              <h3 className="font-medium text-blue-900 mb-3">Filtrar por Fecha</h3>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Desde
-                  </label>
-                  <input
+        {/* Filtros de Fecha */}
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+          <h3 className="font-medium text-blue-900 mb-3">Filtrar por Fecha</h3>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
                     type="date"
                     value={fechaDesde}
                     onChange={(e) => setFechaDesde(e.target.value)}
@@ -245,42 +253,11 @@ div className="flex justify-between items-center mb-4">
                       >
                         {loading ? 'Procesando...' : 'Crear Liquidación →'}
                       </button>
-                    </div>
-                  </div>
-                )}anilla.vehiculos?.codigo_vehiculo} - {planilla.conductor} - 
-                          {new Date(planilla.fecha).toLocaleDateString('es-CO')} - 
-                          <span className={`ml-2 ${planilla.tipo_pago === 'credito' ? 'text-orange-600' : 'text-green-600'}`}>
-                            {planilla.tipo_pago === 'credito' ? 'Crédito' : 'Contado'}
-                          </span>
-                        </p>
-                      </div>
-                      <p className="font-bold">${planilla.valor.toLocaleString('es-CO')}</p>
-                    </label>
-                  ))}
-                </div>
 
-                {planillasSeleccionadas.length > 0 && (
-                  <div className="flex justify-between items-center pt-4 border-t">
-                    <p className="text-lg font-semibold">
-                      Total seleccionado: $
-                      {planillas
-                        .filter(p => planillasSeleccionadas.includes(p.id))
-                        .reduce((sum, p) => sum + p.valor, 0)
-                        .toLocaleString('es-CO')}
-                    </p>
-                    <button
-                      onClick={handleCrearLiquidacion}
-                      disabled={loading}
-                      className="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 disabled:opacity-50"
-                    >
-                      {loading ? 'Procesando...' : 'Crear Liquidación'}
-                    </button>
-                  </div>
-                )}
+                    </div>
+                  )}
+                </div>
               </>
-            )}
-          </div>
-        )}
 
         {rol === 'tesorera' && (
           <div className="bg-white rounded-lg shadow p-6">
@@ -384,6 +361,5 @@ div className="flex justify-between items-center mb-4">
           </div>
         )}
       </main>
-    </div>
   );
 }
