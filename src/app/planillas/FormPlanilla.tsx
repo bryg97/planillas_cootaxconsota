@@ -270,7 +270,11 @@ export default function FormPlanilla({
             <input
               type="date"
               name="fecha"
-              defaultValue={new Date().toISOString().split('T')[0]}
+              defaultValue={(function() {
+                const d = new Date();
+                d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
+                return d.toISOString().split('T')[0];
+              })()}
               required
               className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
               pattern="\\d{4}-\\d{2}-\\d{2}"
