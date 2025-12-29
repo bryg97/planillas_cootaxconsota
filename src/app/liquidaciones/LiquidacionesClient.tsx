@@ -178,7 +178,7 @@ export default function LiquidacionesClient({
                       <span className={`px-2 py-0.5 rounded-full text-xs ${planilla.estado === 'recaudada' ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-800'}`}>{planilla.estado}</span>
                     </div>
                     <p className="text-sm text-gray-600 mt-1">
-                      <span className="font-medium">{planilla.vehiculos?.codigo_vehiculo}</span> • {planilla.conductor} • {new Date(planilla.fecha).toLocaleDateString('es-CO', { weekday: 'short', day: '2-digit', month: 'short' })}
+                      <span className="font-medium">{planilla.vehiculos?.codigo_vehiculo}</span> • {planilla.conductor} • {planilla.fecha}
                     </p>
                   </div>
                   <p className="font-bold text-lg text-gray-900 ml-3">${planilla.valor.toLocaleString('es-CO')}</p>

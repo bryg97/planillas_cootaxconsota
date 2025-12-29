@@ -20,15 +20,23 @@ export default async function OperacionesPage() {
     .eq('usuario', user.email)
     .single();
 
-  // Obtener planillas del día actual
-  const hoy = new Date().toISOString().split('T')[0];
+  // Obtener planillas del día local (zona horaria de Bogotá)
+  const bogota = new Date().toLocaleString('en-US', { timeZone: 'America/Bogota' });
+  const fechaLocal = new Date(bogota);
+  const yyyy = fechaLocal.getFullYear();
+  const mm = String(fechaLocal.getMonth() + 1).padStart(2, '0');
+  const dd = String(fechaLocal.getDate()).padStart(2, '0');
+  const hoyLocal = `${yyyy}-${mm}-${dd}`;
+
+  // Traer todas las planillas cuya fecha esté entre 00:00 y 23:59 del día local
   const { data: planillasHoy } = await adminClient
     .from('planillas')
     .select(`
       *,
       vehiculos:vehiculo_id (codigo_vehiculo)
     `)
-    .eq('fecha', hoy)
+    .gte('fecha', hoyLocal)
+    .lte('fecha', hoyLocal)
     .order('id', { ascending: false });
 
   // Obtener mis liquidaciones pendientes (si soy operador)
