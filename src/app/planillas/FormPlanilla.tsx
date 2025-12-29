@@ -225,13 +225,14 @@ export default function FormPlanilla({
         <div className="grid grid-cols-1 md:grid-cols-6 gap-6 mb-8">
           {/* Operador */}
           <div className="md:col-span-1">
-            <label className="block text-sm font-medium text-gray-700 mb-2">Operador *</label>
+            <label className="block text-sm font-bold text-gray-700 mb-2">Operador *</label>
             <select
               name="operador"
               value={operadorForm}
               onChange={e => setOperadorForm(e.target.value)}
               required
-              className="w-full px-3 py-2 border border-blue-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 bg-blue-50"
+              className="min-w-[180px] w-auto px-3 py-2 border border-blue-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 bg-blue-50"
+              style={{maxWidth: '100%'}}
             >
               <option value="">Seleccione un operador</option>
               {operadores.map((op) => (
@@ -241,7 +242,7 @@ export default function FormPlanilla({
           </div>
           {/* Vehículo */}
           <div className="md:col-span-2">
-            <label className="block text-sm font-medium text-gray-700 mb-2">Vehículo *</label>
+            <label className="block text-sm font-bold text-gray-700 mb-2">Vehículo *</label>
             <input
               type="text"
               placeholder="Buscar vehículo..."
@@ -254,7 +255,8 @@ export default function FormPlanilla({
               value={vehiculoSeleccionado}
               onChange={e => handleVehiculoChange(e.target.value)}
               required
-              className="w-full px-3 py-2 border border-blue-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 bg-blue-50"
+              className="min-w-[180px] w-auto px-3 py-2 border border-blue-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 bg-blue-50"
+              style={{maxWidth: '100%'}}
             >
               <option value="">Seleccione un vehículo</option>
               {vehiculos
