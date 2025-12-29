@@ -8,6 +8,10 @@ export default function LogoutButton() {
   const supabase = createClient()
 
   const handleLogout = async () => {
+    // Limpiar operador seleccionado al cerrar sesión
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('operadorSeleccionado');
+    }
     await supabase.auth.signOut()
     router.push('/login')
     router.refresh()
