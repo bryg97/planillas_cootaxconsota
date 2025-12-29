@@ -224,7 +224,7 @@ export default function FormPlanilla({
         )}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
           {/* Operador */}
-          <div className="md:col-span-1">
+          <div className="md:col-span-2">
             <label className="block text-sm font-bold text-gray-700 mb-2">Operador *</label>
             <select
               name="operador"
@@ -269,7 +269,7 @@ export default function FormPlanilla({
             </select>
           </div>
           {/* Conductor */}
-          <div className="md:col-span-2">
+          <div className="md:col-span-1">
             <label className="block text-sm font-bold text-gray-700 mb-2">Conductor *</label>
             <input
               type="text"
@@ -280,7 +280,7 @@ export default function FormPlanilla({
             />
           </div>
           {/* Tipo de Pago */}
-          <div className="md:col-start-2 md:col-span-2">
+          <div className="md:col-span-1">
             <label className="block text-sm font-bold text-gray-700 mb-2">Tipo *</label>
             <select
               name="tipo_pago"
@@ -320,7 +320,7 @@ export default function FormPlanilla({
             />
           </div>
           {/* Origen */}
-          <div className="md:col-span-2">
+          <div className="md:col-span-1">
             <label className="block text-sm font-bold text-gray-700 mb-2">Origen</label>
             <input
               type="text"
@@ -331,7 +331,7 @@ export default function FormPlanilla({
             />
           </div>
           {/* Destino */}
-          <div className="md:col-span-2">
+          <div className="md:col-span-1">
             <label className="block text-sm font-bold text-gray-700 mb-2">Destino</label>
             <input
               type="text"
