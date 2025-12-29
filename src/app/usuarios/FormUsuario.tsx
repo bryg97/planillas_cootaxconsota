@@ -74,6 +74,7 @@ export default function FormUsuario({ onClose }: { onClose: () => void }) {
             >
               <option value="">Seleccione un rol</option>
               <option value="operador">Operador</option>
+              <option value="supervisor">Supervisor</option>
               <option value="administrador">Administrador</option>
             </select>
           </div>
