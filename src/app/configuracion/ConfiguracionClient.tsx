@@ -1,11 +1,11 @@
 'use client';
-
-import { useState, useEffect } from 'react';
-import { updateConfiguracion, createOperador, deleteOperador, depurarVehiculos, eliminarPlanillasVehiculo, eliminarTodasPlanillas, updateOperador } from './actions';
-
-export default function ConfiguracionClient({ 
-  configuracion, 
-  operadores,
+                ))
+              ) : (
+                <p className="text-gray-500 text-center py-4">No hay operadores registrados</p>
+              )}
+            </div>
+          </div>
+        </div>
   vehiculos
 }: { 
   configuracion: any; 
