@@ -280,7 +280,7 @@ export default function FormPlanilla({
             />
           </div>
           {/* Tipo de Pago */}
-          <div className="md:col-span-1">
+          <div className="md:col-start-2 md:col-span-2">
             <label className="block text-sm font-bold text-gray-700 mb-2">Tipo *</label>
             <select
               name="tipo_pago"
