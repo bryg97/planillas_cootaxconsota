@@ -19,7 +19,7 @@ async function vincularUsuariosConAuth() {
 
     // 2. Obtener todos los usuarios de Supabase Auth (paginando si hay muchos)
     let allAuthUsers: any[] = [];
-    let nextPage = null;
+    let nextPage: number | undefined = undefined;
     do {
       const { data: authData, error: authError } = await adminClient.auth.admin.listUsers({ page: nextPage });
       if (authError) {
@@ -27,8 +27,8 @@ async function vincularUsuariosConAuth() {
         return;
       }
       allAuthUsers = allAuthUsers.concat(authData.users);
-      nextPage = authData.nextPage ?? null;
-    } while (nextPage);
+      nextPage = authData.nextPage !== null && authData.nextPage !== undefined ? authData.nextPage : undefined;
+    } while (nextPage !== undefined);
 
     for (const user of usuarios) {
       // Buscar el usuario de Auth por email
