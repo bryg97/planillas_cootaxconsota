@@ -146,12 +146,14 @@ export default function PlanillasClient({ planillas, vehiculos, operadores, valo
       </main>
 
       {showForm && (
-        <FormPlanilla 
-          vehiculos={vehiculos}
-          operadores={operadores}
-          valorDefecto={valorDefecto}
-          onClose={() => setShowForm(false)} 
-        />
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <FormPlanilla 
+            vehiculos={vehiculos}
+            operadores={operadores}
+            valorDefecto={valorDefecto}
+            onClose={() => setShowForm(false)} 
+          />
+        </div>
       )}
 
       {planillaVer && (
