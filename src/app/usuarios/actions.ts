@@ -38,7 +38,7 @@ export async function editarUsuario(id: number | undefined, formData: FormData) 
 
   // Si hay que actualizar auth, hacerlo en auth.users
   if (updateAuth && usuarioRow.auth_id) {
-    const { error: authUpdateError } = await adminClient.auth.admin.updateUser(
+    const { error: authUpdateError } = await adminClient.auth.admin.updateUserById(
       usuarioRow.auth_id,
       { password: clave }
     );
