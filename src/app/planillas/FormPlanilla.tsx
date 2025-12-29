@@ -212,111 +212,132 @@ export default function FormPlanilla({
       )}
 
       {/* Formulario principal */}
-      <form onSubmit={handleSubmit} className="bg-white rounded-lg p-8 max-w-md w-full mx-4 max-h-[90vh] overflow-y-auto">
+      <form onSubmit={handleSubmit} className="bg-white rounded-lg p-8 max-w-5xl w-full mx-4 max-h-[90vh] overflow-y-auto">
         <h2 className="text-2xl font-bold mb-6">Nueva Planilla</h2>
         {error && (
           <div className="bg-red-50 text-red-600 p-3 rounded mb-4">
             {error}
           </div>
         )}
-        {/* Operador obligatorio */}
-        <div className="mb-4">
-          <label className="block text-sm font-medium text-gray-700 mb-2">Operador *</label>
-          <select
-            name="operador"
-            value={operadorForm}
-            onChange={e => setOperadorForm(e.target.value)}
-            required
-            className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-          >
-            <option value="">Seleccione un operador</option>
-            {operadores.map((op) => (
-              <option key={op.nombre} value={op.nombre}>{op.nombre}</option>
-            ))}
-          </select>
-        </div>
-        {/* Búsqueda y selección de vehículo */}
-        <div className="mb-4">
-          <label className="block text-sm font-medium text-gray-700 mb-2">Vehículo *</label>
-          <input
-            type="text"
-            placeholder="Buscar vehículo..."
-            value={vehiculoBusqueda}
-            onChange={e => setVehiculoBusqueda(e.target.value)}
-            className="w-full px-3 py-2 mb-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-          />
-          <select
-            name="vehiculo_id"
-            value={vehiculoSeleccionado}
-            onChange={e => handleVehiculoChange(e.target.value)}
-            required
-            className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-          >
-            <option value="">Seleccione un vehículo</option>
-            {vehiculos
-              .filter(v =>
-                v.codigo_vehiculo.toLowerCase().includes(vehiculoBusqueda.toLowerCase())
-              )
-              .map((v) => (
-                <option key={v.id} value={v.id}>
-                  {v.codigo_vehiculo}
-                </option>
+        <div className="grid grid-cols-1 md:grid-cols-6 gap-4 mb-4">
+          {/* Operador */}
+          <div className="md:col-span-1">
+            <label className="block text-sm font-medium text-gray-700 mb-2">Operador *</label>
+            <select
+              name="operador"
+              value={operadorForm}
+              onChange={e => setOperadorForm(e.target.value)}
+              required
+              className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="">Seleccione un operador</option>
+              {operadores.map((op) => (
+                <option key={op.nombre} value={op.nombre}>{op.nombre}</option>
               ))}
-          </select>
-        </div>
-        <div className="mb-4">
-          <label className="block text-sm font-medium text-gray-700 mb-2">Conductor *</label>
-          <input
-            type="text"
-            name="conductor"
-            required
-            className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-            placeholder="Nombre del conductor"
-          />
-        </div>
-        <div className="mb-4">
-          <label className="block text-sm font-medium text-gray-700 mb-2">Origen</label>
-          <input
-            type="text"
-            name="origen"
-            defaultValue={''}
-            className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-            placeholder="Lugar de origen"
-          />
-        </div>
-        <div className="mb-4">
-          <label className="block text-sm font-medium text-gray-700 mb-2">Destino</label>
-          <input
-            type="text"
-            name="destino"
-            defaultValue={''}
-            className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-            placeholder="Lugar de destino"
-          />
-        </div>
-        <div className="mb-4">
-          <label className="block text-sm font-medium text-gray-700 mb-2">Tipo de Pago *</label>
-          <select
-            name="tipo_pago"
-            value={tipoPago}
-            onChange={e => setTipoPago(e.target.value)}
-            required
-            className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-          >
-            <option value="contado">Contado</option>
-            <option value="credito">Crédito</option>
-          </select>
-        </div>
-        <div className="mb-4">
-          <label className="block text-sm font-medium text-gray-700 mb-2">Número de Planilla *</label>
-          <input
-            type="text"
-            name="numero_planilla"
-            value={numeroPlanilla}
-            onChange={(e) => setNumeroPlanilla(e.target.value)}
-            required
-            className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-          />
+            </select>
+          </div>
+          {/* Vehículo */}
+          <div className="md:col-span-2">
+            <label className="block text-sm font-medium text-gray-700 mb-2">Vehículo *</label>
+            <input
+              type="text"
+              placeholder="Buscar vehículo..."
+              value={vehiculoBusqueda}
+              onChange={e => setVehiculoBusqueda(e.target.value)}
+              className="w-full px-3 py-2 mb-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+            <select
+              name="vehiculo_id"
+              value={vehiculoSeleccionado}
+              onChange={e => handleVehiculoChange(e.target.value)}
+              required
+              className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="">Seleccione un vehículo</option>
+              {vehiculos
+                .filter(v =>
+                  v.codigo_vehiculo.toLowerCase().includes(vehiculoBusqueda.toLowerCase())
+                )
+                .map((v) => (
+                  <option key={v.id} value={v.id}>
+                    {v.codigo_vehiculo}
+                  </option>
+                ))}
+            </select>
+          </div>
+          {/* Conductor */}
+          <div className="md:col-span-2">
+            <label className="block text-sm font-medium text-gray-700 mb-2">Conductor *</label>
+            <input
+              type="text"
+              name="conductor"
+              required
+              className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="Nombre del conductor"
+            />
+          </div>
+          {/* Tipo de Pago */}
+          <div className="md:col-span-1">
+            <label className="block text-sm font-medium text-gray-700 mb-2">Tipo *</label>
+            <select
+              name="tipo_pago"
+              value={tipoPago}
+              onChange={e => setTipoPago(e.target.value)}
+              required
+              className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="contado">Contado</option>
+              <option value="credito">Crédito</option>
+            </select>
+          </div>
+          {/* Valor Planilla */}
+          <div className="md:col-span-1">
+            <label className="block text-sm font-medium text-gray-700 mb-2">Valor Base</label>
+            <input
+              type="number"
+              name="valor"
+              step="0.01"
+              value={valorPlanilla}
+              onChange={(e) => setValorPlanilla(parseFloat(e.target.value) || 0)}
+              required
+              className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="0.00"
+            />
+          </div>
+          {/* Número de Planilla */}
+          <div className="md:col-span-1">
+            <label className="block text-sm font-medium text-gray-700 mb-2">N° Planilla</label>
+            <input
+              type="text"
+              name="numero_planilla"
+              value={numeroPlanilla}
+              onChange={(e) => setNumeroPlanilla(e.target.value)}
+              required
+              className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+          {/* Origen */}
+          <div className="md:col-span-3">
+            <label className="block text-sm font-medium text-gray-700 mb-2">Origen</label>
+            <input
+              type="text"
+              name="origen"
+              defaultValue={''}
+              className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="Lugar de origen"
+            />
+          </div>
+          {/* Destino */}
+          <div className="md:col-span-3">
+            <label className="block text-sm font-medium text-gray-700 mb-2">Destino</label>
+            <input
+              type="text"
+              name="destino"
+              defaultValue={''}
+              className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="Lugar de destino"
+            />
+          </div>
         </div>
         {/* Notificación y opción de saldo a favor */}
         {saldoFavor > 0 && (
@@ -353,26 +374,13 @@ export default function FormPlanilla({
             pattern="\\d{4}-\\d{2}-\\d{2}"
           />
         </div>
-        <div className="mb-4">
-          <label className="block text-sm font-medium text-gray-700 mb-2">Valor Planilla *</label>
-          <input
-            type="number"
-            name="valor"
-            step="0.01"
-            value={valorPlanilla}
-            onChange={(e) => setValorPlanilla(parseFloat(e.target.value) || 0)}
-            required
-            className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-            placeholder="0.00"
-          />
-        </div>
         <div className="flex gap-2 mt-6">
           <button
             type="submit"
             disabled={loading}
             className="w-full bg-blue-600 text-white px-4 py-3 rounded font-semibold hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {loading ? 'Guardando...' : 'Guardar Planilla'}
+            {loading ? 'Guardando...' : 'Registrar Planilla'}
           </button>
           <button
             type="button"
