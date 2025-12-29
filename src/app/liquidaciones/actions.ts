@@ -156,12 +156,17 @@ export async function aprobarLiquidacion(liquidacionId: number) {
 
   const adminClient = createAdminClient();
   
-  // Obtener datos de la tesorera (incluyendo auth_id)
-  const { data: tesorera } = await adminClient
+  // LOG: Mostrar el email que se busca
+  console.log('[AprobarLiquidacion] Buscando usuario con email:', user.email);
+  const { data: tesorera, error: tesoreraError } = await adminClient
     .from('usuarios')
     .select('id, usuario, auth_id')
     .eq('usuario', user.email)
     .single();
+  if (tesoreraError) {
+    console.log('[AprobarLiquidacion] Error al buscar usuario:', tesoreraError.message);
+  }
+  console.log('[AprobarLiquidacion] Usuario encontrado:', tesorera);
 
   if (!tesorera) {
     return { error: 'Usuario no encontrado' };
