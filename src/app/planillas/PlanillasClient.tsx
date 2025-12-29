@@ -1,6 +1,8 @@
 'use client';
 
 import { useState } from 'react';
+import ImportarPlanillasModal from './ImportarPlanillasModal';
+import { importarPlanillasDesdeExcel } from './importarExcelAction';
 import FormPlanilla from './FormPlanilla';
 import VerPlanilla from './VerPlanilla';
 import EditarPlanilla from './EditarPlanilla';
@@ -9,6 +11,7 @@ export default function PlanillasClient({ planillas, vehiculos, operadores, valo
   const [showForm, setShowForm] = useState(false);
   const [planillaVer, setPlanillaVer] = useState<any>(null);
   const [planillaEditar, setPlanillaEditar] = useState<any>(null);
+  const [showImport, setShowImport] = useState(false);
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -23,15 +26,38 @@ export default function PlanillasClient({ planillas, vehiculos, operadores, valo
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="bg-white rounded-lg shadow">
-          <div className="p-6 border-b border-gray-200 flex justify-between items-center">
+          <div className="p-6 border-b border-gray-200 flex flex-col md:flex-row md:items-center md:justify-between gap-2">
             <h2 className="text-xl font-semibold">Gestión de Planillas</h2>
-            <button
-              onClick={() => setShowForm(true)}
-              className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
-            >
-              + Nueva Planilla
-            </button>
+            <div className="flex gap-2">
+              <button
+                onClick={() => setShowForm(true)}
+                className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+              >
+                + Nueva Planilla
+              </button>
+              <button
+                onClick={() => setShowImport(true)}
+                className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
+              >
+                Importar planillas
+              </button>
+            </div>
           </div>
+      {showImport && (
+        <ImportarPlanillasModal 
+          onClose={() => setShowImport(false)}
+          onImport={async (data) => {
+            const res = await importarPlanillasDesdeExcel(data);
+            if (res.success) {
+              alert('✅ ' + res.cantidad + ' planillas importadas correctamente.');
+              window.location.reload();
+            } else {
+              alert('Error: ' + res.error);
+            }
+            setShowImport(false);
+          }}
+        />
+      )}
 
           <div className="overflow-x-auto">
             <table className="min-w-full divide-y divide-gray-200">
