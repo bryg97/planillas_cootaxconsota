@@ -68,9 +68,10 @@ export default function EditarPlanilla({
             <input
               type="date"
               name="fecha"
-              defaultValue={planilla.fecha}
+              defaultValue={planilla.fecha ? planilla.fecha.substring(0, 10) : ''}
               required
               className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+              pattern="\\d{4}-\\d{2}-\\d{2}"
             />
           </div>
 

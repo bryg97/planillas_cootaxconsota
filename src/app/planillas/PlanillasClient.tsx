@@ -55,7 +55,7 @@ export default function PlanillasClient({ planillas, vehiculos, operadores, valo
                         {planilla.numero_planilla}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {new Date(planilla.fecha).toLocaleDateString('es-CO')}
+                        {planilla.fecha ? planilla.fecha.substring(0, 10).split('-').reverse().join('/') : ''}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                         {planilla.vehiculos?.codigo_vehiculo}

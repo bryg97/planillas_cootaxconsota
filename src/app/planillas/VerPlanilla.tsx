@@ -37,11 +37,7 @@ export default function VerPlanilla({
               Fecha
             </label>
             <p className="text-lg font-semibold text-gray-900">
-              {new Date(planilla.fecha).toLocaleDateString('es-CO', {
-                day: '2-digit',
-                month: '2-digit',
-                year: 'numeric'
-              })}
+              {planilla.fecha ? planilla.fecha.substring(0, 10).split('-').reverse().join('/') : ''}
             </p>
           </div>
 
