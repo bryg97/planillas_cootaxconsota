@@ -132,17 +132,92 @@ export default function FormPlanilla({
   }
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg p-8 max-w-md w-full mx-4 max-h-[90vh] overflow-y-auto">
-        <h2 className="text-2xl font-bold mb-6">Nueva Planilla</h2>
-        
-        {error && (
-          <div className="bg-red-50 text-red-600 p-3 rounded mb-4">
-            {error}
+    <>
+      {mostrarDetalleDeuda && deudaVehiculo && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-8 max-w-md w-full mx-4 max-h-[90vh] overflow-y-auto border-2 border-red-400">
+            <div className="flex items-start mb-3">
+              <div className="flex-shrink-0">
+                <svg className="h-6 w-6 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
+              </div>
+              <div className="ml-3 flex-1">
+                <h3 className="text-lg font-bold text-red-800">
+                  ⚠️ Este vehículo tiene {deudaVehiculo.cantidad} planilla(s) pendiente(s)
+                </h3>
+                <p className="text-sm text-red-700 mt-1">
+                  Debe recaudar antes de registrar una nueva planilla
+                </p>
+              </div>
+            </div>
+            <div className="bg-white rounded p-3 mb-3">
+              <p className="text-sm font-semibold text-gray-700 mb-2">Planillas pendientes de pago:</p>
+              <div className="space-y-2 max-h-60 overflow-y-auto">
+                {deudaVehiculo.planillas.map((planilla: any) => (
+                  <label
+                    key={planilla.id}
+                    className="flex items-start p-2 bg-gray-50 rounded border hover:bg-blue-50 cursor-pointer"
+                  >
+                    <input
+                      type="checkbox"
+                      checked={planillasRecaudar.includes(planilla.id)}
+                      onChange={() => togglePlanillaRecaudar(planilla.id)}
+                      className="mt-1 mr-3 h-4 w-4"
+                    />
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium text-sm">N° {planilla.numero_planilla}</p>
+                      <p className="text-xs text-gray-600">
+                        {planilla.conductor} • {new Date(planilla.fecha).toLocaleDateString('es-CO')}
+                      </p>
+                    </div>
+                    <p className="font-bold text-red-600 ml-2">{planilla.valor.toLocaleString('es-CO')}</p>
+                  </label>
+                ))}
+              </div>
+            </div>
+            <div className="bg-yellow-100 p-3 rounded mb-3">
+              <div className="flex justify-between items-center">
+                <span className="font-semibold text-gray-800">Total a recaudar:</span>
+                <span className="text-xl font-bold text-red-600">
+                  {deudaVehiculo.planillas
+                    .filter((p: any) => planillasRecaudar.includes(p.id))
+                    .reduce((sum: number, p: any) => sum + p.valor, 0)
+                    .toLocaleString('es-CO')}
+                </span>
+              </div>
+            </div>
+            <div className="flex gap-2 mt-4">
+              <button
+                type="button"
+                onClick={handleContinuarConDeuda}
+                disabled={planillasRecaudar.length === 0}
+                className="w-full bg-green-600 text-white px-4 py-3 rounded font-semibold hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {planillasRecaudar.length === 0 
+                  ? 'Seleccione al menos una planilla' 
+                  : `Confirmar recaudo de ${planillasRecaudar.length} planilla(s)`}
+              </button>
+              <button
+                type="button"
+                onClick={() => setMostrarDetalleDeuda(false)}
+                className="w-full bg-gray-400 text-white px-4 py-3 rounded font-semibold hover:bg-gray-500"
+              >
+                Cancelar
+              </button>
+            </div>
           </div>
-        )}
-
-        <form onSubmit={handleSubmit}>
+        </div>
+      )}
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-40">
+        <div className="bg-white rounded-lg p-8 max-w-md w-full mx-4 max-h-[90vh] overflow-y-auto">
+          <h2 className="text-2xl font-bold mb-6">Nueva Planilla</h2>
+          {error && (
+            <div className="bg-red-50 text-red-600 p-3 rounded mb-4">
+              {error}
+            </div>
+          )}
+          <form onSubmit={handleSubmit}>
           {/* Operador: select con todos los operadores, por defecto el de la sesión */}
           <div className="mb-4">
             <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -377,53 +452,7 @@ export default function FormPlanilla({
           onClick={handleContinuarConDeuda}
           disabled={planillasRecaudar.length === 0}
           className="w-full bg-green-600 text-white px-4 py-3 rounded font-semibold hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          {planillasRecaudar.length === 0 
-            ? 'Seleccione al menos una planilla' 
-            : `Confirmar recaudo de ${planillasRecaudar.length} planilla(s)`}
-        </button>
-        <button
-          type="button"
-          onClick={() => setMostrarDetalleDeuda(false)}
-          className="w-full bg-gray-400 text-white px-4 py-3 rounded font-semibold hover:bg-gray-500"
-        >
-          Cancelar
-        </button>
-      </div>
-    </div>
-  </div>
-)}
-
-                      </div>
-                      <p className="font-bold text-red-600 ml-2">${planilla.valor.toLocaleString('es-CO')}</p>
-                    </label>
-                  ))}
-                </div>
-              </div>
-              <div className="bg-yellow-100 p-3 rounded mb-3">
-                <div className="flex justify-between items-center">
-                  <span className="font-semibold text-gray-800">Total a recaudar:</span>
-                  <span className="text-xl font-bold text-red-600">
-                    ${deudaVehiculo.planillas
-                      .filter((p: any) => planillasRecaudar.includes(p.id))
-                      .reduce((sum: number, p: any) => sum + p.valor, 0)
-                      .toLocaleString('es-CO')}
-                  </span>
-                </div>
-              </div>
-              <button
-                type="button"
-                onClick={handleContinuarConDeuda}
-                disabled={planillasRecaudar.length === 0}
-                className="w-full bg-green-600 text-white px-4 py-3 rounded font-semibold hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {planillasRecaudar.length === 0 
-
-                  ? 'Seleccione al menos una planilla' 
-                  : `Confirmar recaudo de ${planillasRecaudar.length} planilla(s)`}
-              </button>
-            </div>
-          )}
+// ...existing code...
           <div className="flex gap-2 mt-4">
             <button
               type="submit"
