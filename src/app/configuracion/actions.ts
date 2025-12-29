@@ -1,3 +1,6 @@
+
+'use server';
+
 export async function updateOperador(formData: FormData) {
   const id = parseInt(formData.get('id') as string);
   const nombre = formData.get('nombre') as string;
@@ -16,7 +19,6 @@ export async function updateOperador(formData: FormData) {
   revalidatePath('/configuracion');
   return { success: true };
 }
-'use server';
 
 import { createAdminClient } from '@/lib/supabase/admin';
 import { revalidatePath } from 'next/cache';
