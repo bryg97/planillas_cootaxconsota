@@ -212,14 +212,17 @@ export default function FormPlanilla({
       )}
 
       {/* Formulario principal */}
-      <form onSubmit={handleSubmit} className="bg-white rounded-lg p-8 max-w-5xl w-full mx-4 max-h-[90vh] overflow-y-auto">
-        <h2 className="text-2xl font-bold mb-6">Nueva Planilla</h2>
+      <form onSubmit={handleSubmit} className="bg-white shadow-2xl rounded-2xl p-10 max-w-5xl w-full mx-4 max-h-[90vh] overflow-y-auto border border-blue-200">
+        <h2 className="text-3xl font-extrabold mb-8 text-blue-700 tracking-tight flex items-center gap-2">
+          <svg className="h-8 w-8 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
+          Nueva Planilla
+        </h2>
         {error && (
           <div className="bg-red-50 text-red-600 p-3 rounded mb-4">
             {error}
           </div>
         )}
-        <div className="grid grid-cols-1 md:grid-cols-6 gap-4 mb-4">
+        <div className="grid grid-cols-1 md:grid-cols-6 gap-6 mb-8">
           {/* Operador */}
           <div className="md:col-span-1">
             <label className="block text-sm font-medium text-gray-700 mb-2">Operador *</label>
@@ -228,7 +231,7 @@ export default function FormPlanilla({
               value={operadorForm}
               onChange={e => setOperadorForm(e.target.value)}
               required
-              className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-blue-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 bg-blue-50"
             >
               <option value="">Seleccione un operador</option>
               {operadores.map((op) => (
@@ -244,14 +247,14 @@ export default function FormPlanilla({
               placeholder="Buscar vehículo..."
               value={vehiculoBusqueda}
               onChange={e => setVehiculoBusqueda(e.target.value)}
-              className="w-full px-3 py-2 mb-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 mb-2 border border-blue-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 bg-blue-50"
             />
             <select
               name="vehiculo_id"
               value={vehiculoSeleccionado}
               onChange={e => handleVehiculoChange(e.target.value)}
               required
-              className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-blue-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 bg-blue-50"
             >
               <option value="">Seleccione un vehículo</option>
               {vehiculos
@@ -272,7 +275,7 @@ export default function FormPlanilla({
               type="text"
               name="conductor"
               required
-              className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-blue-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 bg-blue-50"
               placeholder="Nombre del conductor"
             />
           </div>
@@ -284,7 +287,7 @@ export default function FormPlanilla({
               value={tipoPago}
               onChange={e => setTipoPago(e.target.value)}
               required
-              className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-blue-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 bg-blue-50"
             >
               <option value="contado">Contado</option>
               <option value="credito">Crédito</option>
@@ -300,7 +303,7 @@ export default function FormPlanilla({
               value={valorPlanilla}
               onChange={(e) => setValorPlanilla(parseFloat(e.target.value) || 0)}
               required
-              className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-blue-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 bg-blue-50"
               placeholder="0.00"
             />
           </div>
@@ -313,7 +316,7 @@ export default function FormPlanilla({
               value={numeroPlanilla}
               onChange={(e) => setNumeroPlanilla(e.target.value)}
               required
-              className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-blue-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 bg-blue-50"
             />
           </div>
           {/* Origen */}
@@ -323,7 +326,7 @@ export default function FormPlanilla({
               type="text"
               name="origen"
               defaultValue={''}
-              className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-blue-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 bg-blue-50"
               placeholder="Lugar de origen"
             />
           </div>
@@ -334,7 +337,7 @@ export default function FormPlanilla({
               type="text"
               name="destino"
               defaultValue={''}
-              className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-blue-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 bg-blue-50"
               placeholder="Lugar de destino"
             />
           </div>
@@ -374,18 +377,18 @@ export default function FormPlanilla({
             pattern="\\d{4}-\\d{2}-\\d{2}"
           />
         </div>
-        <div className="flex gap-2 mt-6">
+        <div className="flex gap-4 mt-8">
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-blue-600 text-white px-4 py-3 rounded font-semibold hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full bg-gradient-to-r from-blue-500 to-blue-700 text-white px-4 py-3 rounded-xl font-bold shadow-lg hover:from-blue-600 hover:to-blue-800 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed text-lg"
           >
             {loading ? 'Guardando...' : 'Registrar Planilla'}
           </button>
           <button
             type="button"
             onClick={onClose}
-            className="w-full bg-gray-400 text-white px-4 py-3 rounded font-semibold hover:bg-gray-500"
+            className="w-full bg-gradient-to-r from-gray-400 to-gray-500 text-white px-4 py-3 rounded-xl font-bold shadow hover:from-gray-500 hover:to-gray-600 transition-all duration-200 text-lg"
           >
             Cancelar
           </button>
