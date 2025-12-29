@@ -1,26 +1,26 @@
-  // --- Mover función handleEditOperador aquí (fuera del JSX) ---
-  async function handleEditOperador(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault();
-    setLoading(true);
-    setError('');
-    setMessage('');
-    const formData = new FormData(e.currentTarget);
-    formData.append('id', String(editOperadorId));
-    const result = await updateOperador(formData);
-    if (result.error) {
-      setError(result.error);
-    } else {
-      setMessage('Operador actualizado correctamente');
-      setShowEditFormOperador(false);
-      setEditOperadorId(null);
-      setEditOperadorNombre('');
-      setEditOperadorCorreo('');
-      setTimeout(() => window.location.reload(), 1000);
-    }
-    setLoading(false);
-  }
+"use client";
 
-'use client';
+// --- Mover función handleEditOperador aquí (fuera del JSX) ---
+async function handleEditOperador(e: React.FormEvent<HTMLFormElement>) {
+  e.preventDefault();
+  setLoading(true);
+  setError('');
+  setMessage('');
+  const formData = new FormData(e.currentTarget);
+  formData.append('id', String(editOperadorId));
+  const result = await updateOperador(formData);
+  if (result.error) {
+    setError(result.error);
+  } else {
+    setMessage('Operador actualizado correctamente');
+    setShowEditFormOperador(false);
+    setEditOperadorId(null);
+    setEditOperadorNombre('');
+    setEditOperadorCorreo('');
+    setTimeout(() => window.location.reload(), 1000);
+  }
+  setLoading(false);
+}
 import { useState, useEffect } from 'react';
 import { updateConfiguracion, createOperador, deleteOperador, depurarVehiculos, eliminarPlanillasVehiculo, eliminarTodasPlanillas, updateOperador } from './actions';
 
