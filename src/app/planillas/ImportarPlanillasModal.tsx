@@ -8,8 +8,8 @@ export default function ImportarPlanillasModal({ onClose, onImport }: { onClose:
 
   function handleDownloadTemplate() {
     const ws = XLSX.utils.aoa_to_sheet([
-      ['numero_planilla', 'fecha', 'vehiculo_id', 'conductor', 'valor', 'tipo_pago', 'estado'],
-      ['PL-12345678', '2025-12-29', '1', 'Juan Pérez', '10000', 'contado', 'pendiente'],
+      ['numero_planilla', 'fecha', 'vehiculo_id', 'conductor', 'operador', 'origen', 'destino', 'valor', 'tipo_pago', 'estado'],
+      ['PL-12345678', '2025-12-29', '1', 'Juan Pérez', 'Operador Ejemplo', 'Cúcuta', 'Pamplona', '10000', 'contado', 'pendiente'],
     ]);
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, 'Planillas');
