@@ -1,6 +1,4 @@
-import dynamic from 'next/dynamic';
-
-const DashboardClient = dynamic(() => import('./DashboardClient'), { ssr: false });
+import DashboardClient from './DashboardClient';
 import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { redirect } from 'next/navigation';

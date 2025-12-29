@@ -25,34 +25,7 @@ export default function ConfiguracionClient({
   const [editOperadorNombre, setEditOperadorNombre] = useState('');
   const [editOperadorCorreo, setEditOperadorCorreo] = useState('');
 
-  async function handleEditOperador(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault();
-    if (!editOperadorId) return;
-    setLoading(true);
-    setError('');
-    setMessage('');
-    const formData = new FormData();
-    formData.append('id', String(editOperadorId));
-    formData.append('nombre', editOperadorNombre);
-    formData.append('correo', editOperadorCorreo);
-    const result = await updateOperador(formData);
-    if (result.error) {
-      setError(result.error);
-    } else {
-      setMessage('Operador actualizado correctamente');
-      setShowEditFormOperador(false);
-      setTimeout(() => window.location.reload(), 1000);
-    }
-    setLoading(false);
-  }
 
-    // Removed duplicate handleEditOperador function
-      setMessage('Operador actualizado correctamente');
-      setShowEditFormOperador(false);
-      setTimeout(() => window.location.reload(), 1000);
-    }
-    setLoading(false);
-  }
 
   async function handleSubmitConfig(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
