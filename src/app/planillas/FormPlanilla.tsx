@@ -465,8 +465,9 @@ export default function FormPlanilla({
           Cancelar
         </button>
       </div>
-        </form>
-      </div>
-    </div>
+    </form>
+  </div>
+  </div>
+  </>
   );
 }
