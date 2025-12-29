@@ -300,7 +300,27 @@ export default function ConfiguracionClient(props: ConfiguracionClientProps) {
               ) : null}
               {/* Formulario de edición de operador (fuera del map) */}
               {showEditFormOperador && (
-                <form onSubmit={handleCreateOperador} className="mb-4 p-4 bg-gray-100 rounded shadow-lg fixed top-0 left-0 right-0 max-w-md mx-auto z-50 mt-24">
+                <form onSubmit={handleEditOperador} className="mb-4 p-4 bg-gray-100 rounded shadow-lg fixed top-0 left-0 right-0 max-w-md mx-auto z-50 mt-24">
+                    async function handleEditOperador(e: React.FormEvent<HTMLFormElement>) {
+                      e.preventDefault();
+                      setLoading(true);
+                      setError('');
+                      setMessage('');
+                      const formData = new FormData(e.currentTarget);
+                      formData.append('id', String(editOperadorId));
+                      const result = await updateOperador(formData);
+                      if (result.error) {
+                        setError(result.error);
+                      } else {
+                        setMessage('Operador actualizado correctamente');
+                        setShowEditFormOperador(false);
+                        setEditOperadorId(null);
+                        setEditOperadorNombre('');
+                        setEditOperadorCorreo('');
+                        setTimeout(() => window.location.reload(), 1000);
+                      }
+                      setLoading(false);
+                    }
                   <h3 className="font-semibold mb-2">Editar Operador</h3>
                   <input
                     type="text"
