@@ -2,6 +2,7 @@
 import { useEffect, useState } from "react";
 import SeleccionarOperadorModal from "../components/SeleccionarOperadorModal";
 import { useOperadorSeleccionado } from "../hooks/useOperadorSeleccionado";
+import LogoutButton from "./LogoutButton";
 
 export default function DashboardClient({ user, rol, modulos }: { user: any, rol: string, modulos: any[] }) {
   const [operador, setOperador] = useOperadorSeleccionado(user.email);
@@ -68,7 +69,7 @@ export default function DashboardClient({ user, rol, modulos }: { user: any, rol
                   {rol}
                 </p>
               </div>
-              {/* Aquí iría el botón de logout */}
+              <LogoutButton />
             </div>
           </div>
         </div>
@@ -82,7 +83,27 @@ export default function DashboardClient({ user, rol, modulos }: { user: any, rol
             Panel de control - {bogotaNow.toLocaleDateString('es-CO', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
           </p>
         </div>
-        {/* Aquí puedes renderizar el resto del dashboard, módulos, etc. */}
+        {/* Renderizar los módulos disponibles */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+          {modulos && modulos.length > 0 ? (
+            modulos.map((modulo) => (
+              <a
+                key={modulo.nombre}
+                href={modulo.ruta}
+                className={`block p-6 rounded-lg shadow bg-white hover:bg-blue-50 border-t-4 border-${modulo.color}-600 transition-all`}
+              >
+                <div className="flex items-center gap-4">
+                  <span className="text-3xl">{modulo.icono}</span>
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-900">{modulo.nombre}</h3>
+                  </div>
+                </div>
+              </a>
+            ))
+          ) : (
+            <div className="col-span-full text-center text-gray-500">No tienes módulos asignados.</div>
+          )}
+        </div>
       </main>
     </div>
   );
