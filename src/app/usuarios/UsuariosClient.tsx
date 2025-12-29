@@ -1,5 +1,6 @@
 'use client';
 
+
 import { useState } from 'react';
 import FormUsuario from './FormUsuario';
 import { deleteUsuario } from './actions';
@@ -7,6 +8,8 @@ import { deleteUsuario } from './actions';
 export default function UsuariosClient({ usuarios }: { usuarios: any[] }) {
   const [showForm, setShowForm] = useState(false);
   const [deleting, setDeleting] = useState<number | null>(null);
+  const [usuarioSeleccionado, setUsuarioSeleccionado] = useState<any>(null);
+  const [modoForm, setModoForm] = useState<'crear' | 'ver' | 'editar'>('crear');
 
   async function handleDelete(id: number, usuario: string) {
     if (!confirm(`¿Está seguro de eliminar el usuario ${usuario}?`)) {
@@ -40,7 +43,11 @@ export default function UsuariosClient({ usuarios }: { usuarios: any[] }) {
           <div className="p-6 border-b border-gray-200 flex justify-between items-center">
             <h2 className="text-xl font-semibold">Gestión de Usuarios</h2>
             <button
-              onClick={() => setShowForm(true)}
+              onClick={() => {
+                setUsuarioSeleccionado(null);
+                setModoForm('crear');
+                setShowForm(true);
+              }}
               className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
             >
               + Nuevo Usuario
@@ -77,8 +84,22 @@ export default function UsuariosClient({ usuarios }: { usuarios: any[] }) {
                         {new Date(usuario.created_at).toLocaleDateString('es-CO')}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        <button className="text-blue-600 hover:text-blue-900 mr-3">Ver</button>
-                        <button className="text-green-600 hover:text-green-900 mr-3">Editar</button>
+                        <button
+                          className="text-blue-600 hover:text-blue-900 mr-3"
+                          onClick={() => {
+                            setUsuarioSeleccionado(usuario);
+                            setModoForm('ver');
+                            setShowForm(true);
+                          }}
+                        >Ver</button>
+                        <button
+                          className="text-green-600 hover:text-green-900 mr-3"
+                          onClick={() => {
+                            setUsuarioSeleccionado(usuario);
+                            setModoForm('editar');
+                            setShowForm(true);
+                          }}
+                        >Editar</button>
                         <button
                           onClick={() => handleDelete(usuario.id, usuario.usuario)}
                           disabled={deleting === usuario.id}
@@ -102,7 +123,13 @@ export default function UsuariosClient({ usuarios }: { usuarios: any[] }) {
         </div>
       </main>
 
-      {showForm && <FormUsuario onClose={() => setShowForm(false)} />}
+      {showForm && (
+        <FormUsuario
+          onClose={() => setShowForm(false)}
+          usuarioData={usuarioSeleccionado}
+          modo={modoForm}
+        />
+      )}
     </div>
   );
 }
