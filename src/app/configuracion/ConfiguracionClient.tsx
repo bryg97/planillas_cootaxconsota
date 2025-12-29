@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { updateConfiguracion, createOperador, deleteOperador, depurarVehiculos, eliminarPlanillasVehiculo, eliminarTodasPlanillas } from './actions';
+import { updateConfiguracion, createOperador, deleteOperador, depurarVehiculos, eliminarPlanillasVehiculo, eliminarTodasPlanillas, updateOperador } from './actions';
 
 export default function ConfiguracionClient({ 
   configuracion, 
@@ -18,6 +18,41 @@ export default function ConfiguracionClient({
   const [showFormOperador, setShowFormOperador] = useState(false);
   const [nuevoOperador, setNuevoOperador] = useState('');
   const [vehiculoSeleccionado, setVehiculoSeleccionado] = useState('');
+
+  // Estado para edición de operador
+  const [showEditFormOperador, setShowEditFormOperador] = useState(false);
+  const [editOperadorId, setEditOperadorId] = useState<number|null>(null);
+  const [editOperadorNombre, setEditOperadorNombre] = useState('');
+  const [editOperadorCorreo, setEditOperadorCorreo] = useState('');
+
+  async function handleEditOperador(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    if (!editOperadorId) return;
+    setLoading(true);
+    setError('');
+    setMessage('');
+    const formData = new FormData();
+    formData.append('id', String(editOperadorId));
+    formData.append('nombre', editOperadorNombre);
+    formData.append('correo', editOperadorCorreo);
+    const result = await updateOperador(formData);
+    if (result.error) {
+      setError(result.error);
+    } else {
+      setMessage('Operador actualizado correctamente');
+      setShowEditFormOperador(false);
+      setTimeout(() => window.location.reload(), 1000);
+    }
+    setLoading(false);
+  }
+
+    // Removed duplicate handleEditOperador function
+      setMessage('Operador actualizado correctamente');
+      setShowEditFormOperador(false);
+      setTimeout(() => window.location.reload(), 1000);
+    }
+    setLoading(false);
+  }
 
   async function handleSubmitConfig(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -263,15 +298,96 @@ export default function ConfiguracionClient({
                     key={op.id}
                     className="flex justify-between items-center p-3 bg-gray-50 rounded"
                   >
-                    <span className="font-medium">{op.nombre}</span>
-                    <button
-                      onClick={() => handleDeleteOperador(op.id, op.nombre)}
-                      className="text-red-600 hover:text-red-800 text-sm"
-                    >
-                      Eliminar
-                    </button>
+                    <div>
+                      <span className="font-medium">{op.nombre}</span>
+                      <span className="ml-2 text-xs text-gray-500">{op.correo || ''}</span>
+                    </div>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => {
+                          setEditOperadorId(op.id);
+                          setEditOperadorNombre(op.nombre);
+                          setEditOperadorCorreo(op.correo || '');
+                          setShowEditFormOperador(true);
+                        }}
+                        className="text-blue-600 hover:text-blue-800 text-sm"
+                      >
+                        Editar
+                      </button>
+                      <button
+                        onClick={() => handleDeleteOperador(op.id, op.nombre)}
+                        className="text-red-600 hover:text-red-800 text-sm"
+                      >
+                        Eliminar
+                      </button>
+                    </div>
                   </div>
                 ))
+                // Estado para edición de operador
+                const [showEditFormOperador, setShowEditFormOperador] = useState(false);
+                const [editOperadorId, setEditOperadorId] = useState<number|null>(null);
+                const [editOperadorNombre, setEditOperadorNombre] = useState('');
+                const [editOperadorCorreo, setEditOperadorCorreo] = useState('');
+
+                async function handleEditOperador(e: React.FormEvent<HTMLFormElement>) {
+                  e.preventDefault();
+                  if (!editOperadorId) return;
+                  setLoading(true);
+                  setError('');
+                  setMessage('');
+                  const formData = new FormData();
+                  formData.append('id', String(editOperadorId));
+                  formData.append('nombre', editOperadorNombre);
+                  formData.append('correo', editOperadorCorreo);
+                  const result = await updateOperador(formData);
+                  if (result.error) {
+                    setError(result.error);
+                  } else {
+                    setMessage('Operador actualizado correctamente');
+                    setShowEditFormOperador(false);
+                    setTimeout(() => window.location.reload(), 1000);
+                  }
+                  setLoading(false);
+                }
+                    {/* Formulario de edición de operador */}
+                    {showEditFormOperador && (
+                      <form onSubmit={handleEditOperador} className="mb-4 p-4 bg-gray-100 rounded shadow-lg fixed top-0 left-0 right-0 max-w-md mx-auto z-50 mt-24">
+                        <h3 className="font-semibold mb-2">Editar Operador</h3>
+                        <input
+                          type="text"
+                          name="nombre"
+                          value={editOperadorNombre}
+                          onChange={e => setEditOperadorNombre(e.target.value)}
+                          placeholder="Nombre del operador"
+                          required
+                          className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 mb-2"
+                        />
+                        <input
+                          type="email"
+                          name="correo"
+                          value={editOperadorCorreo}
+                          onChange={e => setEditOperadorCorreo(e.target.value)}
+                          placeholder="Correo electrónico"
+                          required
+                          className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 mb-2"
+                        />
+                        <div className="flex gap-2">
+                          <button
+                            type="button"
+                            onClick={() => setShowEditFormOperador(false)}
+                            className="flex-1 px-4 py-2 border border-gray-300 rounded hover:bg-gray-50"
+                          >
+                            Cancelar
+                          </button>
+                          <button
+                            type="submit"
+                            className="flex-1 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+                          >
+                            Guardar
+                          </button>
+                        </div>
+                      </form>
+                    )}
               ) : (
                 <p className="text-gray-500 text-center py-4">No hay operadores registrados</p>
               )}

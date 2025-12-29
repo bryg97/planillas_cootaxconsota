@@ -4,19 +4,22 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useOperadorSeleccionado } from '../hooks/useOperadorSeleccionado';
 import { createPlanilla, verificarDeudaVehiculo, recaudarPlanillas } from './actions';
 
 export default function FormPlanilla({ 
   vehiculos,
-  operadores,
   valorDefecto,
   onClose 
 }: { 
   vehiculos: any[];
-  operadores: any[];
   valorDefecto?: number;
   onClose: () => void;
 }) {
+  // Obtener email del usuario autenticado desde localStorage (ya que es client component)
+  const user = typeof window !== 'undefined' ? JSON.parse(localStorage.getItem('supabase.auth.user') || 'null') : null;
+  const email = user?.email || '';
+  const [operadorSeleccionado] = useOperadorSeleccionado(email);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [numeroPlanilla, setNumeroPlanilla] = useState('');
@@ -103,6 +106,10 @@ export default function FormPlanilla({
     if (usarSaldoFavor) {
       formData.append('usar_saldo_favor', '1');
     }
+    // Insertar el operador seleccionado automáticamente
+    if (operadorSeleccionado) {
+      formData.set('operador', operadorSeleccionado.nombre);
+    }
     const result = await createPlanilla(formData);
     if (result.error) {
       setError(result.error);
@@ -125,24 +132,10 @@ export default function FormPlanilla({
         )}
 
         <form onSubmit={handleSubmit}>
-          <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Operador *
-            </label>
-            <select
-              name="operador"
-              required
-              defaultValue={''}
-              className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="">Seleccione un operador</option>
-              {operadores.map((op) => (
-                <option key={op.id} value={op.nombre}>
-                  {op.nombre}
-                </option>
-              ))}
-            </select>
-          </div>
+          {/* Operador seleccionado (oculto) */}
+          {operadorSeleccionado && (
+            <input type="hidden" name="operador" value={operadorSeleccionado.nombre} />
+          )}
 
           <div className="mb-4">
             <label className="block text-sm font-medium text-gray-700 mb-2">

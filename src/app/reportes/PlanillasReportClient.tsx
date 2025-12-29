@@ -1,13 +1,24 @@
 "use client";
 import { useState } from "react";
+import { useOperadorSeleccionado } from "../hooks/useOperadorSeleccionado";
 import * as XLSX from "xlsx";
 
 export default function PlanillasReportClient({ planillas }: { planillas: any[] }) {
   const [fechaInicio, setFechaInicio] = useState("");
   const [fechaFin, setFechaFin] = useState("");
+  // Obtener email del usuario autenticado desde localStorage (ya que es client component)
+  const user = typeof window !== 'undefined' ? JSON.parse(localStorage.getItem('supabase.auth.user') || 'null') : null;
+  const email = user?.email || '';
+  const [operadorSeleccionado] = useOperadorSeleccionado(email);
 
   function handleExportExcel() {
-    const ws = XLSX.utils.json_to_sheet(planillasFiltradas);
+    // Agregar operador seleccionado como encabezado en la hoja
+    const dataWithHeader = [
+      operadorSeleccionado ? { "Operador": operadorSeleccionado.nombre } : {},
+      {}, // línea vacía
+      ...planillasFiltradas
+    ];
+    const ws = XLSX.utils.json_to_sheet(dataWithHeader, { skipHeader: false });
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Planillas");
     XLSX.writeFile(wb, "reporte_planillas.xlsx");
@@ -31,6 +42,7 @@ export default function PlanillasReportClient({ planillas }: { planillas: any[] 
         </head>
         <body>
           <h2>Reporte de Planillas</h2>
+          ${operadorSeleccionado ? `<div style='margin-bottom:10px'><b>Operador:</b> ${operadorSeleccionado.nombre}</div>` : ''}
           ${printContents}
         </body>
       </html>
@@ -55,6 +67,10 @@ export default function PlanillasReportClient({ planillas }: { planillas: any[] 
 
   return (
     <div className="bg-white rounded-lg shadow p-6 print:bg-white">
+      {/* Mostrar operador seleccionado en el encabezado */}
+      {operadorSeleccionado && (
+        <div className="mb-2 text-sm text-gray-700"><b>Operador:</b> {operadorSeleccionado.nombre}</div>
+      )}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-4">
         <div className="flex gap-2 items-center">
           <label>Desde:</label>

@@ -1,12 +1,23 @@
 "use client";
 import { useState } from "react";
+import { useOperadorSeleccionado } from "../hooks/useOperadorSeleccionado";
 import * as XLSX from "xlsx";
 
 export default function LiquidacionesReportClient({ liquidaciones }: { liquidaciones: any[] }) {
   const [search, setSearch] = useState("");
+  // Obtener email del usuario autenticado desde localStorage (ya que es client component)
+  const user = typeof window !== 'undefined' ? JSON.parse(localStorage.getItem('supabase.auth.user') || 'null') : null;
+  const email = user?.email || '';
+  const [operadorSeleccionado] = useOperadorSeleccionado(email);
 
   function handleExportExcel() {
-    const ws = XLSX.utils.json_to_sheet(liquidaciones);
+    // Agregar operador seleccionado como encabezado en la hoja
+    const dataWithHeader = [
+      operadorSeleccionado ? { "Operador": operadorSeleccionado.nombre } : {},
+      {}, // línea vacía
+      ...filtered
+    ];
+    const ws = XLSX.utils.json_to_sheet(dataWithHeader, { skipHeader: false });
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Liquidaciones");
     XLSX.writeFile(wb, "reporte_liquidaciones.xlsx");
@@ -30,6 +41,7 @@ export default function LiquidacionesReportClient({ liquidaciones }: { liquidaci
         </head>
         <body>
           <h2>Reporte de Liquidaciones</h2>
+          ${operadorSeleccionado ? `<div style='margin-bottom:10px'><b>Operador:</b> ${operadorSeleccionado.nombre}</div>` : ''}
           ${printContents}
         </body>
       </html>
@@ -49,6 +61,10 @@ export default function LiquidacionesReportClient({ liquidaciones }: { liquidaci
 
   return (
     <div className="bg-white rounded-lg shadow p-6 print:bg-white">
+      {/* Mostrar operador seleccionado en el encabezado */}
+      {operadorSeleccionado && (
+        <div className="mb-2 text-sm text-gray-700"><b>Operador:</b> {operadorSeleccionado.nombre}</div>
+      )}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-4">
         <input
           type="text"

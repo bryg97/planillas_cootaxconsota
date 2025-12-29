@@ -196,7 +196,7 @@ export async function createPlanilla(formData: FormData) {
       minute: '2-digit',
       hour12: true
     });
-
+    // operadorNombre ya corresponde al operador seleccionado (no al email)
     await notificarNuevaPlanillaCredito({
       operador: operadorNombre,
       vehiculo: vehiculo?.codigo_vehiculo || '',

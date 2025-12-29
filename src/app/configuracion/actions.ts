@@ -1,3 +1,21 @@
+export async function updateOperador(formData: FormData) {
+  const id = parseInt(formData.get('id') as string);
+  const nombre = formData.get('nombre') as string;
+  const correo = formData.get('correo') as string;
+  if (!id || !nombre || !correo) {
+    return { error: 'Todos los campos son requeridos' };
+  }
+  const adminClient = createAdminClient();
+  const { error } = await adminClient
+    .from('modulos')
+    .update({ nombre, correo })
+    .eq('id', id);
+  if (error) {
+    return { error: error.message };
+  }
+  revalidatePath('/configuracion');
+  return { success: true };
+}
 'use server';
 
 import { createAdminClient } from '@/lib/supabase/admin';
