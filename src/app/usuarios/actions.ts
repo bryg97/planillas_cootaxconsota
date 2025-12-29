@@ -18,9 +18,33 @@ export async function editarUsuario(id: number | undefined, formData: FormData) 
   let updateData: any = {
     rol: rol
   };
+  let updateAuth = false;
+  let authError = null;
   // Solo actualizar clave si se provee
   if (clave && clave.length >= 6) {
     updateData.clave = await bcrypt.hash(clave, 10);
+    updateAuth = true;
+  }
+
+  // Buscar el usuario en la tabla usuarios para obtener el uuid de auth
+  const { data: usuarioRow, error: findError } = await adminClient
+    .from('usuarios')
+    .select('id, usuario, auth_id')
+    .eq('id', id)
+    .single();
+  if (findError || !usuarioRow) {
+    return { error: 'No se encontró el usuario en la base de datos' };
+  }
+
+  // Si hay que actualizar auth, hacerlo en auth.users
+  if (updateAuth && usuarioRow.auth_id) {
+    const { error: authUpdateError } = await adminClient.auth.admin.updateUser(
+      usuarioRow.auth_id,
+      { password: clave }
+    );
+    if (authUpdateError) {
+      authError = authUpdateError.message;
+    }
   }
 
   const { error } = await adminClient
@@ -30,6 +54,9 @@ export async function editarUsuario(id: number | undefined, formData: FormData) 
 
   if (error) {
     return { error: error.message };
+  }
+  if (authError) {
+    return { error: 'Usuario actualizado, pero error en auth: ' + authError };
   }
 
   revalidatePath('/usuarios');
