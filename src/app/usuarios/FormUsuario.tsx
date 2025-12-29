@@ -31,6 +31,10 @@ export default function FormUsuario({ onClose, usuarioData = null, modo = 'crear
     if (modo === 'crear') {
       result = await createUsuario(formData);
     } else if (modo === 'editar') {
+      // Asegurarse de que usuario esté presente aunque el input esté deshabilitado
+      if (usuarioData?.usuario) {
+        formData.set('usuario', usuarioData.usuario);
+      }
       result = await editarUsuario(usuarioData?.id, formData);
     }
     if (result?.error) {
