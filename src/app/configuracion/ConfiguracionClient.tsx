@@ -3,13 +3,14 @@
 import { useState, useEffect } from 'react';
 import { updateConfiguracion, createOperador, deleteOperador, depurarVehiculos, eliminarPlanillasVehiculo, eliminarTodasPlanillas, updateOperador } from './actions';
 
-type ConfiguracionClientProps = {
+interface ConfiguracionClientProps {
   configuracion: any;
   operadores: any[];
   vehiculos: any[];
-};
+}
 
-export default function ConfiguracionClient({ configuracion, operadores, vehiculos }: ConfiguracionClientProps) {
+export default function ConfiguracionClient(props: ConfiguracionClientProps) {
+  const { configuracion, operadores, vehiculos } = props;
   configuracion: any; 
   operadores: any[];
   vehiculos: any[];
