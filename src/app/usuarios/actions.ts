@@ -36,14 +36,18 @@ export async function editarUsuario(id: number | undefined, formData: FormData) 
     return { error: 'No se encontró el usuario en la base de datos' };
   }
 
-  // Si hay que actualizar auth, hacerlo en auth.users
-  if (updateAuth && usuarioRow.auth_id) {
-    const { error: authUpdateError } = await adminClient.auth.admin.updateUserById(
-      usuarioRow.auth_id,
-      { password: clave }
-    );
-    if (authUpdateError) {
-      authError = authUpdateError.message;
+  // Si hay que actualizar auth, hacerlo en auth.users (si hay auth_id)
+  if (updateAuth) {
+    if (usuarioRow.auth_id) {
+      const { error: authUpdateError } = await adminClient.auth.admin.updateUserById(
+        usuarioRow.auth_id,
+        { password: clave }
+      );
+      if (authUpdateError) {
+        authError = authUpdateError.message;
+      }
+    } else {
+      authError = 'No se pudo sincronizar con Auth porque el usuario no tiene auth_id.';
     }
   }
 
