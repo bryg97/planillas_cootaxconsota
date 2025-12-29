@@ -5,6 +5,7 @@ export default function ImportarPlanillasModal({ onClose, onImport }: { onClose:
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [data, setData] = useState<any[]>([]);
 
   function handleDownloadTemplate() {
     const ws = XLSX.utils.aoa_to_sheet([
@@ -23,15 +24,16 @@ export default function ImportarPlanillasModal({ onClose, onImport }: { onClose:
     if (!file) return;
     const reader = new FileReader();
     reader.onload = (evt) => {
-      const data = new Uint8Array(evt.target?.result as ArrayBuffer);
-      const workbook = XLSX.read(data, { type: 'array' });
+      const arr = new Uint8Array(evt.target?.result as ArrayBuffer);
+      const workbook = XLSX.read(arr, { type: 'array' });
       const sheet = workbook.Sheets[workbook.SheetNames[0]];
       const json = XLSX.utils.sheet_to_json(sheet, { defval: '' });
       if (!Array.isArray(json) || json.length === 0) {
         setError('El archivo está vacío o no tiene datos válidos.');
+        setData([]);
         return;
       }
-      onImport(json);
+      setData(json);
       setSuccess('Archivo leído correctamente. Listo para importar.');
     };
     reader.readAsArrayBuffer(file);
@@ -45,6 +47,14 @@ export default function ImportarPlanillasModal({ onClose, onImport }: { onClose:
         <input type="file" accept=".xlsx,.xls" ref={fileInputRef} onChange={handleFileChange} className="mb-4 block" />
         {error && <div className="bg-red-50 text-red-600 p-3 rounded mb-4">{error}</div>}
         {success && <div className="bg-green-50 text-green-600 p-3 rounded mb-4">{success}</div>}
+        {data.length > 0 && (
+          <button
+            onClick={() => onImport(data)}
+            className="w-full bg-blue-600 text-white px-4 py-2 rounded font-semibold hover:bg-blue-700 mt-2"
+          >
+            Importar
+          </button>
+        )}
         <div className="flex justify-end gap-2 mt-4">
           <button onClick={onClose} className="bg-gray-300 px-4 py-2 rounded hover:bg-gray-400">Cerrar</button>
         </div>
