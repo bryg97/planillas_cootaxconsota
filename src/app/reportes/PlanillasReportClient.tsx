@@ -72,15 +72,17 @@ export default function PlanillasReportClient({ planillas }: { planillas: any[] 
         <div className="mb-2 text-sm text-gray-700"><b>Operador:</b> {operadorSeleccionado.nombre}</div>
       )}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-4">
-        <div className="flex gap-2 items-center w-full md:w-1/3">
-          <label>Desde:</label>
-          <input type="date" value={fechaInicio} onChange={e => setFechaInicio(e.target.value)} className="border px-3 py-2 rounded w-full" />
-          <label>Hasta:</label>
-          <input type="date" value={fechaFin} onChange={e => setFechaFin(e.target.value)} className="border px-3 py-2 rounded w-full" />
-        </div>
-        <div className="flex gap-2 md:justify-end w-full md:w-auto">
-          <button onClick={handleExportExcel} className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">Exportar Excel</button>
-          <button onClick={handlePrint} className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 print:hidden">Imprimir</button>
+        <div className="flex flex-col md:flex-row md:items-center w-full gap-2">
+          <div className="flex gap-2 items-center w-full md:w-auto">
+            <label>Desde:</label>
+            <input type="date" value={fechaInicio} onChange={e => setFechaInicio(e.target.value)} className="border px-3 py-2 rounded w-full md:w-48" />
+            <label>Hasta:</label>
+            <input type="date" value={fechaFin} onChange={e => setFechaFin(e.target.value)} className="border px-3 py-2 rounded w-full md:w-48" />
+          </div>
+          <div className="flex gap-2 md:ml-4 md:justify-end w-full md:w-auto">
+            <button onClick={handleExportExcel} className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">Exportar Excel</button>
+            <button onClick={handlePrint} className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 print:hidden">Imprimir</button>
+          </div>
         </div>
       </div>
       <div className="overflow-x-auto" id="planillas-table">
