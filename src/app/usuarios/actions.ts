@@ -1,3 +1,34 @@
+export async function editarUsuario(id: number | undefined, formData: FormData) {
+  if (!id) return { error: 'ID de usuario requerido' };
+  const usuario = formData.get('usuario') as string;
+  const clave = formData.get('clave') as string;
+  const rol = formData.get('rol') as string;
+
+  if (!usuario || !rol) {
+    return { error: 'Usuario y rol son requeridos' };
+  }
+
+  const adminClient = createAdminClient();
+  let updateData: any = {
+    rol: rol
+  };
+  // Solo actualizar clave si se provee
+  if (clave && clave.length >= 6) {
+    updateData.clave = await bcrypt.hash(clave, 10);
+  }
+
+  const { error } = await adminClient
+    .from('usuarios')
+    .update(updateData)
+    .eq('id', id);
+
+  if (error) {
+    return { error: error.message };
+  }
+
+  revalidatePath('/usuarios');
+  return { success: true };
+}
 'use server';
 
 import { createAdminClient } from '@/lib/supabase/admin';
