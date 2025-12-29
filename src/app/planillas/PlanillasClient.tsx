@@ -114,6 +114,7 @@ export default function PlanillasClient({ planillas, vehiculos, operadores, valo
       {showForm && (
         <FormPlanilla 
           vehiculos={vehiculos}
+          operadores={operadores}
           valorDefecto={valorDefecto}
           onClose={() => setShowForm(false)} 
         />

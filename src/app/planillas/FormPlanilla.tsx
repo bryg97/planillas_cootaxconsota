@@ -9,10 +9,12 @@ import { createPlanilla, verificarDeudaVehiculo, recaudarPlanillas } from './act
 
 export default function FormPlanilla({ 
   vehiculos,
+  operadores = [],
   valorDefecto,
   onClose 
 }: { 
   vehiculos: any[];
+  operadores?: any[];
   valorDefecto?: number;
   onClose: () => void;
 }) {
@@ -20,6 +22,15 @@ export default function FormPlanilla({
   const user = typeof window !== 'undefined' ? JSON.parse(localStorage.getItem('supabase.auth.user') || 'null') : null;
   const email = user?.email || '';
   const [operadorSeleccionado] = useOperadorSeleccionado(email);
+  const [operadorForm, setOperadorForm] = useState<string>(operadorSeleccionado ? operadorSeleccionado.nombre : (operadores[0]?.nombre || ''));
+
+  useEffect(() => {
+    if (operadorSeleccionado) {
+      setOperadorForm(operadorSeleccionado.nombre);
+    } else if (operadores.length > 0) {
+      setOperadorForm(operadores[0].nombre);
+    }
+  }, [operadorSeleccionado, operadores]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [numeroPlanilla, setNumeroPlanilla] = useState('');
@@ -107,8 +118,8 @@ export default function FormPlanilla({
       formData.append('usar_saldo_favor', '1');
     }
     // Insertar el operador seleccionado automáticamente
-    if (operadorSeleccionado) {
-      formData.set('operador', operadorSeleccionado.nombre);
+    if (operadorForm) {
+      formData.set('operador', operadorForm);
     }
     const result = await createPlanilla(formData);
     if (result.error) {
@@ -132,20 +143,24 @@ export default function FormPlanilla({
         )}
 
         <form onSubmit={handleSubmit}>
-          {/* Operador: editable si no hay operador seleccionado, o visible y editable si hay */}
+          {/* Operador: select con todos los operadores, por defecto el de la sesión */}
           <div className="mb-4">
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Operador *
             </label>
-            <input
-              type="text"
+            <select
               name="operador"
+              value={operadorForm}
+              onChange={e => setOperadorForm(e.target.value)}
               required
               className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-              value={operadorSeleccionado ? operadorSeleccionado.nombre : ''}
-              onChange={() => {}}
-              readOnly={!!operadorSeleccionado}
-            />
+              // Siempre habilitado, solo autorrellena
+            >
+              <option value="">Seleccione un operador</option>
+              {operadores.map((op: any) => (
+                <option key={op.id} value={op.nombre}>{op.nombre}</option>
+              ))}
+            </select>
           </div>
 
           <div className="mb-4">
