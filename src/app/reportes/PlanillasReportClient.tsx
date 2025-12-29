@@ -37,8 +37,10 @@ export default function PlanillasReportClient({ planillas }: { planillas: any[] 
     `);
     printWindow.document.close();
     printWindow.focus();
-    printWindow.print();
-    printWindow.close();
+    setTimeout(() => {
+      printWindow.print();
+      printWindow.close();
+    }, 300);
   }
 
   const planillasFiltradas = planillas.filter(p => {

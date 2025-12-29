@@ -36,8 +36,10 @@ export default function LiquidacionesReportClient({ liquidaciones }: { liquidaci
     `);
     printWindow.document.close();
     printWindow.focus();
-    printWindow.print();
-    printWindow.close();
+    setTimeout(() => {
+      printWindow.print();
+      printWindow.close();
+    }, 300);
   }
 
   const filtered = liquidaciones.filter(l =>
