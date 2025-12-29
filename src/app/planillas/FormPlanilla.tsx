@@ -222,7 +222,7 @@ export default function FormPlanilla({
             {error}
           </div>
         )}
-        <div className="grid grid-cols-1 md:grid-cols-6 gap-6 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
           {/* Operador */}
           <div className="md:col-span-1">
             <label className="block text-sm font-bold text-gray-700 mb-2">Operador *</label>
@@ -231,8 +231,7 @@ export default function FormPlanilla({
               value={operadorForm}
               onChange={e => setOperadorForm(e.target.value)}
               required
-              className="min-w-[180px] w-auto px-3 py-2 border border-blue-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 bg-blue-50"
-              style={{maxWidth: '100%'}}
+              className="w-full px-3 py-2 border border-blue-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 bg-blue-50"
             >
               <option value="">Seleccione un operador</option>
               {operadores.map((op) => (
@@ -255,8 +254,7 @@ export default function FormPlanilla({
               value={vehiculoSeleccionado}
               onChange={e => handleVehiculoChange(e.target.value)}
               required
-              className="min-w-[180px] w-auto px-3 py-2 border border-blue-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 bg-blue-50"
-              style={{maxWidth: '100%'}}
+              className="w-full px-3 py-2 border border-blue-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 bg-blue-50"
             >
               <option value="">Seleccione un vehículo</option>
               {vehiculos
@@ -272,7 +270,7 @@ export default function FormPlanilla({
           </div>
           {/* Conductor */}
           <div className="md:col-span-2">
-            <label className="block text-sm font-medium text-gray-700 mb-2">Conductor *</label>
+            <label className="block text-sm font-bold text-gray-700 mb-2">Conductor *</label>
             <input
               type="text"
               name="conductor"
@@ -283,7 +281,7 @@ export default function FormPlanilla({
           </div>
           {/* Tipo de Pago */}
           <div className="md:col-span-1">
-            <label className="block text-sm font-medium text-gray-700 mb-2">Tipo *</label>
+            <label className="block text-sm font-bold text-gray-700 mb-2">Tipo *</label>
             <select
               name="tipo_pago"
               value={tipoPago}
@@ -297,7 +295,7 @@ export default function FormPlanilla({
           </div>
           {/* Valor Planilla */}
           <div className="md:col-span-1">
-            <label className="block text-sm font-medium text-gray-700 mb-2">Valor Base</label>
+            <label className="block text-sm font-bold text-gray-700 mb-2">Valor Base</label>
             <input
               type="number"
               name="valor"
@@ -311,7 +309,7 @@ export default function FormPlanilla({
           </div>
           {/* Número de Planilla */}
           <div className="md:col-span-1">
-            <label className="block text-sm font-medium text-gray-700 mb-2">N° Planilla</label>
+            <label className="block text-sm font-bold text-gray-700 mb-2">N° Planilla</label>
             <input
               type="text"
               name="numero_planilla"
@@ -322,8 +320,8 @@ export default function FormPlanilla({
             />
           </div>
           {/* Origen */}
-          <div className="md:col-span-3">
-            <label className="block text-sm font-medium text-gray-700 mb-2">Origen</label>
+          <div className="md:col-span-2">
+            <label className="block text-sm font-bold text-gray-700 mb-2">Origen</label>
             <input
               type="text"
               name="origen"
@@ -333,8 +331,8 @@ export default function FormPlanilla({
             />
           </div>
           {/* Destino */}
-          <div className="md:col-span-3">
-            <label className="block text-sm font-medium text-gray-700 mb-2">Destino</label>
+          <div className="md:col-span-2">
+            <label className="block text-sm font-bold text-gray-700 mb-2">Destino</label>
             <input
               type="text"
               name="destino"
@@ -365,7 +363,7 @@ export default function FormPlanilla({
           </div>
         )}
         <div className="mb-4">
-          <label className="block text-sm font-medium text-gray-700 mb-2">Fecha *</label>
+          <label className="block text-sm font-bold text-gray-700 mb-2">Fecha *</label>
           <input
             type="date"
             name="fecha"
