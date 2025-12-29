@@ -63,6 +63,18 @@ export async function recaudarPlanillas(planillaIds: number[]) {
     return { error: updateError.message };
   }
 
+  // Auditoría: registrar UPDATE masivo
+  for (const planillaId of planillaIds) {
+    await adminClient.from('auditoria').insert({
+      usuario: user.email,
+      accion: 'UPDATE',
+      detalles: `Recaudó planilla (ID: ${planillaId})`,
+      created_at: new Date().toISOString(),
+      tabla: 'planillas',
+      registro_id: planillaId
+    });
+  }
+
   // Crear registros de recaudos
   const recaudos = planillaIds.map(planillaId => ({
     planilla_id: planillaId,
@@ -148,6 +160,18 @@ export async function createPlanilla(formData: FormData) {
     .select()
     .single();
 
+  // Auditoría: registrar INSERT
+  if (data && data.id) {
+    await adminClient.from('auditoria').insert({
+      usuario: operadorNombre,
+      accion: 'INSERT',
+      detalles: `Creó planilla N° ${numeroPlanilla} para vehículo ${vehiculoId}`,
+      created_at: new Date().toISOString(),
+      tabla: 'planillas',
+      registro_id: data.id
+    });
+  }
+
   // Si se usó saldo a favor, actualizar el saldo del vehículo a 0
   if (usarSaldoFavor && vehiculo && vehiculo.saldo > 0) {
     await adminClient
@@ -222,6 +246,18 @@ export async function updatePlanilla(formData: FormData) {
     .eq('id', id)
     .select()
     .single();
+
+  // Auditoría: registrar UPDATE
+  if (data && data.id) {
+    await adminClient.from('auditoria').insert({
+      usuario: operadorNombre,
+      accion: 'UPDATE',
+      detalles: `Editó planilla N° ${numeroPlanilla} (ID: ${id})`,
+      created_at: new Date().toISOString(),
+      tabla: 'planillas',
+      registro_id: id
+    });
+  }
 
   if (error) {
     return { error: error.message };
