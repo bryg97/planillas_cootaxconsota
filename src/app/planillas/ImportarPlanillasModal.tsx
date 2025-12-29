@@ -33,7 +33,18 @@ export default function ImportarPlanillasModal({ onClose, onImport }: { onClose:
         setData([]);
         return;
       }
-      setData(json);
+      // Normalizar fechas: convertir números de Excel a yyyy-mm-dd
+      const normalizados = json.map((row: any) => {
+        const copia = { ...row };
+        if (copia.fecha && typeof copia.fecha === 'number') {
+          // Excel: días desde 1899-12-30
+          const excelEpoch = new Date(1899, 11, 30);
+          const fecha = new Date(excelEpoch.getTime() + (copia.fecha * 24 * 60 * 60 * 1000));
+          copia.fecha = fecha.toISOString().slice(0, 10);
+        }
+        return copia;
+      });
+      setData(normalizados);
       setSuccess('Archivo leído correctamente. Listo para importar.');
     };
     reader.readAsArrayBuffer(file);
