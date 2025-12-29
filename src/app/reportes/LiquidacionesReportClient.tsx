@@ -13,7 +13,31 @@ export default function LiquidacionesReportClient({ liquidaciones }: { liquidaci
   }
 
   function handlePrint() {
-    window.print();
+    const printContents = document.getElementById('liquidaciones-table')?.outerHTML;
+    if (!printContents) return;
+    const printWindow = window.open('', '', 'height=600,width=900');
+    if (!printWindow) return;
+    printWindow.document.write(`
+      <html>
+        <head>
+          <title>Imprimir Liquidaciones</title>
+          <style>
+            body { font-family: sans-serif; margin: 40px; }
+            table { width: 100%; border-collapse: collapse; font-size: 14px; }
+            th, td { border: 1px solid #ccc; padding: 6px 8px; }
+            th { background: #f3f3f3; }
+          </style>
+        </head>
+        <body>
+          <h2>Reporte de Liquidaciones</h2>
+          ${printContents}
+        </body>
+      </html>
+    `);
+    printWindow.document.close();
+    printWindow.focus();
+    printWindow.print();
+    printWindow.close();
   }
 
   const filtered = liquidaciones.filter(l =>
@@ -36,7 +60,7 @@ export default function LiquidacionesReportClient({ liquidaciones }: { liquidaci
           <button onClick={handlePrint} className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 print:hidden">Imprimir</button>
         </div>
       </div>
-      <div className="overflow-x-auto">
+      <div className="overflow-x-auto" id="liquidaciones-table">
         <table className="min-w-full border text-xs md:text-sm">
           <thead className="bg-gray-100">
             <tr>
