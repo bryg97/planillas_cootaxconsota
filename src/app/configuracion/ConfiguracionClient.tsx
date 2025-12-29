@@ -11,6 +11,13 @@ interface ConfiguracionClientProps {
 
 export default function ConfiguracionClient(props: ConfiguracionClientProps) {
   const { configuracion, operadores, vehiculos } = props;
+
+  // ...todo el código de hooks y funciones...
+
+  // El return principal debe envolver todo el JSX del componente
+  return (
+    // ...todo el JSX existente del componente...
+  );
   configuracion: any; 
   operadores: any[];
   vehiculos: any[];
