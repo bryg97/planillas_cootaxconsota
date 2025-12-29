@@ -56,6 +56,16 @@ export async function editarUsuario(id: number | undefined, formData: FormData) 
     .update(updateData)
     .eq('id', id);
 
+  // Auditoría: registrar UPDATE
+  await adminClient.from('auditoria').insert({
+    usuario: usuario,
+    accion: 'UPDATE',
+    detalles: `Actualizó usuario ${usuario} (ID: ${id})`,
+    created_at: new Date().toISOString(),
+    tabla: 'usuarios',
+    registro_id: id
+  });
+
   if (error) {
     return { error: error.message };
   }
@@ -91,6 +101,18 @@ export async function createUsuario(formData: FormData) {
     .select()
     .single();
 
+  // Auditoría: registrar INSERT
+  if (data && data.id) {
+    await adminClient.from('auditoria').insert({
+      usuario: usuario,
+      accion: 'INSERT',
+      detalles: `Creó usuario ${usuario} (ID: ${data.id})`,
+      created_at: new Date().toISOString(),
+      tabla: 'usuarios',
+      registro_id: data.id
+    });
+  }
+
   if (error) {
     if (error.code === '23505') { // Duplicate key
       return { error: 'El usuario ya existe' };
@@ -104,11 +126,28 @@ export async function createUsuario(formData: FormData) {
 
 export async function deleteUsuario(id: number) {
   const adminClient = createAdminClient();
-  
+
+  // Obtener usuario antes de eliminar para auditoría
+  const { data: usuarioRow } = await adminClient
+    .from('usuarios')
+    .select('usuario')
+    .eq('id', id)
+    .single();
+
   const { error } = await adminClient
     .from('usuarios')
     .delete()
     .eq('id', id);
+
+  // Auditoría: registrar DELETE
+  await adminClient.from('auditoria').insert({
+    usuario: usuarioRow?.usuario || 'desconocido',
+    accion: 'DELETE',
+    detalles: `Eliminó usuario ${usuarioRow?.usuario || ''} (ID: ${id})`,
+    created_at: new Date().toISOString(),
+    tabla: 'usuarios',
+    registro_id: id
+  });
 
   if (error) {
     return { error: error.message };
