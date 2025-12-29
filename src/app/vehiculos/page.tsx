@@ -42,12 +42,25 @@ export default async function VehiculosPage() {
     redirect('/dashboard');
   }
 
-  // Obtener vehículos
-  const { data: vehiculos } = await adminClient
+  // Obtener vehículos y calcular saldo pendiente por cada uno
+  const { data: vehiculosBase } = await adminClient
     .from('vehiculos')
     .select('*')
     .order('codigo_vehiculo', { ascending: true });
 
-  return <VehiculosClient vehiculos={vehiculos || []} />;
+  // Para cada vehículo, sumar el valor de planillas pendientes
+  const vehiculos = await Promise.all(
+    (vehiculosBase || []).map(async (vehiculo) => {
+      const { data: planillasPendientes } = await adminClient
+        .from('planillas')
+        .select('valor')
+        .eq('vehiculo_id', vehiculo.id)
+        .eq('estado', 'pendiente');
+      const saldo_pendiente = (planillasPendientes || []).reduce((sum, p) => sum + (p.valor || 0), 0);
+      return { ...vehiculo, saldo_pendiente };
+    })
+  );
+
+  return <VehiculosClient vehiculos={vehiculos} />;
 }
 
