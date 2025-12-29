@@ -452,23 +452,19 @@ export default function FormPlanilla({
           onClick={handleContinuarConDeuda}
           disabled={planillasRecaudar.length === 0}
           className="w-full bg-green-600 text-white px-4 py-3 rounded font-semibold hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
-// ...existing code...
-          <div className="flex gap-2 mt-4">
-            <button
-              type="submit"
-              className="w-full bg-blue-600 text-white px-4 py-3 rounded font-semibold hover:bg-blue-700 disabled:opacity-50"
-              disabled={loading}
-            >
-              {loading ? 'Guardando...' : 'Guardar Planilla'}
-            </button>
-            <button
-              type="button"
-              className="w-full bg-gray-400 text-white px-4 py-3 rounded font-semibold hover:bg-gray-500"
-              onClick={onClose}
-            >
-              Cancelar
-            </button>
-          </div>
+        >
+          {planillasRecaudar.length === 0 
+            ? 'Seleccione al menos una planilla' 
+            : `Confirmar recaudo de ${planillasRecaudar.length} planilla(s)`}
+        </button>
+        <button
+          type="button"
+          onClick={() => setMostrarDetalleDeuda(false)}
+          className="w-full bg-gray-400 text-white px-4 py-3 rounded font-semibold hover:bg-gray-500"
+        >
+          Cancelar
+        </button>
+      </div>
         </form>
       </div>
     </div>
