@@ -296,32 +296,6 @@ export default function ConfiguracionClient({
                     </div>
                   </div>
                 ))
-                // Estado para edición de operador
-                const [showEditFormOperador, setShowEditFormOperador] = useState(false);
-                const [editOperadorId, setEditOperadorId] = useState<number|null>(null);
-                const [editOperadorNombre, setEditOperadorNombre] = useState('');
-                const [editOperadorCorreo, setEditOperadorCorreo] = useState('');
-
-                async function handleEditOperador(e: React.FormEvent<HTMLFormElement>) {
-                  e.preventDefault();
-                  if (!editOperadorId) return;
-                  setLoading(true);
-                  setError('');
-                  setMessage('');
-                  const formData = new FormData();
-                  formData.append('id', String(editOperadorId));
-                  formData.append('nombre', editOperadorNombre);
-                  formData.append('correo', editOperadorCorreo);
-                  const result = await updateOperador(formData);
-                  if (result.error) {
-                    setError(result.error);
-                  } else {
-                    setMessage('Operador actualizado correctamente');
-                    setShowEditFormOperador(false);
-                    setTimeout(() => window.location.reload(), 1000);
-                  }
-                  setLoading(false);
-                }
                     {/* Formulario de edición de operador */}
                     {showEditFormOperador && (
                       <form onSubmit={handleEditOperador} className="mb-4 p-4 bg-gray-100 rounded shadow-lg fixed top-0 left-0 right-0 max-w-md mx-auto z-50 mt-24">
