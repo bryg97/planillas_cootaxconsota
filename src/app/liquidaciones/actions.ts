@@ -156,15 +156,18 @@ export async function aprobarLiquidacion(liquidacionId: number) {
 
   const adminClient = createAdminClient();
   
-  // Obtener datos de la tesorera
+  // Obtener datos de la tesorera (incluyendo auth_id)
   const { data: tesorera } = await adminClient
     .from('usuarios')
-    .select('id, usuario')
+    .select('id, usuario, auth_id')
     .eq('usuario', user.email)
     .single();
 
   if (!tesorera) {
     return { error: 'Usuario no encontrado' };
+  }
+  if (!tesorera.auth_id) {
+    return { error: 'El usuario no tiene auth_id, no se puede aprobar.' };
   }
 
   // Obtener liquidación con detalles
@@ -191,7 +194,7 @@ export async function aprobarLiquidacion(liquidacionId: number) {
     .from('liquidaciones')
     .update({ 
       estado: 'aprobada',
-      aprobada_por: tesorera.id,
+      aprobada_por: tesorera.auth_id,
       fecha_aprobacion: new Date().toISOString()
     })
     .eq('id', liquidacionId);
