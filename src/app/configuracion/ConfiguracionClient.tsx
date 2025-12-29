@@ -11,17 +11,8 @@ interface ConfiguracionClientProps {
 
 export default function ConfiguracionClient(props: ConfiguracionClientProps) {
   const { configuracion, operadores, vehiculos } = props;
-
-  // ...todo el código de hooks y funciones...
-
-  // El return principal debe envolver todo el JSX del componente
-  return (
-    // ...todo el JSX existente del componente...
-  );
-  configuracion: any; 
-  operadores: any[];
-  vehiculos: any[];
-}) {
+  // ...hooks y funciones...
+  // El return principal ya está más abajo, eliminar duplicados y fragmentos fuera de lugar.
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
@@ -106,7 +97,7 @@ export default function ConfiguracionClient(props: ConfiguracionClientProps) {
       return;
     }
 
-    const vehiculo = vehiculos.find(v => v.id === parseInt(vehiculoSeleccionado));
+    const vehiculo = vehiculos.find((v: any) => v.id === parseInt(vehiculoSeleccionado));
     if (!confirm(`¿Está seguro de eliminar TODAS las planillas del vehículo ${vehiculo?.codigo_vehiculo}? Esta acción no se puede deshacer.`)) {
       return;
     }
@@ -309,7 +300,7 @@ export default function ConfiguracionClient(props: ConfiguracionClientProps) {
               ) : null}
               {/* Formulario de edición de operador (fuera del map) */}
               {showEditFormOperador && (
-                <form onSubmit={handleEditOperador} className="mb-4 p-4 bg-gray-100 rounded shadow-lg fixed top-0 left-0 right-0 max-w-md mx-auto z-50 mt-24">
+                <form onSubmit={handleCreateOperador} className="mb-4 p-4 bg-gray-100 rounded shadow-lg fixed top-0 left-0 right-0 max-w-md mx-auto z-50 mt-24">
                   <h3 className="font-semibold mb-2">Editar Operador</h3>
                   <input
                     type="text"
@@ -346,9 +337,10 @@ export default function ConfiguracionClient(props: ConfiguracionClientProps) {
                   </div>
                 </form>
               )}
-              ) : (
+              {/* Fin de edición de operador */}
+              {!operadores || (operadores.length === 0 && !showEditFormOperador) ? (
                 <p className="text-gray-500 text-center py-4">No hay operadores registrados</p>
-              )}
+              ) : null}
             </div>
           </div>
         </div>
