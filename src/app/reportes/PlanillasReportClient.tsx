@@ -79,8 +79,8 @@ export default function PlanillasReportClient({ planillas }: { planillas: any[] 
           <input type="date" value={fechaFin} onChange={e => setFechaFin(e.target.value)} className="border px-2 py-1 rounded" />
         </div>
         <div className="flex gap-2">
-          <button onClick={handleExportExcel} className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">Exportar Excel</button>
-          <button onClick={handlePrint} className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 print:hidden">Imprimir</button>
+          <button onClick={handleExportExcel} className="bg-green-600 text-white px-3 py-2 rounded hover:bg-green-700 text-sm">Exportar Excel</button>
+          <button onClick={handlePrint} className="bg-blue-600 text-white px-3 py-2 rounded hover:bg-blue-700 print:hidden text-sm">Imprimir</button>
         </div>
       </div>
       <div className="overflow-x-auto" id="planillas-table">
