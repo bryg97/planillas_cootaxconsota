@@ -2,7 +2,6 @@
 
 import { useState } from 'react';
 import ImportarPlanillasModal from './ImportarPlanillasModal';
-import { importarPlanillasDesdeExcel } from './importarExcelAction';
 import FormPlanilla from './FormPlanilla';
 import VerPlanilla from './VerPlanilla';
 import EditarPlanilla from './EditarPlanilla';
@@ -47,12 +46,21 @@ export default function PlanillasClient({ planillas, vehiculos, operadores, valo
         <ImportarPlanillasModal 
           onClose={() => setShowImport(false)}
           onImport={async (data) => {
-            const res = await importarPlanillasDesdeExcel(data);
-            if (res.success) {
-              alert('✅ ' + res.cantidad + ' planillas importadas correctamente.');
-              window.location.reload();
-            } else {
-              alert('Error: ' + res.error);
+            try {
+              const res = await fetch('/api/importar-planillas', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ planillas: data })
+              });
+              const json = await res.json();
+              if (json.success) {
+                alert('✅ ' + json.cantidad + ' planillas importadas correctamente.');
+                window.location.reload();
+              } else {
+                alert('Error: ' + (json.error || 'Error desconocido.'));
+              }
+            } catch (e: any) {
+              alert('Error: ' + (e.message || 'Error inesperado.'));
             }
             setShowImport(false);
           }}
