@@ -1,3 +1,9 @@
+
+'use server';
+import { createAdminClient } from '@/lib/supabase/admin';
+import { revalidatePath } from 'next/cache';
+import bcrypt from 'bcryptjs';
+
 export async function editarUsuario(id: number | undefined, formData: FormData) {
   if (!id) return { error: 'ID de usuario requerido' };
   const usuario = formData.get('usuario') as string;
@@ -29,11 +35,6 @@ export async function editarUsuario(id: number | undefined, formData: FormData) 
   revalidatePath('/usuarios');
   return { success: true };
 }
-'use server';
-
-import { createAdminClient } from '@/lib/supabase/admin';
-import { revalidatePath } from 'next/cache';
-import bcrypt from 'bcryptjs';
 
 export async function createUsuario(formData: FormData) {
   const usuario = formData.get('usuario') as string;
