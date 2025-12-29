@@ -12,13 +12,25 @@ export default async function VehiculosPage() {
     redirect('/login');
   }
 
+
   // Obtener el rol del usuario desde la tabla usuarios
   const adminClient = createAdminClient();
-  const { data: usuarioRow, error } = await adminClient
+  let { data: usuarioRow, error } = await adminClient
     .from('usuarios')
     .select('rol')
     .eq('auth_id', user.id)
     .single();
+
+  // Si no se encuentra por auth_id, intentar por email (caso admin antiguos)
+  if (error || !usuarioRow) {
+    const { data: usuarioPorEmail, error: errorEmail } = await adminClient
+      .from('usuarios')
+      .select('rol')
+      .eq('usuario', user.email)
+      .single();
+    usuarioRow = usuarioPorEmail;
+    error = errorEmail;
+  }
 
   if (error || !usuarioRow) {
     // Si no se encuentra el usuario, redirigir al login por seguridad
