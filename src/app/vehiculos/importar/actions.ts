@@ -52,7 +52,7 @@ export async function importarVehiculos(formData: FormData) {
     }));
 
     // Filtrar registros válidos
-    const vehiculosValidos = vehiculos.filter(v => v.codigo_vehiculo !== '');
+    const vehiculosValidos = vehiculos.filter((v: { codigo_vehiculo: string }) => v.codigo_vehiculo !== '');
 
     if (vehiculosValidos.length === 0) {
       return { error: 'No se encontraron vehículos válidos en el archivo' };
