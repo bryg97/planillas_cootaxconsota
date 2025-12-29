@@ -1,13 +1,15 @@
+
 'use client';
-                ))
-              ) : (
-                <p className="text-gray-500 text-center py-4">No hay operadores registrados</p>
-              )}
-            </div>
-          </div>
-        </div>
-  vehiculos
-}: { 
+import { useState, useEffect } from 'react';
+import { updateConfiguracion, createOperador, deleteOperador, depurarVehiculos, eliminarPlanillasVehiculo, eliminarTodasPlanillas, updateOperador } from './actions';
+
+type ConfiguracionClientProps = {
+  configuracion: any;
+  operadores: any[];
+  vehiculos: any[];
+};
+
+export default function ConfiguracionClient({ configuracion, operadores, vehiculos }: ConfiguracionClientProps) {
   configuracion: any; 
   operadores: any[];
   vehiculos: any[];
