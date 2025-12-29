@@ -9,6 +9,7 @@ export default function CarteraClient({ vehiculos }: { vehiculos: any[] }) {
   const [error, setError] = useState('');
   const [vehiculoExpandido, setVehiculoExpandido] = useState<number | null>(null);
   const [planillasSeleccionadas, setPlanillasSeleccionadas] = useState<number[]>([]);
+  const [searchTerm, setSearchTerm] = useState('');
 
   function toggleVehiculo(vehiculoId: number) {
     setVehiculoExpandido(vehiculoExpandido === vehiculoId ? null : vehiculoId);
@@ -73,13 +74,25 @@ export default function CarteraClient({ vehiculos }: { vehiculos: any[] }) {
           </div>
         )}
 
-        {vehiculos.length === 0 ? (
+        {/* Buscador de vehículos */}
+        <div className="mb-6 max-w-md">
+          <input
+            type="text"
+            placeholder="Buscar vehículo por código..."
+            value={searchTerm}
+            onChange={e => setSearchTerm(e.target.value)}
+            className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+        </div>
+        {vehiculos.filter(v => v.codigo_vehiculo.toLowerCase().includes(searchTerm.toLowerCase())).length === 0 ? (
           <div className="bg-white rounded-lg shadow p-8 text-center">
             <p className="text-gray-500">No hay vehículos con planillas pendientes</p>
           </div>
         ) : (
           <div className="space-y-4">
-            {vehiculos.map((vehiculo) => (
+            {vehiculos
+              .filter(v => v.codigo_vehiculo.toLowerCase().includes(searchTerm.toLowerCase()))
+              .map((vehiculo) => (
               <div key={vehiculo.vehiculo_id} className="bg-white rounded-lg shadow">
                 <div
                   className="p-4 cursor-pointer hover:bg-gray-50 flex justify-between items-center"
