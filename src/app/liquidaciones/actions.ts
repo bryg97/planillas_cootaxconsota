@@ -5,12 +5,12 @@ import { createClient } from '@/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
 import { notificarDineroEntregado } from '@/lib/telegram';
 
-export async function getPlanillasParaLiquidar(operadorId?: number) {
+export async function getPlanillasParaLiquidar() {
   const adminClient = createAdminClient();
   
+  // Mostrar TODAS las planillas pendientes de liquidar, sin filtrar por operador
   // Solo planillas con tipo_pago contado o estado recaudada (crédito ya cobrado)
-  // Que no estén liquidadas, pagadas o aprobadas
-  let query = adminClient
+  const query = adminClient
     .from('planillas')
     .select(`
       id,
@@ -31,10 +31,6 @@ export async function getPlanillasParaLiquidar(operadorId?: number) {
     `)
     .in('estado', ['pendiente', 'recaudada'])
     .order('fecha', { ascending: false });
-
-  if (operadorId) {
-    query = query.eq('operador_id', operadorId);
-  }
 
   const { data } = await query;
   
