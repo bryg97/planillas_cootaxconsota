@@ -130,7 +130,7 @@ export default function LiquidacionesClient({
 
         {/* Filtros de Fecha y Búsqueda */}
         <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
-          <h3 className="font-medium text-blue-900 mb-3">Filtros</h3>
+          <h3 className="font-medium text-blue-900 mb-4">Filtros</h3>
           
           {/* Buscador */}
           <div className="mb-4">
@@ -145,15 +145,15 @@ export default function LiquidacionesClient({
           </div>
 
           {/* Filtros de Fecha */}
-          <h4 className="text-sm font-medium text-gray-700 mb-2">Por Fecha</h4>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <h4 className="text-sm font-medium text-gray-700 mb-3">Por Fecha</h4>
+          <div className="grid grid-cols-1 md:grid-cols-5 gap-3 mb-3">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Desde</label>
               <input
                 type="date"
                 value={fechaDesde}
                 onChange={(e) => setFechaDesde(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
               />
             </div>
             <div>
@@ -162,13 +162,17 @@ export default function LiquidacionesClient({
                 type="date"
                 value={fechaHasta}
                 onChange={(e) => setFechaHasta(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
               />
             </div>
-            <div className="flex items-end gap-2">
-              <button onClick={() => { setFechaDesde(''); setFechaHasta(''); }} className="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600 text-sm">Limpiar Filtros</button>
-              <button onClick={seleccionarTodas} className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 text-sm">Seleccionar Todas</button>
-              <button onClick={deseleccionarTodas} className="px-4 py-2 bg-gray-300 text-gray-700 rounded hover:bg-gray-400 text-sm">Deseleccionar</button>
+            <div className="flex items-end">
+              <button onClick={() => { setFechaDesde(''); setFechaHasta(''); }} className="w-full px-3 py-2 bg-gray-500 text-white rounded hover:bg-gray-600 text-xs font-medium">Limpiar</button>
+            </div>
+            <div className="flex items-end">
+              <button onClick={seleccionarTodas} className="w-full px-3 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 text-xs font-medium">Seleccionar</button>
+            </div>
+            <div className="flex items-end">
+              <button onClick={deseleccionarTodas} className="w-full px-3 py-2 bg-gray-300 text-gray-700 rounded hover:bg-gray-400 text-xs font-medium">Deseleccionar</button>
             </div>
           </div>
         </div>
