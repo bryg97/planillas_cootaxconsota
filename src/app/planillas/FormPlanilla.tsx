@@ -109,9 +109,32 @@ export default function FormPlanilla({
     setLoading(true);
     setError('');
 
+    try {
+      const formElement = e.currentTarget; // Guardar referencia antes de cualquier await
       // Validar que el número de planilla sea solo números
-      if (!/^\d+$/.test(numeroPlanilla)) {
-        setError('El número de planilla debe contener solo números');
+      if (!numeroPlanilla || !/^\d+$/.test(numeroPlanilla)) {
+        setError('El número de planilla es obligatorio y debe contener solo números');
+        setLoading(false);
+        return;
+      }
+
+      // Validar que el vehículo esté seleccionado
+      if (!vehiculoSeleccionado) {
+        setError('Debe seleccionar un vehículo');
+        setLoading(false);
+        return;
+      }
+
+      // Validar que el operador esté seleccionado
+      if (!operadorForm) {
+        setError('Debe seleccionar un operador');
+        setLoading(false);
+        return;
+      }
+
+      // Validar que el valor sea válido
+      if (!valorPlanilla || valorPlanilla <= 0) {
+        setError('El valor de la planilla debe ser mayor a 0');
         setLoading(false);
         return;
       }
@@ -124,21 +147,29 @@ export default function FormPlanilla({
         return;
       }
 
-    const formData = new FormData(e.currentTarget);
-    if (usarSaldoFavor) {
-      formData.append('usar_saldo_favor', '1');
-    }
-    // Insertar el operador seleccionado automáticamente
-    if (operadorForm) {
-      formData.set('operador', operadorForm);
-    }
-    const result = await createPlanilla(formData);
-    if (result.error) {
-      setError(result.error);
+      const formData = new FormData(formElement);
+      if (usarSaldoFavor) {
+        formData.append('usar_saldo_favor', '1');
+      }
+      // Insertar el operador seleccionado automáticamente
+      if (operadorForm) {
+        formData.set('operador', operadorForm);
+      }
+      // Asegurar que el valor se envía correctamente
+      formData.set('valor', valorPlanilla.toString());
+
+      const result = await createPlanilla(formData);
+      if (result.error) {
+        setError(result.error);
+        setLoading(false);
+      } else {
+        alert('✅ Planilla registrada exitosamente');
+        onClose();
+        window.location.reload();
+      }
+    } catch (err) {
+      setError('Error al guardar la planilla: ' + String(err));
       setLoading(false);
-    } else {
-      onClose();
-      window.location.reload();
     }
   }
 

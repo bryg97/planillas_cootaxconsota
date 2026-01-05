@@ -158,8 +158,29 @@ export async function createPlanilla(formData: FormData) {
   const origen = formData.get('origen') as string;
   const destino = formData.get('destino') as string;
 
+  // Log para debug
+  console.log('CreatePlanilla - Datos recibidos:', {
+    vehiculoId,
+    conductor,
+    operadorNombre,
+    valor,
+    numeroPlanilla,
+    fecha,
+    tipoPago,
+    origen,
+    destino
+  });
+
   if (!vehiculoId || !conductor || !valor || !numeroPlanilla || !fecha || !tipoPago || !operadorNombre) {
-    return { error: 'Todos los campos son requeridos' };
+    const missingFields = [];
+    if (!vehiculoId) missingFields.push('vehiculo_id');
+    if (!conductor) missingFields.push('conductor');
+    if (!valor) missingFields.push('valor');
+    if (!numeroPlanilla) missingFields.push('numero_planilla');
+    if (!fecha) missingFields.push('fecha');
+    if (!tipoPago) missingFields.push('tipo_pago');
+    if (!operadorNombre) missingFields.push('operador');
+    return { error: `Campos faltantes: ${missingFields.join(', ')}` };
   }
 
   // Obtener el usuario actual
