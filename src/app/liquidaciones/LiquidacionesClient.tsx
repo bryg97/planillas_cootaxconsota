@@ -17,6 +17,7 @@ export default function LiquidacionesClient({
   const [fechaDesde, setFechaDesde] = useState<string>("");
   const [fechaHasta, setFechaHasta] = useState<string>("");
   const [busqueda, setBusqueda] = useState<string>("");
+  const [planillaDetalle, setPlanillaDetalle] = useState<any>(null);
   const [error, setError] = useState<string>("");
   const [message, setMessage] = useState<string>("");
 
@@ -211,6 +212,15 @@ export default function LiquidacionesClient({
                     </p>
                   </div>
                   <p className="font-bold text-lg text-gray-900 ml-3">${planilla.valor.toLocaleString('es-CO')}</p>
+                  <button
+                    onClick={(e) => {
+                      e.preventDefault();
+                      setPlanillaDetalle(planilla);
+                    }}
+                    className="ml-3 text-blue-600 hover:text-blue-900 text-sm font-medium"
+                  >
+                    Ver detalles
+                  </button>
                 </label>
               ))}
             </div>
@@ -269,6 +279,81 @@ export default function LiquidacionesClient({
                 ))}
               </div>
             )}
+          </div>
+        )}
+
+        {/* Modal de detalles de planilla */}
+        {planillaDetalle && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-lg p-8 max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+              <div className="flex justify-between items-center mb-6">
+                <h2 className="text-2xl font-bold">Detalles de Planilla</h2>
+                <button
+                  onClick={() => setPlanillaDetalle(null)}
+                  className="text-gray-500 hover:text-gray-700"
+                >
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+
+              <div className="grid grid-cols-2 gap-6 mb-6">
+                <div>
+                  <label className="block text-sm font-medium text-gray-500 mb-1">N° Planilla</label>
+                  <p className="text-lg font-semibold">{planillaDetalle.numero_planilla}</p>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-500 mb-1">Vehículo</label>
+                  <p className="text-lg font-semibold">{planillaDetalle.vehiculos?.codigo_vehiculo}</p>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-500 mb-1">Conductor</label>
+                  <p className="text-lg font-semibold">{planillaDetalle.conductor}</p>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-500 mb-1">Valor</label>
+                  <p className="text-2xl font-bold text-green-600">${parseFloat(planillaDetalle.valor).toLocaleString('es-CO')}</p>
+                </div>
+              </div>
+
+              {/* Trazabilidad */}
+              <div className="border-t pt-6">
+                <h3 className="text-lg font-semibold mb-4">Trazabilidad</h3>
+                <div className="space-y-4">
+                  <div className="bg-blue-50 p-4 rounded-lg">
+                    <label className="block text-sm font-medium text-blue-900 mb-2">Creado</label>
+                    <p className="text-sm text-blue-800">
+                      Fecha: {planillaDetalle.created_at ? new Date(planillaDetalle.created_at).toLocaleString('es-CO') : 'N/A'}
+                    </p>
+                    <p className="text-sm text-blue-800">
+                      Por: {planillaDetalle.usuarios?.usuario || 'Operador'}
+                    </p>
+                  </div>
+
+                  {planillaDetalle.estado === 'recaudada' && (
+                    <div className="bg-green-50 p-4 rounded-lg">
+                      <label className="block text-sm font-medium text-green-900 mb-2">Recaudado</label>
+                      <p className="text-sm text-green-800">
+                        Fecha: {planillaDetalle.fecha_recaudacion ? new Date(planillaDetalle.fecha_recaudacion).toLocaleString('es-CO') : 'N/A'}
+                      </p>
+                      <p className="text-sm text-green-800">
+                        Por: {planillaDetalle.recaudada_por || 'Pendiente'}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <div className="mt-8 flex justify-end">
+                <button
+                  onClick={() => setPlanillaDetalle(null)}
+                  className="px-6 py-2 bg-gray-600 text-white rounded hover:bg-gray-700"
+                >
+                  Cerrar
+                </button>
+              </div>
+            </div>
           </div>
         )}
 
