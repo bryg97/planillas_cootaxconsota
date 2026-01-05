@@ -22,6 +22,11 @@ export default function LiquidacionesClient({
   const [error, setError] = useState<string>("");
   const [message, setMessage] = useState<string>("");
 
+  // Debug logs
+  console.log('LiquidacionesClient - Rol:', rol);
+  console.log('LiquidacionesClient - Planillas recibidas:', planillas?.length || 0);
+  console.log('LiquidacionesClient - Liquidaciones pendientes:', liquidacionesPendientes?.length || 0);
+
 
 
     function seleccionarTodas() {

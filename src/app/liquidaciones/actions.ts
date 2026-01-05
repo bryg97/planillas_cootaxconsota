@@ -9,7 +9,7 @@ export async function getPlanillasParaLiquidar() {
   const adminClient = createAdminClient();
   
   // Mostrar TODAS las planillas pendientes de liquidar, sin filtrar por operador
-  // Solo planillas con tipo_pago contado o estado recaudada (crédito ya cobrado)
+  // Solo planillas que NO estén liquidadas, pagadas o aprobadas
   const query = adminClient
     .from('planillas')
     .select(`
@@ -29,15 +29,22 @@ export async function getPlanillasParaLiquidar() {
       vehiculos:vehiculo_id (codigo_vehiculo),
       usuarios:operador_id (usuario)
     `)
-    .in('estado', ['pendiente', 'recaudada'])
+    .not('estado', 'in', '(liquidada,pagada,aprobada)')
     .order('fecha', { ascending: false });
 
-  const { data } = await query;
+  const { data, error } = await query;
+  
+  if (error) {
+    console.error('Error al obtener planillas:', error);
+    return [];
+  }
   
   // Filtrar: incluir solo planillas de contado (cualquier estado) o crédito recaudado
   const planillasFiltradas = data?.filter(p => 
     p.tipo_pago === 'contado' || (p.tipo_pago === 'credito' && p.estado === 'recaudada')
   ) || [];
+  
+  console.log('Planillas para liquidar:', planillasFiltradas.length);
   
   return planillasFiltradas;
 }

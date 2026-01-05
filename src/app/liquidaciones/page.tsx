@@ -27,12 +27,14 @@ export default async function LiquidacionesPage() {
   let planillas: any[] = [];
   if (rol === 'operador' || rol === 'administrador') {
     planillas = await getPlanillasParaLiquidar();
+    console.log('Liquidaciones Page - Rol:', rol, '- Planillas obtenidas:', planillas.length);
   }
 
   // Si es tesorera o admin, obtener liquidaciones pendientes
   let liquidacionesPendientes: any[] = [];
   if (rol === 'tesorera' || rol === 'administrador' || rol === 'operador') {
     liquidacionesPendientes = await getLiquidacionesPendientes();
+    console.log('Liquidaciones Page - Liquidaciones pendientes:', liquidacionesPendientes.length);
   }
 
   return (
