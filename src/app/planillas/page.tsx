@@ -22,7 +22,7 @@ export default async function PlanillasPage() {
     `)
     .in('estado', ['pendiente', 'recaudada'])
     .order('fecha', { ascending: false })
-    .limit(50);
+    .limit(500);
 
   // Obtener vehículos para el formulario
   const { data: vehiculos } = await adminClient

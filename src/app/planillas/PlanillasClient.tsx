@@ -11,6 +11,19 @@ export default function PlanillasClient({ planillas, vehiculos, operadores, valo
   const [planillaVer, setPlanillaVer] = useState<any>(null);
   const [planillaEditar, setPlanillaEditar] = useState<any>(null);
   const [showImport, setShowImport] = useState(false);
+  const [busqueda, setBusqueda] = useState('');
+
+  // Filtrar planillas según búsqueda
+  const planillasFiltradas = planillas.filter(p => {
+    const textoBusqueda = busqueda.toLowerCase();
+    return (
+      p.numero_planilla?.toLowerCase().includes(textoBusqueda) ||
+      p.conductor?.toLowerCase().includes(textoBusqueda) ||
+      p.vehiculos?.codigo_vehiculo?.toLowerCase().includes(textoBusqueda) ||
+      p.tipo_pago?.toLowerCase().includes(textoBusqueda) ||
+      p.estado?.toLowerCase().includes(textoBusqueda)
+    );
+  });
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -41,6 +54,22 @@ export default function PlanillasClient({ planillas, vehiculos, operadores, valo
                 Importar planillas
               </button>
             </div>
+          </div>
+
+          {/* Buscador */}
+          <div className="p-4 bg-gray-50 border-b border-gray-200">
+            <input
+              type="text"
+              placeholder="🔍 Buscar por N° planilla, conductor, vehículo, tipo o estado..."
+              value={busqueda}
+              onChange={(e) => setBusqueda(e.target.value)}
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+            {busqueda && (
+              <p className="mt-2 text-sm text-gray-600">
+                Mostrando {planillasFiltradas.length} de {planillas.length} planillas
+              </p>
+            )}
           </div>
       {showImport && (
         <ImportarPlanillasModal 
@@ -82,8 +111,8 @@ export default function PlanillasClient({ planillas, vehiculos, operadores, valo
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {planillas && planillas.length > 0 ? (
-                  planillas.map((planilla: any) => (
+                {planillasFiltradas && planillasFiltradas.length > 0 ? (
+                  planillasFiltradas.map((planilla: any) => (
                     <tr key={planilla.id}>
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                         {planilla.numero_planilla}
