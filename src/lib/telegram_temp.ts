@@ -1,4 +1,4 @@
-// Servicio de notificaciones de Telegram
+﻿// Servicio de notificaciones de Telegram
 import { createAdminClient } from '@/lib/supabase/admin';
 
 interface PlanillaNotificacion {
@@ -24,18 +24,6 @@ interface PagoVehiculo {
   planillas: Array<{
     numero: string;
     monto: number;
-  }>;
-  total: number;
-  fecha: string;
-}
-
-interface RecaudoCredito {
-  operador: string;
-  planillas: Array<{
-    numero: string;
-    monto: number;
-    vehiculo: string;
-    conductor: string;
   }>;
   total: number;
   fecha: string;
@@ -89,10 +77,10 @@ async function enviarMensajeTelegram(mensaje: string) {
 }
 
 export async function notificarNuevaPlanillaCredito(data: PlanillaNotificacion) {
-  const mensaje = `📄 <b>Nueva Planilla Credito</b>
+  const mensaje = `📄 <b>Nueva Planilla Crédito</b>
 
 👤 Operador: ${data.operador}
-🚕 Vehiculo: ${data.vehiculo}
+🚕 Vehículo: ${data.vehiculo}
 🧑 Conductor: ${data.conductor}
 📄 N°: ${data.numero_planilla}
 🕒 ${data.fecha}`;
@@ -120,9 +108,9 @@ export async function notificarPagoVehiculo(data: PagoVehiculo) {
     .map(p => `- N°${p.numero} → $${p.monto.toLocaleString('es-CO')}`)
     .join('\n');
 
-  const mensaje = `✅ <b>PAGO TOTAL VEHICULO</b>
+  const mensaje = `✅ <b>PAGO TOTAL VEHÍCULO</b>
 
-🚖 Vehiculo: ${data.vehiculo}
+🚖 Vehículo: ${data.vehiculo}
 👤 Autorizó: ${data.autorizo}
 
 Planillas pagadas:
@@ -134,19 +122,4 @@ ${listaPlanillas}
   return await enviarMensajeTelegram(mensaje);
 }
 
-export async function notificarRecaudoCredito(data: RecaudoCredito) {
-  const listaPlanillas = data.planillas
-    .map(p => `- N° ${p.numero} (${p.vehiculo}) ${p.conductor}  $${p.monto.toLocaleString('es-CO')}`)
-    .join('\n');
-
-  const mensaje = `📊 <b>CREDITO RECAUDADO</b>
-
-👤 Operador: ${data.operador}
-📄 Planillas:
-${listaPlanillas}
-
-💸 Total recaudado: $${data.total.toLocaleString('es-CO')}
-🕒 ${data.fecha}`;
-
-  return await enviarMensajeTelegram(mensaje);
-}
+interface RecaudoCredito {
