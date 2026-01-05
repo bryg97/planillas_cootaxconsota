@@ -23,10 +23,10 @@ export default async function LiquidacionesPage() {
 
   const rol = userData?.rol || 'operador';
 
-  // Si es operador o administrador, obtener sus planillas
+  // Si es operador o administrador, obtener TODAS las planillas
   let planillas: any[] = [];
   if (rol === 'operador' || rol === 'administrador') {
-    planillas = await getPlanillasParaLiquidar(userData?.id);
+    planillas = await getPlanillasParaLiquidar();
   }
 
   // Si es tesorera o admin, obtener liquidaciones pendientes
