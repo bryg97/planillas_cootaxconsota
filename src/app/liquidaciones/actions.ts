@@ -8,9 +8,8 @@ import { notificarDineroEntregado } from '@/lib/telegram';
 export async function getPlanillasParaLiquidar() {
   const adminClient = createAdminClient();
   
-  // Mostrar TODAS las planillas pendientes de liquidar, sin filtrar por operador
-  // Solo planillas que NO estén liquidadas, pagadas o aprobadas
-  const query = adminClient
+  // Obtener TODAS las planillas sin filtro de estado para debugging
+  const { data, error } = await adminClient
     .from('planillas')
     .select(`
       id,
@@ -29,22 +28,28 @@ export async function getPlanillasParaLiquidar() {
       vehiculos:vehiculo_id (codigo_vehiculo),
       usuarios:operador_id (usuario)
     `)
-    .not('estado', 'in', '(liquidada,pagada,aprobada)')
     .order('fecha', { ascending: false });
 
-  const { data, error } = await query;
-  
   if (error) {
     console.error('Error al obtener planillas:', error);
     return [];
   }
   
-  // Filtrar: incluir solo planillas de contado (cualquier estado) o crédito recaudado
-  const planillasFiltradas = data?.filter(p => 
-    p.tipo_pago === 'contado' || (p.tipo_pago === 'credito' && p.estado === 'recaudada')
+  console.log('Total planillas en BD:', data?.length || 0);
+  
+  // Filtrar: solo planillas que NO estén liquidadas
+  const planillasSinLiquidar = data?.filter(p => 
+    p.estado !== 'liquidada' && p.estado !== 'pagada' && p.estado !== 'aprobada'
   ) || [];
   
-  console.log('Planillas para liquidar:', planillasFiltradas.length);
+  console.log('Planillas sin liquidar:', planillasSinLiquidar.length);
+  
+  // De esas, solo las de contado o crédito recaudado
+  const planillasFiltradas = planillasSinLiquidar.filter(p => 
+    p.tipo_pago === 'contado' || (p.tipo_pago === 'credito' && p.estado === 'recaudada')
+  );
+  
+  console.log('Planillas para liquidar (contado o crédito recaudado):', planillasFiltradas.length);
   
   return planillasFiltradas;
 }
