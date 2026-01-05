@@ -16,6 +16,7 @@ export default function LiquidacionesClient({
   const [planillasSeleccionadas, setPlanillasSeleccionadas] = useState<any[]>([]);
   const [fechaDesde, setFechaDesde] = useState<string>("");
   const [fechaHasta, setFechaHasta] = useState<string>("");
+  const [busqueda, setBusqueda] = useState<string>("");
   const [error, setError] = useState<string>("");
   const [message, setMessage] = useState<string>("");
 
@@ -31,6 +32,15 @@ export default function LiquidacionesClient({
     }
 
     const planillasFiltradas = planillas.filter((p) => {
+      const textoBusqueda = busqueda.toLowerCase();
+      const cumpleBusqueda = !busqueda || (
+        p.numero_planilla?.toLowerCase().includes(textoBusqueda) ||
+        p.conductor?.toLowerCase().includes(textoBusqueda) ||
+        p.vehiculos?.codigo_vehiculo?.toLowerCase().includes(textoBusqueda)
+      );
+      
+      if (!cumpleBusqueda) return false;
+      
       if (!fechaDesde && !fechaHasta) return true;
       const fechaPlanilla = new Date(p.fecha);
       const desde = fechaDesde ? new Date(fechaDesde) : null;
@@ -118,9 +128,24 @@ export default function LiquidacionesClient({
           </div>
         </div>
 
-        {/* Filtros de Fecha */}
+        {/* Filtros de Fecha y Búsqueda */}
         <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
-          <h3 className="font-medium text-blue-900 mb-3">Filtrar por Fecha</h3>
+          <h3 className="font-medium text-blue-900 mb-3">Filtros</h3>
+          
+          {/* Buscador */}
+          <div className="mb-4">
+            <label className="block text-sm font-medium text-gray-700 mb-1">Buscar</label>
+            <input
+              type="text"
+              placeholder="🔍 Buscar por N° planilla, conductor o vehículo..."
+              value={busqueda}
+              onChange={(e) => setBusqueda(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+
+          {/* Filtros de Fecha */}
+          <h4 className="text-sm font-medium text-gray-700 mb-2">Por Fecha</h4>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Desde</label>

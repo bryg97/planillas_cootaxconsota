@@ -23,17 +23,15 @@ export default async function LiquidacionesPage() {
 
   const rol = userData?.rol || 'operador';
 
-  // Si es operador, obtener sus planillas
+  // Si es operador o administrador, obtener sus planillas
   let planillas: any[] = [];
-  if (rol === 'operador') {
+  if (rol === 'operador' || rol === 'administrador') {
     planillas = await getPlanillasParaLiquidar(userData?.id);
-  } else if (rol === 'administrador') {
-    planillas = await getPlanillasParaLiquidar();
   }
 
   // Si es tesorera o admin, obtener liquidaciones pendientes
   let liquidacionesPendientes: any[] = [];
-  if (rol === 'tesorera' || rol === 'administrador') {
+  if (rol === 'tesorera' || rol === 'administrador' || rol === 'operador') {
     liquidacionesPendientes = await getLiquidacionesPendientes();
   }
 

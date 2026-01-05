@@ -136,6 +136,50 @@ export default function VerPlanilla({
               </p>
             </div>
           )}
+
+          {planilla.created_at && (
+            <div>
+              <label className="block text-sm font-medium text-gray-500 mb-1">
+                Fecha de Creación
+              </label>
+              <p className="text-sm text-gray-700">
+                {new Date(planilla.created_at).toLocaleString('es-CO')}
+              </p>
+            </div>
+          )}
+
+          {planilla.recaudada_por && (
+            <div>
+              <label className="block text-sm font-medium text-gray-500 mb-1">
+                Recaudada por
+              </label>
+              <p className="text-sm text-gray-700">
+                {planilla.recaudada_por}
+              </p>
+            </div>
+          )}
+
+          {planilla.fecha_recaudacion && (
+            <div>
+              <label className="block text-sm font-medium text-gray-500 mb-1">
+                Fecha de Recaudación
+              </label>
+              <p className="text-sm text-gray-700">
+                {new Date(planilla.fecha_recaudacion).toLocaleString('es-CO')}
+              </p>
+            </div>
+          )}
+
+          {planilla.observaciones && (
+            <div className="col-span-2">
+              <label className="block text-sm font-medium text-gray-500 mb-1">
+                Observaciones
+              </label>
+              <p className="text-sm text-gray-700">
+                {planilla.observaciones}
+              </p>
+            </div>
+          )}
         </div>
 
         <div className="mt-8 flex justify-end">
