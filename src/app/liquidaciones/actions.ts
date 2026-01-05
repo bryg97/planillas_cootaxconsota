@@ -23,7 +23,7 @@ export async function getPlanillasParaLiquidar() {
       vehiculo_id,
       created_at,
       vehiculos:vehiculo_id (codigo_vehiculo),
-      usuarios:operador_id (usuario)
+      usuarios:operador_id (usuario, nombre)
     `)
     .order('fecha', { ascending: false });
 
@@ -143,7 +143,7 @@ export async function getLiquidacionesPendientes() {
       fecha,
       estado,
       operador_id,
-      usuarios:operador_id (usuario),
+      usuarios:operador_id (usuario, nombre),
       liquidaciones_detalle (
         planilla_id,
         monto,
@@ -190,7 +190,7 @@ export async function aprobarLiquidacion(liquidacionId: number) {
     .from('liquidaciones')
     .select(`
       *,
-      usuarios:operador_id (usuario),
+      usuarios:operador_id (usuario, nombre),
       liquidaciones_detalle (
         planilla_id,
         monto,
@@ -224,12 +224,20 @@ export async function aprobarLiquidacion(liquidacionId: number) {
     monto: d.monto
   }));
 
+  // Obtener el nombre del tesorera (usuario actual)
+  const { data: tesoreraInfo } = await adminClient
+    .from('usuarios')
+    .select('nombre')
+    .eq('auth_id', tesorera.auth_id)
+    .single();
+
   await notificarDineroEntregado({
-    operador: liquidacion.usuarios.usuario,
-    recibe: tesorera.usuario,
+    operador: liquidacion.usuarios.nombre || liquidacion.usuarios.usuario,
+    recibe: tesoreraInfo?.nombre || tesorera.usuario,
     planillas: planillas
   });
 
   revalidatePath('/liquidaciones');
   return { success: true };
 }
+
