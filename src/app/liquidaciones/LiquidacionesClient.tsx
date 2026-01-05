@@ -377,17 +377,12 @@ export default function LiquidacionesClient({
                     </p>
                   </div>
 
-                  {planillaDetalle.estado === 'recaudada' && (
-                    <div className="bg-green-50 p-4 rounded-lg">
-                      <label className="block text-sm font-medium text-green-900 mb-2">Recaudado</label>
-                      <p className="text-sm text-green-800">
-                        Fecha: {planillaDetalle.fecha_recaudacion ? new Date(planillaDetalle.fecha_recaudacion).toLocaleString('es-CO') : 'Pendiente'}
-                      </p>
-                      <p className="text-sm text-green-800">
-                        Por: {planillaDetalle.recaudada_por || 'Pendiente'}
-                      </p>
-                    </div>
-                  )}
+                  <div className={`p-4 rounded-lg ${planillaDetalle.estado === 'recaudada' ? 'bg-green-50' : 'bg-gray-50'}`}>
+                    <label className="block text-sm font-medium text-gray-900 mb-2">Estado</label>
+                    <p className="text-sm text-gray-800">
+                      {planillaDetalle.estado === 'recaudada' ? '✓ Recaudada' : planillaDetalle.estado}
+                    </p>
+                  </div>
                 </div>
               </div>
 
