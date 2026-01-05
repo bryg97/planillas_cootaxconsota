@@ -1,62 +1,71 @@
 import { redirect } from 'next/navigation';
-import { createClient } from '@/lib/supabase/server';
-import { createAdminClient } from '@/lib/supabase/admin';
+import { getCurrentUser } from '@/lib/auth-helper';
+import { query } from '@/lib/db';
 import PlanillasClient from './PlanillasClient';
 
 export default async function PlanillasPage() {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getCurrentUser();
 
   if (!user) {
     redirect('/login');
   }
 
   // Obtener planillas con datos de vehículos (solo pendientes y recaudadas)
-  const adminClient = createAdminClient();
-  const { data: planillas } = await adminClient
-    .from('planillas')
-    .select(`
-      *,
-      vehiculos:vehiculo_id (codigo_vehiculo),
-      usuarios:operador_id (usuario)
-    `)
-    .in('estado', ['pendiente', 'recaudada'])
-    .order('fecha', { ascending: false })
-    .limit(500);
+  const planillas = await query(`
+    SELECT 
+      p.id,
+      p.numero_planilla,
+      p.fecha,
+      p.conductor,
+      p.operador,
+      p.valor,
+      p.tipo_pago,
+      p.estado,
+      p.origen,
+      p.destino,
+      p.created_at,
+      v.codigo_vehiculo
+    FROM planillas p
+    LEFT JOIN vehiculos v ON p.vehiculo_id = v.id
+    WHERE p.estado IN ('pendiente', 'recaudada')
+    ORDER BY p.fecha DESC
+    LIMIT 500
+  `);
 
   // Obtener vehículos para el formulario
-  const { data: vehiculos } = await adminClient
-    .from('vehiculos')
-    .select('*')
-    .order('codigo_vehiculo', { ascending: true });
+  const vehiculos = await query(
+    'SELECT id, codigo_vehiculo, saldo FROM vehiculos ORDER BY codigo_vehiculo ASC'
+  );
 
   // Obtener operadores
-  const { data: operadores } = await adminClient
-    .from('modulos')
-    .select('*')
-    .eq('descripcion', 'Operador')
-    .order('nombre', { ascending: true });
+  const operadores = await query(
+    "SELECT nombre FROM modulos WHERE descripcion = 'Operador' ORDER BY nombre ASC"
+  );
 
   // Obtener configuración para valor predeterminado
-  const { data: configuracion } = await adminClient
-    .from('configuracion')
-    .select('valor_planilla_defecto')
-    .single();
+  const configuracion = await query(
+    'SELECT valor_planilla_defecto FROM configuracion LIMIT 1'
+  );
 
   // Obtener rol del usuario
-  const { data: userData } = await adminClient
-    .from('usuarios')
-    .select('rol')
-    .eq('usuario', user.email)
-    .single();
+  const userData = await query(
+    'SELECT rol FROM usuarios WHERE usuario = $1',
+    [user.email]
+  );
 
-  const rol = userData?.rol || 'operador';
+  // Formatear datos para el cliente
+  const planillasFormateadas = planillas.map((p: any) => ({
+    ...p,
+    vehiculos: { codigo_vehiculo: p.codigo_vehiculo }
+  }));
 
-  return <PlanillasClient 
-    planillas={planillas || []} 
-    vehiculos={vehiculos || []} 
-    operadores={operadores || []} 
-    valorDefecto={configuracion?.valor_planilla_defecto || 0}
-    rol={rol}
-  />;
+  return (
+    <PlanillasClient
+      planillas={planillasFormateadas}
+      vehiculos={vehiculos}
+      operadores={operadores}
+      valorDefecto={configuracion[0]?.valor_planilla_defecto}
+      rol={userData[0]?.rol || 'operador'}
+    />
+  );
 }

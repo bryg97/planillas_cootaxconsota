@@ -6,6 +6,7 @@
 import { useState, useEffect } from 'react';
 import { useOperadorSeleccionado } from '../hooks/useOperadorSeleccionado';
 import { createPlanilla, verificarDeudaVehiculo, recaudarPlanillas, verificarNumeroPlanillaExiste } from './actions';
+import { useSession } from 'next-auth/react';
 
 export default function FormPlanilla({ 
   vehiculos,
@@ -18,9 +19,9 @@ export default function FormPlanilla({
   valorDefecto?: number;
   onClose: () => void;
 }) {
-  // Obtener email del usuario autenticado desde localStorage (ya que es client component)
-  const user = typeof window !== 'undefined' ? JSON.parse(localStorage.getItem('supabase.auth.user') || 'null') : null;
-  const email = user?.email || '';
+  // Obtener email del usuario autenticado desde sesión NextAuth
+  const { data: session } = useSession();
+  const email = session?.user?.email || '';
   const [operadorSeleccionado] = useOperadorSeleccionado(email);
   const [operadorForm, setOperadorForm] = useState<string>(operadorSeleccionado ? operadorSeleccionado.nombre : (operadores[0]?.nombre || ''));
 

@@ -1,44 +1,48 @@
 'use server';
 
-import { createAdminClient } from '@/lib/supabase/admin';
+import { query, queryOne, execute } from '@/lib/db';
+import { getSession } from '@/lib/auth-helper';
 import { revalidatePath } from 'next/cache';
-import { createClient } from '@/lib/supabase/server';
 import { notificarNuevaPlanillaCredito, notificarRecaudoCredito } from '@/lib/telegram';
 
 export async function verificarNumeroPlanillaExiste(numeroPlanilla: string) {
-  const adminClient = createAdminClient();
-  
-  const { data } = await adminClient
-    .from('planillas')
-    .select('id')
-    .eq('numero_planilla', numeroPlanilla)
-    .single();
-
-  return !!data;
+  try {
+    const result = await queryOne(
+      'SELECT id FROM planillas WHERE numero_planilla = $1',
+      [numeroPlanilla]
+    );
+    return !!result;
+  } catch (error) {
+    console.error('Error verificando número de planilla:', error);
+    return false;
+  }
 }
 
 export async function verificarDeudaVehiculo(vehiculoId: number) {
-  const adminClient = createAdminClient();
-  
-  const { data: planillas } = await adminClient
-    .from('planillas')
-    .select('id, numero_planilla, valor, fecha, conductor')
-    .eq('vehiculo_id', vehiculoId)
-    .eq('tipo_pago', 'credito')
-    .eq('estado', 'pendiente')
-    .order('fecha', { ascending: true });
+  try {
+    const planillas = await query(
+      `SELECT id, numero_planilla, valor, fecha, conductor 
+       FROM planillas 
+       WHERE vehiculo_id = $1 AND tipo_pago = 'credito' AND estado = 'pendiente'
+       ORDER BY fecha ASC`,
+      [vehiculoId]
+    );
 
-  if (!planillas || planillas.length === 0) {
+    if (!planillas || planillas.length === 0) {
+      return null;
+    }
+
+    const total = planillas.reduce((sum: number, p: any) => sum + (p.valor || 0), 0);
+
+    return {
+      planillas,
+      cantidad: planillas.length,
+      total
+    };
+  } catch (error) {
+    console.error('Error verificando deuda del vehículo:', error);
     return null;
   }
-
-  const total = planillas.reduce((sum, p) => sum + (p.valor || 0), 0);
-
-  return {
-    planillas: planillas,
-    cantidad: planillas.length,
-    total: total
-  };
 }
 
 export async function recaudarPlanillas(planillaIds: number[]) {
@@ -46,331 +50,331 @@ export async function recaudarPlanillas(planillaIds: number[]) {
     return { error: 'Debe seleccionar al menos una planilla' };
   }
 
-  const adminClient = createAdminClient();
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  try {
+    const session = await getSession();
+    if (!session?.user?.email) {
+      return { error: 'Usuario no autenticado' };
+    }
 
-  if (!user) {
-    return { error: 'Usuario no autenticado' };
+    // Obtener datos del usuario
+    const userData = await queryOne(
+      'SELECT id, nombre FROM usuarios WHERE usuario = $1',
+      [session.user.email]
+    );
+
+    if (!userData) {
+      return { error: 'Usuario no encontrado' };
+    }
+
+    // Obtener detalles de las planillas
+    const planillasData = await query(
+      `SELECT p.id, p.numero_planilla, p.valor, p.tipo_pago, p.fecha, p.conductor, v.placa
+       FROM planillas p
+       LEFT JOIN vehiculos v ON p.vehiculo_id = v.id
+       WHERE p.id = ANY($1::int[])`,
+      [planillaIds]
+    );
+
+    // Actualizar estado a 'recaudada'
+    await execute(
+      'UPDATE planillas SET estado = $1 WHERE id = ANY($2::int[])',
+      ['recaudada', planillaIds]
+    );
+
+    // Auditoría: registrar UPDATE masivo
+    for (const planillaId of planillaIds) {
+      await execute(
+        `INSERT INTO auditoria (usuario, accion, detalles, created_at, tabla, registro_id)
+         VALUES ($1, $2, $3, $4, $5, $6)`,
+        [
+          session.user.email,
+          'UPDATE',
+          `Recaudó planilla (ID: ${planillaId})`,
+          new Date().toISOString(),
+          'planillas',
+          planillaId
+        ]
+      );
+    }
+
+    // Crear registros de recaudos
+    for (const planillaId of planillaIds) {
+      await execute(
+        `INSERT INTO recaudos (planilla_id, usuario_id, fecha_recaudo)
+         VALUES ($1, $2, $3)`,
+        [planillaId, userData.id, new Date().toISOString()]
+      );
+    }
+
+    // Notificar recaudos de crédito
+    if (planillasData && planillasData.length > 0) {
+      const planillasCredito = planillasData.filter((p: any) => p.tipo_pago === 'credito');
+
+      if (planillasCredito.length > 0) {
+        const fecha = new Date().toLocaleDateString('es-CO', {
+          timeZone: 'America/Bogota',
+          year: 'numeric',
+          month: '2-digit',
+          day: '2-digit',
+          hour: '2-digit',
+          minute: '2-digit',
+          hour12: true
+        });
+
+        const totalRecaudado = planillasCredito.reduce((sum: number, p: any) => sum + p.valor, 0);
+
+        await notificarRecaudoCredito({
+          operador: userData.nombre,
+          planillas: planillasCredito.map((p: any) => ({
+            numero: p.numero_planilla,
+            monto: p.valor,
+            vehiculo: p.placa || 'N/A',
+            conductor: p.conductor
+          })),
+          total: totalRecaudado,
+          fecha
+        });
+      }
+    }
+
+    revalidatePath('/planillas');
+    revalidatePath('/cartera');
+    revalidatePath('/operaciones');
+
+    return { success: true, cantidad: planillaIds.length };
+  } catch (error) {
+    console.error('Error recaudando planillas:', error);
+    return { error: 'Error al recaudar planillas' };
   }
+}
 
-  // Obtener datos del usuario (nombre para notificación)
-  const { data: userData } = await adminClient
-    .from('usuarios')
-    .select('id, nombre')
-    .eq('usuario', user.email)
-    .single();
+export async function createPlanilla(formData: FormData) {
+  try {
+    const session = await getSession();
+    if (!session?.user?.email) {
+      return { error: 'Usuario no autenticado' };
+    }
 
-  if (!userData) {
-    return { error: 'Usuario no encontrado' };
-  }
+    const usarSaldoFavor = formData.get('usar_saldo_favor') === '1';
+    const vehiculoId = parseInt(formData.get('vehiculo_id') as string);
+    const conductor = formData.get('conductor') as string;
+    const operadorNombre = formData.get('operador') as string;
+    const valor = parseFloat(formData.get('valor') as string);
+    const numeroPlanilla = formData.get('numero_planilla') as string;
+    const fecha = formData.get('fecha') as string;
+    const tipoPago = formData.get('tipo_pago') as string;
+    const origen = formData.get('origen') as string;
+    const destino = formData.get('destino') as string;
 
-  // Obtener los detalles de las planillas para notificación
-  const { data: planillasData } = await adminClient
-    .from('planillas')
-    .select('id, numero_planilla, valor, tipo_pago, fecha, vehiculo_id, conductor, vehiculos(placa)')
-    .in('id', planillaIds);
-
-  // Actualizar el estado de las planillas a 'recaudada'
-  const { error: updateError } = await adminClient
-    .from('planillas')
-    .update({ estado: 'recaudada' })
-    .in('id', planillaIds);
-
-  if (updateError) {
-    return { error: updateError.message };
-  }
-
-  // Auditoría: registrar UPDATE masivo
-  for (const planillaId of planillaIds) {
-    await adminClient.from('auditoria').insert({
-      usuario: user.email,
-      accion: 'UPDATE',
-      detalles: `Recaudó planilla (ID: ${planillaId})`,
-      created_at: new Date().toISOString(),
-      tabla: 'planillas',
-      registro_id: planillaId
+    console.log('CreatePlanilla - Datos recibidos:', {
+      vehiculoId,
+      conductor,
+      operadorNombre,
+      valor,
+      numeroPlanilla,
+      fecha,
+      tipoPago,
+      origen,
+      destino
     });
-  }
 
-  // Crear registros de recaudos
-  const recaudos = planillaIds.map(planillaId => ({
-    planilla_id: planillaId,
-    usuario_id: userData.id,
-    fecha_recaudo: new Date().toISOString()
-  }));
+    if (!vehiculoId || !conductor || !valor || !numeroPlanilla || !fecha || !tipoPago || !operadorNombre) {
+      const missingFields = [];
+      if (!vehiculoId) missingFields.push('vehiculo_id');
+      if (!conductor) missingFields.push('conductor');
+      if (!valor) missingFields.push('valor');
+      if (!numeroPlanilla) missingFields.push('numero_planilla');
+      if (!fecha) missingFields.push('fecha');
+      if (!tipoPago) missingFields.push('tipo_pago');
+      if (!operadorNombre) missingFields.push('operador');
+      return { error: `Campos faltantes: ${missingFields.join(', ')}` };
+    }
 
-  const { error: recaudoError } = await adminClient
-    .from('recaudos')
-    .insert(recaudos);
+    // Obtener el ID del usuario
+    const userData = await queryOne(
+      'SELECT id FROM usuarios WHERE usuario = $1',
+      [session.user.email]
+    );
 
-  if (recaudoError) {
-    console.error('Error al crear recaudos:', recaudoError);
-  }
+    if (!userData) {
+      return { error: 'Usuario no encontrado' };
+    }
 
-  // Notificar recaudos de crédito
-  if (planillasData && planillasData.length > 0) {
-    const planillasCredito = planillasData.filter((p: any) => p.tipo_pago === 'credito');
-    
-    if (planillasCredito.length > 0) {
-      const fecha = new Date().toLocaleDateString('es-CO', {
+    // Obtener datos del vehículo
+    const vehiculo = await queryOne(
+      'SELECT codigo_vehiculo, saldo FROM vehiculos WHERE id = $1',
+      [vehiculoId]
+    );
+
+    // Insertar planilla
+    const result = await queryOne(
+      `INSERT INTO planillas (
+        vehiculo_id, conductor, operador, valor, numero_planilla, fecha,
+        operador_id, pagada, tipo_pago, estado, origen, destino
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+      RETURNING id`,
+      [
+        vehiculoId,
+        conductor,
+        operadorNombre,
+        valor,
+        numeroPlanilla,
+        fecha,
+        userData.id,
+        usarSaldoFavor ? 1 : 0,
+        tipoPago,
+        usarSaldoFavor ? 'pagada' : 'pendiente',
+        origen || null,
+        destino || null
+      ]
+    );
+
+    const planillaId = result?.id;
+
+    // Auditoría
+    if (planillaId) {
+      await execute(
+        `INSERT INTO auditoria (usuario, accion, detalles, created_at, tabla, registro_id)
+         VALUES ($1, $2, $3, $4, $5, $6)`,
+        [
+          operadorNombre,
+          'INSERT',
+          `Creó planilla N° ${numeroPlanilla} para vehículo ${vehiculoId}`,
+          new Date().toISOString(),
+          'planillas',
+          planillaId
+        ]
+      );
+    }
+
+    // Si se usó saldo a favor, actualizar el saldo del vehículo
+    if (usarSaldoFavor && vehiculo && vehiculo.saldo > 0) {
+      await execute(
+        'UPDATE vehiculos SET saldo = 0 WHERE id = $1',
+        [vehiculoId]
+      );
+    }
+
+    // Enviar notificación Telegram solo si es crédito
+    if (tipoPago === 'credito') {
+      const fechaFormateada = new Date().toLocaleString('es-CO', {
         timeZone: 'America/Bogota',
-        year: 'numeric',
-        month: '2-digit',
         day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
         hour: '2-digit',
         minute: '2-digit',
         hour12: true
       });
 
-      const totalRecaudado = planillasCredito.reduce((sum: number, p: any) => sum + p.valor, 0);
-
-      await notificarRecaudoCredito({
-        operador: userData.nombre,
-        planillas: planillasCredito.map((p: any) => ({
-          numero: p.numero_planilla,
-          monto: p.valor,
-          vehiculo: p.vehiculos?.placa || 'N/A',
-          conductor: p.conductor
-        })),
-        total: totalRecaudado,
-        fecha
+      await notificarNuevaPlanillaCredito({
+        operador: operadorNombre,
+        vehiculo: vehiculo?.codigo_vehiculo || '',
+        conductor,
+        numero_planilla: numeroPlanilla,
+        fecha: fechaFormateada
       });
     }
+
+    revalidatePath('/planillas');
+    revalidatePath('/operaciones');
+
+    return { success: true, data: result };
+  } catch (error) {
+    console.error('Error creating planilla:', error);
+    return { error: 'Error al crear la planilla' };
   }
-
-  revalidatePath('/planillas');
-  revalidatePath('/cartera');
-  revalidatePath('/operaciones');
-  
-  return { success: true, cantidad: planillaIds.length };
-}
-
-export async function createPlanilla(formData: FormData) {
-    const usarSaldoFavor = formData.get('usar_saldo_favor') === '1';
-  const vehiculoId = parseInt(formData.get('vehiculo_id') as string);
-  const conductor = formData.get('conductor') as string;
-  const operadorNombre = formData.get('operador') as string;
-  const valor = parseFloat(formData.get('valor') as string);
-  const numeroPlanilla = formData.get('numero_planilla') as string;
-  const fecha = formData.get('fecha') as string;
-  const tipoPago = formData.get('tipo_pago') as string;
-  const origen = formData.get('origen') as string;
-  const destino = formData.get('destino') as string;
-
-  // Log para debug
-  console.log('CreatePlanilla - Datos recibidos:', {
-    vehiculoId,
-    conductor,
-    operadorNombre,
-    valor,
-    numeroPlanilla,
-    fecha,
-    tipoPago,
-    origen,
-    destino
-  });
-
-  if (!vehiculoId || !conductor || !valor || !numeroPlanilla || !fecha || !tipoPago || !operadorNombre) {
-    const missingFields = [];
-    if (!vehiculoId) missingFields.push('vehiculo_id');
-    if (!conductor) missingFields.push('conductor');
-    if (!valor) missingFields.push('valor');
-    if (!numeroPlanilla) missingFields.push('numero_planilla');
-    if (!fecha) missingFields.push('fecha');
-    if (!tipoPago) missingFields.push('tipo_pago');
-    if (!operadorNombre) missingFields.push('operador');
-    return { error: `Campos faltantes: ${missingFields.join(', ')}` };
-  }
-
-  // Obtener el usuario actual
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  
-  if (!user) {
-    return { error: 'Usuario no autenticado' };
-  }
-
-  // Obtener el ID del operador desde la tabla usuarios
-  const adminClient = createAdminClient();
-  const { data: userData } = await adminClient
-    .from('usuarios')
-    .select('id')
-    .eq('usuario', user.email)
-    .single();
-
-  if (!userData) {
-    return { error: 'Usuario no encontrado' };
-  }
-
-  // Obtener datos del vehículo
-  const { data: vehiculo } = await adminClient
-    .from('vehiculos')
-    .select('codigo_vehiculo, saldo')
-    .eq('id', vehiculoId)
-    .single();
-
-  const { data, error } = await adminClient
-    .from('planillas')
-    .insert({
-      vehiculo_id: vehiculoId,
-      conductor: conductor,
-      operador: operadorNombre,
-      valor: valor,
-      numero_planilla: numeroPlanilla,
-      fecha: fecha,
-      operador_id: userData.id,
-      pagada: usarSaldoFavor ? 1 : 0,
-      tipo_pago: tipoPago,
-      estado: usarSaldoFavor ? 'pagada' : 'pendiente',
-      origen: origen || null,
-      destino: destino || null
-    })
-    .select()
-    .single();
-
-  // Auditoría: registrar INSERT
-  if (data && data.id) {
-    await adminClient.from('auditoria').insert({
-      usuario: operadorNombre,
-      accion: 'INSERT',
-      detalles: `Creó planilla N° ${numeroPlanilla} para vehículo ${vehiculoId}`,
-      created_at: new Date().toISOString(),
-      tabla: 'planillas',
-      registro_id: data.id
-    });
-  }
-
-  // Si se usó saldo a favor, actualizar el saldo del vehículo a 0
-  if (usarSaldoFavor && vehiculo && vehiculo.saldo > 0) {
-    await adminClient
-      .from('vehiculos')
-      .update({ saldo: 0 })
-      .eq('id', vehiculoId);
-  }
-
-  if (error) {
-    return { error: error.message };
-  }
-
-  // Enviar notificación Telegram solo si es crédito
-  if (tipoPago === 'credito') {
-    // Usar la fecha/hora actual del sistema para la notificación en zona horaria de Bogotá
-    const fechaFormateada = new Date().toLocaleString('es-CO', {
-      timeZone: 'America/Bogota',
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-      hour12: true
-    });
-    // operadorNombre ya corresponde al operador seleccionado (no al email)
-    await notificarNuevaPlanillaCredito({
-      operador: operadorNombre,
-      vehiculo: vehiculo?.codigo_vehiculo || '',
-      conductor: conductor,
-      numero_planilla: numeroPlanilla,
-      fecha: fechaFormateada
-    });
-  }
-
-  revalidatePath('/planillas');
-  revalidatePath('/operaciones');
-  return { success: true, data };
 }
 
 export async function updatePlanilla(formData: FormData) {
-  const id = parseInt(formData.get('id') as string);
-  const vehiculoId = parseInt(formData.get('vehiculo_id') as string);
-  const conductor = formData.get('conductor') as string;
-  const operadorNombre = formData.get('operador') as string;
-  const valor = parseFloat(formData.get('valor') as string);
-  const numeroPlanilla = formData.get('numero_planilla') as string;
-  const fecha = formData.get('fecha') as string;
-  const tipoPago = formData.get('tipo_pago') as string;
-  const estado = formData.get('estado') as string;
-  const origen = formData.get('origen') as string;
-  const destino = formData.get('destino') as string;
+  try {
+    const session = await getSession();
+    if (!session?.user?.email) {
+      return { error: 'Usuario no autenticado' };
+    }
 
-  if (!id || !vehiculoId || !conductor || !valor || !numeroPlanilla || !fecha || !tipoPago || !operadorNombre || !estado) {
-    return { error: 'Todos los campos son requeridos' };
+    const id = parseInt(formData.get('id') as string);
+    const vehiculoId = parseInt(formData.get('vehiculo_id') as string);
+    const conductor = formData.get('conductor') as string;
+    const operadorNombre = formData.get('operador') as string;
+    const valor = parseFloat(formData.get('valor') as string);
+    const numeroPlanilla = formData.get('numero_planilla') as string;
+    const fecha = formData.get('fecha') as string;
+    const tipoPago = formData.get('tipo_pago') as string;
+    const estado = formData.get('estado') as string;
+    const origen = formData.get('origen') as string;
+    const destino = formData.get('destino') as string;
+
+    if (!id || !vehiculoId || !conductor || !valor || !numeroPlanilla || !fecha || !tipoPago || !operadorNombre || !estado) {
+      return { error: 'Todos los campos son requeridos' };
+    }
+
+    const result = await queryOne(
+      `UPDATE planillas SET
+        vehiculo_id = $1, conductor = $2, operador = $3, valor = $4,
+        numero_planilla = $5, fecha = $6, tipo_pago = $7, estado = $8,
+        origen = $9, destino = $10
+       WHERE id = $11
+       RETURNING *`,
+      [vehiculoId, conductor, operadorNombre, valor, numeroPlanilla, fecha, tipoPago, estado, origen || null, destino || null, id]
+    );
+
+    // Auditoría
+    await execute(
+      `INSERT INTO auditoria (usuario, accion, detalles, created_at, tabla, registro_id)
+       VALUES ($1, $2, $3, $4, $5, $6)`,
+      [
+        operadorNombre,
+        'UPDATE',
+        `Editó planilla N° ${numeroPlanilla} (ID: ${id})`,
+        new Date().toISOString(),
+        'planillas',
+        id
+      ]
+    );
+
+    revalidatePath('/planillas');
+    revalidatePath('/operaciones');
+    revalidatePath('/historico');
+
+    return { success: true, data: result };
+  } catch (error) {
+    console.error('Error updating planilla:', error);
+    return { error: 'Error al actualizar la planilla' };
   }
-
-  const adminClient = createAdminClient();
-  const { data, error } = await adminClient
-    .from('planillas')
-    .update({
-      vehiculo_id: vehiculoId,
-      conductor: conductor,
-      operador: operadorNombre,
-      valor: valor,
-      numero_planilla: numeroPlanilla,
-      fecha: fecha,
-      tipo_pago: tipoPago,
-      estado: estado,
-      origen: origen || null,
-      destino: destino || null
-    })
-    .eq('id', id)
-    .select()
-    .single();
-
-  // Auditoría: registrar UPDATE
-  if (data && data.id) {
-    await adminClient.from('auditoria').insert({
-      usuario: operadorNombre,
-      accion: 'UPDATE',
-      detalles: `Editó planilla N° ${numeroPlanilla} (ID: ${id})`,
-      created_at: new Date().toISOString(),
-      tabla: 'planillas',
-      registro_id: id
-    });
-  }
-
-  if (error) {
-    return { error: error.message };
-  }
-
-  revalidatePath('/planillas');
-  revalidatePath('/operaciones');
-  revalidatePath('/historico');
-  return { success: true, data };
 }
 
 export async function eliminarPlanilla(planillaId: number) {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  try {
+    const session = await getSession();
+    if (!session?.user?.email) {
+      return { error: 'Usuario no autenticado' };
+    }
 
-  if (!user) {
-    return { error: 'Usuario no autenticado' };
+    // Verificar que el usuario sea admin
+    const userData = await queryOne(
+      'SELECT rol FROM usuarios WHERE usuario = $1',
+      [session.user.email]
+    );
+
+    if (userData?.rol !== 'administrador') {
+      return { error: 'No tienes permisos para eliminar planillas' };
+    }
+
+    // Eliminar la planilla
+    await execute(
+      'DELETE FROM planillas WHERE id = $1',
+      [planillaId]
+    );
+
+    revalidatePath('/planillas');
+    revalidatePath('/operaciones');
+    revalidatePath('/historico');
+    revalidatePath('/liquidaciones');
+
+    return { success: true };
+  } catch (error) {
+    console.error('Error deleting planilla:', error);
+    return { error: 'Error al eliminar la planilla' };
   }
-
-  // Verificar que el usuario sea admin
-  const adminClient = createAdminClient();
-  const { data: userData } = await adminClient
-    .from('usuarios')
-    .select('rol')
-    .eq('usuario', user.email)
-    .single();
-
-  if (userData?.rol !== 'administrador') {
-    return { error: 'No tienes permisos para eliminar planillas' };
-  }
-
-  // Eliminar la planilla
-  const { error } = await adminClient
-    .from('planillas')
-    .delete()
-    .eq('id', planillaId);
-
-  if (error) {
-    return { error: error.message };
-  }
-
-  revalidatePath('/planillas');
-  revalidatePath('/operaciones');
-  revalidatePath('/historico');
-  revalidatePath('/liquidaciones');
-  return { success: true };
 }
