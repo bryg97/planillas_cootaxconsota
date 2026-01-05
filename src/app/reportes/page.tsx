@@ -1,27 +1,29 @@
 
 import { redirect } from 'next/navigation';
-import { createClient } from '@/lib/supabase/server';
-import { createAdminClient } from '@/lib/supabase/admin';
+import { getCurrentUser } from '@/lib/auth-helper';
+import { query } from '@/lib/db';
 import ReportesClient from './ReportesClient';
 
 export default async function ReportesPage() {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getCurrentUser();
   if (!user) {
     redirect('/login');
   }
-  const adminClient = createAdminClient();
-  const { data: planillas } = await adminClient
-    .from('planillas')
-    .select('id, numero_planilla, fecha, vehiculo_id, conductor, valor, tipo_pago, estado, vehiculos(codigo_vehiculo)');
-  const { data: liquidaciones } = await adminClient
-    .from('liquidaciones')
-    .select('id, numero_liquidacion, fecha, conductor, valor, estado');
+
+  const planillas = await query(`
+    SELECT p.id, p.numero_planilla, p.fecha, p.vehiculo_id, p.conductor, p.valor, p.tipo_pago, p.estado, v.codigo_vehiculo
+    FROM planillas p
+    LEFT JOIN vehiculos v ON p.vehiculo_id = v.id
+  `);
+
+  const liquidaciones = await query(`
+    SELECT id, numero_liquidacion, fecha, conductor, valor, estado FROM liquidaciones
+  `);
 
   // Estadísticas generales
   const totalPlanillas = planillas?.length || 0;
-  const totalRecaudado = planillas?.reduce((sum, p) => sum + parseFloat(p.valor), 0) || 0;
-  const totalVehiculos = (await adminClient.from('vehiculos').select('id')).data?.length || 0;
+  const totalRecaudado = planillas?.reduce((sum: number, p: any) => sum + parseFloat(p.valor || 0), 0) || 0;
+  const totalVehiculos = await query('SELECT COUNT(*) as count FROM vehiculos');
 
   return (
     <ReportesClient
