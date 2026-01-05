@@ -22,7 +22,6 @@ export async function getPlanillasParaLiquidar() {
       estado,
       vehiculo_id,
       created_at,
-      observaciones,
       vehiculos:vehiculo_id (codigo_vehiculo),
       usuarios:operador_id (usuario)
     `)
