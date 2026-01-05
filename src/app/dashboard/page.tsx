@@ -1,27 +1,21 @@
 import DashboardClient from './DashboardClient';
-import { createClient } from '@/lib/supabase/server';
-import { createAdminClient } from '@/lib/supabase/admin';
+import { getCurrentUser } from '@/lib/auth-helper';
+import { query } from '@/lib/db';
 import { redirect } from 'next/navigation';
 
 export default async function DashboardPage() {
-  const supabase = await createClient();
-  const adminClient = createAdminClient();
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getCurrentUser();
 
   if (!user) {
     redirect('/login');
   }
 
-  const { data: userData } = await adminClient
-    .from('usuarios')
-    .select('rol')
-    .eq('usuario', user.email)
-    .single();
+  const userData = await query(
+    'SELECT rol FROM usuarios WHERE usuario = $1',
+    [user.email]
+  );
 
-  const rol = userData?.rol || 'operador';
+  const rol = userData[0]?.rol || 'operador';
   const modulos = [
     { nombre: 'Planillas', ruta: '/planillas', icono: '📋', color: 'blue', roles: ['administrador', 'supervisor', 'operador'] },
     { nombre: 'Operaciones', ruta: '/operaciones', icono: '⚙️', color: 'green', roles: ['administrador', 'operador'] },

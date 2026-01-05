@@ -1,24 +1,22 @@
 import { redirect } from 'next/navigation';
-import { createClient } from '@/lib/supabase/server';
-import { createAdminClient } from '@/lib/supabase/admin';
+import { getCurrentUser } from '@/lib/auth-helper';
+import { query } from '@/lib/db';
 import OperacionesClient from './OperacionesClient';
 
 export default async function OperacionesPage() {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getCurrentUser();
 
   if (!user) {
     redirect('/login');
   }
 
-  const adminClient = createAdminClient();
-  
   // Obtener datos del usuario actual
-  const { data: userData } = await adminClient
-    .from('usuarios')
-    .select('id, usuario, rol')
-    .eq('usuario', user.email)
-    .single();
+  const userData = await query(
+    'SELECT id, usuario, rol FROM usuarios WHERE usuario = $1',
+    [user.email]
+  );
+
+  const userRow = userData[0];
 
   // Obtener planillas del día local (zona horaria de Bogotá)
   const bogota = new Date().toLocaleString('en-US', { timeZone: 'America/Bogota' });
@@ -29,39 +27,42 @@ export default async function OperacionesPage() {
   const hoyLocal = `${yyyy}-${mm}-${dd}`;
 
   // Traer todas las planillas cuya fecha esté entre 00:00 y 23:59 del día local
-  const { data: planillasHoy } = await adminClient
-    .from('planillas')
-    .select(`
-      *,
-      vehiculos:vehiculo_id (codigo_vehiculo)
-    `)
-    .gte('fecha', hoyLocal)
-    .lte('fecha', hoyLocal)
-    .order('id', { ascending: false });
+  const planillasHoy = await query(`
+    SELECT 
+      p.*,
+      v.codigo_vehiculo
+    FROM planillas p
+    LEFT JOIN vehiculos v ON p.vehiculo_id = v.id
+    WHERE DATE(p.fecha) = $1::date
+    ORDER BY p.id DESC
+  `, [hoyLocal]);
 
   // Obtener mis liquidaciones pendientes (si soy operador)
-  const { data: misLiquidaciones } = await adminClient
-    .from('liquidaciones')
-    .select(`
-      *,
-      liquidaciones_detalle:liquidaciones_detalle(
-        planilla_id,
-        planillas:planilla_id (
-          numero_planilla,
-          valor,
-          vehiculos:vehiculo_id (codigo_vehiculo)
+  const misLiquidaciones = await query(`
+    SELECT 
+      l.*,
+      json_agg(json_build_object(
+        'planilla_id', ld.planilla_id,
+        'planillas', json_build_object(
+          'numero_planilla', p.numero_planilla,
+          'valor', p.valor,
+          'codigo_vehiculo', v.codigo_vehiculo
         )
-      )
-    `)
-    .eq('operador_id', userData?.id)
-    .eq('estado', 'pendiente')
-    .order('fecha_liquidacion', { ascending: false });
+      )) as liquidaciones_detalle
+    FROM liquidaciones l
+    LEFT JOIN liquidaciones_detalle ld ON l.id = ld.liquidacion_id
+    LEFT JOIN planillas p ON ld.planilla_id = p.id
+    LEFT JOIN vehiculos v ON p.vehiculo_id = v.id
+    WHERE l.operador_id = $1 AND l.estado = 'pendiente'
+    GROUP BY l.id
+    ORDER BY l.fecha_liquidacion DESC
+  `, [userRow?.id]);
 
   // Estadísticas del día
-  const totalRecaudado = planillasHoy?.reduce((sum, p) => sum + parseFloat(p.valor.toString()), 0) || 0;
-  const planillasContado = planillasHoy?.filter(p => p.tipo_pago === 'contado').length || 0;
-  const planillasCredito = planillasHoy?.filter(p => p.tipo_pago === 'credito').length || 0;
-  const planillasPendientes = planillasHoy?.filter(p => p.estado === 'pendiente').length || 0;
+  const totalRecaudado = planillasHoy?.reduce((sum: number, p: any) => sum + parseFloat(p.valor?.toString() || '0'), 0) || 0;
+  const planillasContado = planillasHoy?.filter((p: any) => p.tipo_pago === 'contado').length || 0;
+  const planillasCredito = planillasHoy?.filter((p: any) => p.tipo_pago === 'credito').length || 0;
+  const planillasPendientes = planillasHoy?.filter((p: any) => p.estado === 'pendiente').length || 0;
 
   return (
     <OperacionesClient
@@ -74,7 +75,7 @@ export default async function OperacionesPage() {
         credito: planillasCredito,
         pendientes: planillasPendientes
       }}
-      usuario={userData}
+      usuario={userRow}
     />
   );
 }

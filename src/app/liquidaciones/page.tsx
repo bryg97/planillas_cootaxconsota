@@ -1,27 +1,23 @@
 import { redirect } from 'next/navigation';
-import { createClient } from '@/lib/supabase/server';
-import { createAdminClient } from '@/lib/supabase/admin';
+import { getCurrentUser } from '@/lib/auth-helper';
+import { query } from '@/lib/db';
 import LiquidacionesClient from './LiquidacionesClient';
 import { getPlanillasParaLiquidar, getLiquidacionesPendientes } from './actions';
 
 export default async function LiquidacionesPage() {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getCurrentUser();
 
   if (!user) {
     redirect('/login');
   }
 
-  const adminClient = createAdminClient();
-  
   // Obtener rol del usuario
-  const { data: userData } = await adminClient
-    .from('usuarios')
-    .select('rol, id')
-    .eq('usuario', user.email)
-    .single();
+  const userData = await query(
+    'SELECT rol, id FROM usuarios WHERE usuario = $1',
+    [user.email]
+  );
 
-  const rol = userData?.rol || 'operador';
+  const rol = userData[0]?.rol || 'operador';
 
   // Si es operador o administrador, obtener TODAS las planillas
   let planillas: any[] = [];
