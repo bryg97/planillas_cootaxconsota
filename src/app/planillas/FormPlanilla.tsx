@@ -44,11 +44,7 @@ export default function FormPlanilla({
   const [saldoFavor, setSaldoFavor] = useState(0);
   const [usarSaldoFavor, setUsarSaldoFavor] = useState(false);
 
-  useEffect(() => {
-    // Generar número de planilla automático
-      const timestamp = Date.now().toString().slice(-6);
-      setNumeroPlanilla(timestamp);
-  }, []);
+  // Sin autollenado: el usuario debe ingresar manualmente el número de planilla
 
   async function handleVehiculoChange(vehiculoId: string) {
     setVehiculoSeleccionado(vehiculoId);
