@@ -121,3 +121,32 @@ ${listaPlanillas}
 
   return await enviarMensajeTelegram(mensaje);
 }
+
+interface RecaudoCredito {
+  operador: string;
+  planillas: Array<{
+    numero: string;
+    monto: number;
+    vehiculo: string;
+    conductor: string;
+  }>;
+  total: number;
+  fecha: string;
+}
+
+export async function notificarRecaudoCredito(data: RecaudoCredito) {
+  const listaPlanillas = data.planillas
+    .map(p => `- N°${p.numero} (${p.vehiculo}) ${p.conductor}  $${p.monto.toLocaleString('es-CO')}`)
+    .join('\n');
+
+  const mensaje = ` <b>CRÉDITO RECAUDADO</b>
+
+ Operador: ${data.operador}
+ Planillas:
+${listaPlanillas}
+
+ Total recaudado: $${data.total.toLocaleString('es-CO')}
+ ${data.fecha}`;
+
+  return await enviarMensajeTelegram(mensaje);
+}

@@ -3,7 +3,7 @@
 import { createAdminClient } from '@/lib/supabase/admin';
 import { revalidatePath } from 'next/cache';
 import { createClient } from '@/lib/supabase/server';
-import { notificarNuevaPlanillaCredito } from '@/lib/telegram';
+import { notificarNuevaPlanillaCredito, notificarRecaudoCredito } from '@/lib/telegram';
 
 export async function verificarNumeroPlanillaExiste(numeroPlanilla: string) {
   const adminClient = createAdminClient();
@@ -54,16 +54,22 @@ export async function recaudarPlanillas(planillaIds: number[]) {
     return { error: 'Usuario no autenticado' };
   }
 
-  // Obtener el ID del usuario
+  // Obtener datos del usuario (nombre para notificación)
   const { data: userData } = await adminClient
     .from('usuarios')
-    .select('id')
+    .select('id, nombre')
     .eq('usuario', user.email)
     .single();
 
   if (!userData) {
     return { error: 'Usuario no encontrado' };
   }
+
+  // Obtener los detalles de las planillas para notificación
+  const { data: planillasData } = await adminClient
+    .from('planillas')
+    .select('id, numero_planilla, valor, tipo_pago, fecha, vehiculo_id, conductor, vehiculos(placa)')
+    .in('id', planillaIds);
 
   // Actualizar el estado de las planillas a 'recaudada'
   const { error: updateError } = await adminClient
@@ -100,7 +106,37 @@ export async function recaudarPlanillas(planillaIds: number[]) {
 
   if (recaudoError) {
     console.error('Error al crear recaudos:', recaudoError);
-    // No retornamos error aquí porque las planillas ya fueron actualizadas
+  }
+
+  // Notificar recaudos de crédito
+  if (planillasData && planillasData.length > 0) {
+    const planillasCredito = planillasData.filter((p: any) => p.tipo_pago === 'credito');
+    
+    if (planillasCredito.length > 0) {
+      const fecha = new Date().toLocaleDateString('es-CO', {
+        timeZone: 'America/Bogota',
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: true
+      });
+
+      const totalRecaudado = planillasCredito.reduce((sum: number, p: any) => sum + p.valor, 0);
+
+      await notificarRecaudoCredito({
+        operador: userData.nombre,
+        planillas: planillasCredito.map((p: any) => ({
+          numero: p.numero_planilla,
+          monto: p.valor,
+          vehiculo: p.vehiculos?.placa || 'N/A',
+          conductor: p.conductor
+        })),
+        total: totalRecaudado,
+        fecha
+      });
+    }
   }
 
   revalidatePath('/planillas');
