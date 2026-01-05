@@ -5,6 +5,18 @@ import { revalidatePath } from 'next/cache';
 import { createClient } from '@/lib/supabase/server';
 import { notificarNuevaPlanillaCredito } from '@/lib/telegram';
 
+export async function verificarNumeroPlanillaExiste(numeroPlanilla: string) {
+  const adminClient = createAdminClient();
+  
+  const { data } = await adminClient
+    .from('planillas')
+    .select('id')
+    .eq('numero_planilla', numeroPlanilla)
+    .single();
+
+  return !!data;
+}
+
 export async function verificarDeudaVehiculo(vehiculoId: number) {
   const adminClient = createAdminClient();
   

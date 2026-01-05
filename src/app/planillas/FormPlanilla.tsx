@@ -5,7 +5,7 @@
 
 import { useState, useEffect } from 'react';
 import { useOperadorSeleccionado } from '../hooks/useOperadorSeleccionado';
-import { createPlanilla, verificarDeudaVehiculo, recaudarPlanillas } from './actions';
+import { createPlanilla, verificarDeudaVehiculo, recaudarPlanillas, verificarNumeroPlanillaExiste } from './actions';
 
 export default function FormPlanilla({ 
   vehiculos,
@@ -46,8 +46,8 @@ export default function FormPlanilla({
 
   useEffect(() => {
     // Generar número de planilla automático
-    const timestamp = Date.now().toString().slice(-8);
-    setNumeroPlanilla(`PL-${timestamp}`);
+      const timestamp = Date.now().toString().slice(-6);
+      setNumeroPlanilla(timestamp);
   }, []);
 
   async function handleVehiculoChange(vehiculoId: string) {
@@ -112,6 +112,21 @@ export default function FormPlanilla({
     e.preventDefault();
     setLoading(true);
     setError('');
+
+      // Validar que el número de planilla sea solo números
+      if (!/^\d+$/.test(numeroPlanilla)) {
+        setError('El número de planilla debe contener solo números');
+        setLoading(false);
+        return;
+      }
+
+      // Verificar si el número de planilla ya existe
+      const existe = await verificarNumeroPlanillaExiste(numeroPlanilla);
+      if (existe) {
+        setError(`El número de planilla ${numeroPlanilla} ya está registrado. Por favor use otro número.`);
+        setLoading(false);
+        return;
+      }
 
     const formData = new FormData(e.currentTarget);
     if (usarSaldoFavor) {
@@ -309,14 +324,22 @@ export default function FormPlanilla({
           </div>
           {/* Número de Planilla */}
           <div className="md:col-span-1">
-            <label className="block text-sm font-bold text-gray-700 mb-2">N° Planilla</label>
+              <label className="block text-sm font-bold text-gray-700 mb-2">N° Planilla *</label>
             <input
-              type="text"
+                type="number"
               name="numero_planilla"
               value={numeroPlanilla}
-              onChange={(e) => setNumeroPlanilla(e.target.value)}
+                onChange={(e) => {
+                  const value = e.target.value.replace(/[^0-9]/g, '');
+                  setNumeroPlanilla(value);
+                }}
               required
+                min="1"
+                step="1"
+                pattern="[0-9]*"
+                inputMode="numeric"
               className="w-full px-3 py-2 border border-blue-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 bg-blue-50"
+                placeholder="Solo números"
             />
           </div>
           {/* Origen */}
