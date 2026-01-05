@@ -43,10 +43,20 @@ export default async function PlanillasPage() {
     .select('valor_planilla_defecto')
     .single();
 
+  // Obtener rol del usuario
+  const { data: userData } = await adminClient
+    .from('usuarios')
+    .select('rol')
+    .eq('usuario', user.email)
+    .single();
+
+  const rol = userData?.rol || 'operador';
+
   return <PlanillasClient 
     planillas={planillas || []} 
     vehiculos={vehiculos || []} 
     operadores={operadores || []} 
     valorDefecto={configuracion?.valor_planilla_defecto || 0}
+    rol={rol}
   />;
 }

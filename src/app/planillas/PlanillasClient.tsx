@@ -5,13 +5,29 @@ import ImportarPlanillasModal from './ImportarPlanillasModal';
 import FormPlanilla from './FormPlanilla';
 import VerPlanilla from './VerPlanilla';
 import EditarPlanilla from './EditarPlanilla';
+import { eliminarPlanilla } from './actions';
 
-export default function PlanillasClient({ planillas, vehiculos, operadores, valorDefecto }: { planillas: any[]; vehiculos: any[]; operadores: any[]; valorDefecto?: number }) {
+export default function PlanillasClient({ planillas, vehiculos, operadores, valorDefecto, rol }: { planillas: any[]; vehiculos: any[]; operadores: any[]; valorDefecto?: number; rol: string }) {
   const [showForm, setShowForm] = useState(false);
   const [planillaVer, setPlanillaVer] = useState<any>(null);
   const [planillaEditar, setPlanillaEditar] = useState<any>(null);
   const [showImport, setShowImport] = useState(false);
   const [busqueda, setBusqueda] = useState('');
+
+  async function handleEliminar(planillaId: number, numeroPlanilla: string) {
+    if (!confirm(`¿Estás seguro de eliminar la planilla N° ${numeroPlanilla}? Esta acción no se puede deshacer.`)) {
+      return;
+    }
+
+    const result = await eliminarPlanilla(planillaId);
+    
+    if (result.error) {
+      alert('Error: ' + result.error);
+    } else {
+      alert('Planilla eliminada correctamente');
+      window.location.reload();
+    }
+  }
 
   // Filtrar planillas según búsqueda
   const planillasFiltradas = planillas.filter(p => {
@@ -154,10 +170,18 @@ export default function PlanillasClient({ planillas, vehiculos, operadores, valo
                         </button>
                         <button 
                           onClick={() => setPlanillaEditar(planilla)}
-                          className="text-green-600 hover:text-green-900"
+                          className="text-green-600 hover:text-green-900 mr-3"
                         >
                           Editar
                         </button>
+                        {rol === 'administrador' && (
+                          <button 
+                            onClick={() => handleEliminar(planilla.id, planilla.numero_planilla)}
+                            className="text-red-600 hover:text-red-900"
+                          >
+                            Eliminar
+                          </button>
+                        )}
                       </td>
                     </tr>
                   ))

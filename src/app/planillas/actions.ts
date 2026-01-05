@@ -268,3 +268,40 @@ export async function updatePlanilla(formData: FormData) {
   revalidatePath('/historico');
   return { success: true, data };
 }
+
+export async function eliminarPlanilla(planillaId: number) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+
+  if (!user) {
+    return { error: 'Usuario no autenticado' };
+  }
+
+  // Verificar que el usuario sea admin
+  const adminClient = createAdminClient();
+  const { data: userData } = await adminClient
+    .from('usuarios')
+    .select('rol')
+    .eq('usuario', user.email)
+    .single();
+
+  if (userData?.rol !== 'administrador') {
+    return { error: 'No tienes permisos para eliminar planillas' };
+  }
+
+  // Eliminar la planilla
+  const { error } = await adminClient
+    .from('planillas')
+    .delete()
+    .eq('id', planillaId);
+
+  if (error) {
+    return { error: error.message };
+  }
+
+  revalidatePath('/planillas');
+  revalidatePath('/operaciones');
+  revalidatePath('/historico');
+  revalidatePath('/liquidaciones');
+  return { success: true };
+}
