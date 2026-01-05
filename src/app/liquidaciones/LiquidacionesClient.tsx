@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { crearLiquidacion, aprobarLiquidacion } from "./actions";
+import * as XLSX from 'xlsx';
 
 export default function LiquidacionesClient({ 
   rol,
@@ -103,6 +104,37 @@ export default function LiquidacionesClient({
       setLoading(false);
     }
 
+    function exportarPlanillas() {
+      const datosExportar = planillasFiltradas.map(p => ({
+        'N° Planilla': p.numero_planilla,
+        'Fecha': p.fecha ? p.fecha.split('-').reverse().join('/') : '',
+        'Vehículo': p.vehiculos?.codigo_vehiculo || '',
+        'Conductor': p.conductor,
+        'Tipo': p.tipo_pago,
+        'Valor': p.valor,
+        'Estado': p.estado,
+        'Seleccionada': planillasSeleccionadas.includes(p.id) ? 'Sí' : 'No'
+      }));
+
+      const ws = XLSX.utils.json_to_sheet(datosExportar);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, "Planillas");
+
+      // Aplicar ancho a columnas
+      ws['!cols'] = [
+        { wch: 15 },
+        { wch: 12 },
+        { wch: 15 },
+        { wch: 20 },
+        { wch: 10 },
+        { wch: 12 },
+        { wch: 12 },
+        { wch: 12 }
+      ];
+
+      XLSX.writeFile(wb, `Planillas_Liquidacion_${new Date().toISOString().split('T')[0]}.xlsx`);
+    }
+
     // --- Aquí va el JSX ---
     return (
 
@@ -169,11 +201,14 @@ export default function LiquidacionesClient({
             <div className="flex items-end">
               <button onClick={() => { setFechaDesde(''); setFechaHasta(''); }} className="w-full px-3 py-2 bg-gray-500 text-white rounded hover:bg-gray-600 text-xs font-medium">Limpiar</button>
             </div>
-            <div className="flex items-end">
+            <div className="flex items-end gap-2">
               <button onClick={seleccionarTodas} className="w-full px-3 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 text-xs font-medium">Seleccionar</button>
             </div>
             <div className="flex items-end">
               <button onClick={deseleccionarTodas} className="w-full px-3 py-2 bg-gray-300 text-gray-700 rounded hover:bg-gray-400 text-xs font-medium">Deseleccionar</button>
+            </div>
+            <div className="flex items-end">
+              <button onClick={exportarPlanillas} className="w-full px-3 py-2 bg-green-600 text-white rounded hover:bg-green-700 text-xs font-medium">📥 Exportar</button>
             </div>
           </div>
         </div>
