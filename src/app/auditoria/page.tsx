@@ -1,25 +1,25 @@
 import { redirect } from 'next/navigation';
-import { createClient } from '@/lib/supabase/server';
-import { createAdminClient } from '@/lib/supabase/admin';
+import { getCurrentUser } from '@/lib/auth-helper';
+import { query } from '@/lib/db';
 
 export default async function AuditoriaPage() {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getCurrentUser();
 
   if (!user) {
     redirect('/login');
   }
 
   // Obtener registros de auditoría
-  const adminClient = createAdminClient();
-  const { data: auditoria } = await adminClient
-    .from('auditoria')
-    .select(`
-      *,
-      usuarios:usuario_id (usuario)
-    `)
-    .order('created_at', { ascending: false })
-    .limit(100);
+  const auditoria = await query(`
+    SELECT * FROM auditoria
+    ORDER BY created_at DESC
+    LIMIT 1000
+  `);
+
+  const registros = auditoria.map((a: any) => ({
+    ...a,
+    usuario: a.usuario
+  }));
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -52,14 +52,14 @@ export default async function AuditoriaPage() {
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {auditoria && auditoria.length > 0 ? (
-                  auditoria.map((registro: any) => (
+                {registros && registros.length > 0 ? (
+                  registros.map((registro: any) => (
                     <tr key={registro.id}>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                         {new Date(registro.created_at).toLocaleString('es-CO')}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {registro.usuarios?.usuario || 'Sistema'}
+                        {registro.usuario || 'Sistema'}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm">
                         <span className={`px-2 py-1 rounded-full text-xs ${
