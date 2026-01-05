@@ -362,7 +362,7 @@ export default function LiquidacionesClient({
                       Fecha: {planillaDetalle.created_at ? new Date(planillaDetalle.created_at).toLocaleString('es-CO') : 'N/A'}
                     </p>
                     <p className="text-sm text-blue-800">
-                      Por: {planillaDetalle.usuarios?.usuario || 'Operador'}
+                      Por: {planillaDetalle.usuarios?.usuario || planillaDetalle.operador || 'Desconocido'}
                     </p>
                   </div>
 
@@ -370,7 +370,7 @@ export default function LiquidacionesClient({
                     <div className="bg-green-50 p-4 rounded-lg">
                       <label className="block text-sm font-medium text-green-900 mb-2">Recaudado</label>
                       <p className="text-sm text-green-800">
-                        Fecha: {planillaDetalle.fecha_recaudacion ? new Date(planillaDetalle.fecha_recaudacion).toLocaleString('es-CO') : 'N/A'}
+                        Fecha: {planillaDetalle.fecha_recaudacion ? new Date(planillaDetalle.fecha_recaudacion).toLocaleString('es-CO') : 'Pendiente'}
                       </p>
                       <p className="text-sm text-green-800">
                         Por: {planillaDetalle.recaudada_por || 'Pendiente'}

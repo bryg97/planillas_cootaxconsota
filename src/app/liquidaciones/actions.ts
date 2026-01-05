@@ -22,7 +22,12 @@ export async function getPlanillasParaLiquidar(operadorId?: number) {
       tipo_pago,
       estado,
       vehiculo_id,
-      vehiculos:vehiculo_id (codigo_vehiculo)
+      created_at,
+      fecha_recaudacion,
+      recaudada_por,
+      observaciones,
+      vehiculos:vehiculo_id (codigo_vehiculo),
+      usuarios:operador_id (usuario)
     `)
     .in('estado', ['pendiente', 'recaudada'])
     .order('fecha', { ascending: false });
