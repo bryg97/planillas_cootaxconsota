@@ -143,13 +143,13 @@ export async function recaudarPlanillas(planillaIds: number[]) {
           hour12: true
         });
 
-        const totalRecaudado = planillasCredito.reduce((sum, p) => sum + p.valor, 0);
+        const totalRecaudado = planillasCredito.reduce((sum, p) => sum + (parseFloat(String(p.valor)) || 0), 0);
 
         await notificarRecaudoCredito({
           operador: userData.usuario ?? 'Operador',
           planillas: planillasCredito.map((p) => ({
             numero: p.numero_planilla,
-            monto: p.valor,
+            monto: parseFloat(String(p.valor)) || 0,
             vehiculo: p.placa || 'N/A',
             conductor: p.conductor
           })),

@@ -321,7 +321,7 @@ export default function LiquidacionesClient({
                   <div key={liquidacion.id} className="border rounded-lg p-4">
                     <div className="flex justify-between items-start mb-3">
                       <div>
-                        <h3 className="text-lg font-semibold">Operador: {liquidacion.usuario}</h3>
+                        <h3 className="text-lg font-semibold">Operador: {liquidacion.operador_nombre || liquidacion.usuario}</h3>
                         <p className="text-sm text-gray-600">Fecha: {formatFechaColombia(liquidacion.fecha)}</p>
                       </div>
                       <div className="text-right">
@@ -430,7 +430,7 @@ export default function LiquidacionesClient({
                   <div key={liquidacion.id} className="border rounded-lg p-4">
                     <div className="flex justify-between items-start mb-3">
                       <div>
-                        <h3 className="text-lg font-semibold">Operador: {liquidacion.usuario}</h3>
+                        <h3 className="text-lg font-semibold">Operador: {liquidacion.operador_nombre || liquidacion.usuario}</h3>
                         <p className="text-sm text-gray-600">Fecha: {formatFechaColombia(liquidacion.fecha)}</p>
                       </div>
                       <div className="text-right">

@@ -140,7 +140,7 @@ export async function crearLiquidacion(planillaIds: number[]) {
       return { error: 'No se encontraron planillas' };
     }
 
-    const total = planillas.reduce((sum, p) => sum + (p.valor || 0), 0);
+    const total = planillas.reduce((sum, p) => sum + (parseFloat(String(p.valor)) || 0), 0);
 
     // Crear registro de liquidación
     const liquidacionResult = await query<{ id: number }>(
@@ -202,11 +202,12 @@ export async function getLiquidacionesPendientes() {
     // Obtener detalles para cada liquidación
     const result = await Promise.all(
       (liquidaciones || []).map(async (liq) => {
-        const detalles = await query<DetalleRow>(`
+        const detalles = await query<DetalleRow & { operador?: string }>(`
           SELECT 
             ld.planilla_id,
             ld.monto,
             p.numero_planilla,
+            p.operador,
             v.codigo_vehiculo
           FROM liquidaciones_detalle ld
           LEFT JOIN planillas p ON ld.planilla_id = p.id
@@ -214,8 +215,12 @@ export async function getLiquidacionesPendientes() {
           WHERE ld.liquidacion_id = $1
         `, [liq.id]);
 
+        // Obtener el nombre del operador de la primera planilla
+        const operadorNombre = detalles?.[0]?.operador || liq.usuario;
+
         return {
           ...liq,
+          operador_nombre: operadorNombre,
           detalles: detalles || []
         };
       })
