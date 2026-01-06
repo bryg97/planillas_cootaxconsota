@@ -90,8 +90,10 @@ export async function getPlanillasParaLiquidar() {
     console.log('Planillas para liquidar:', planillasFiltradas.length);
 
     return planillasFiltradas;
-  } catch (error) {
-    console.error('Error al obtener planillas:', error);
+  } catch (error: any) {
+    console.error('=== ERROR en getPlanillasParaLiquidar ===');
+    console.error('Mensaje:', error?.message || error);
+    console.error('Stack:', error?.stack);
     return [];
   }
 }

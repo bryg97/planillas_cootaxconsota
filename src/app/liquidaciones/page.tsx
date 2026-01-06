@@ -7,9 +7,13 @@ import { getPlanillasParaLiquidar, getLiquidacionesPendientes } from './actions'
 type UsuarioRolRow = { rol: string; id: number };
 
 export default async function LiquidacionesPage() {
+  console.log('=== LiquidacionesPage INICIO ===');
+  
   const user = await getCurrentUser();
+  console.log('User:', user?.email || 'NO USER');
 
   if (!user) {
+    console.log('No user, redirecting to login');
     redirect('/login');
   }
 
@@ -19,7 +23,9 @@ export default async function LiquidacionesPage() {
     [user.email]
   );
 
+  console.log('userData query result:', JSON.stringify(userData));
   const rol = userData[0]?.rol || 'operador';
+  console.log('Rol asignado:', rol);
 
   // Si es operador o administrador, obtener TODAS las planillas
   let planillas: any[] = [];
