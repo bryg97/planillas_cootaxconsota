@@ -129,11 +129,32 @@ export async function depurarVehiculos() {
 
 export async function eliminarPlanillasVehiculo(vehiculoId: number) {
   try {
-    // Eliminar todas las planillas del vehículo
-    await execute(
-      'DELETE FROM planillas WHERE vehiculo_id = $1',
+    // Primero obtener los IDs de las planillas del vehículo
+    const planillas = await query<{ id: number }>(
+      'SELECT id FROM planillas WHERE vehiculo_id = $1',
       [vehiculoId]
     );
+    const planillaIds = planillas?.map(p => p.id) || [];
+
+    if (planillaIds.length > 0) {
+      // Eliminar liquidaciones_detalle relacionados
+      await execute(
+        'DELETE FROM liquidaciones_detalle WHERE planilla_id = ANY($1::int[])',
+        [planillaIds]
+      );
+
+      // Eliminar recaudos relacionados
+      await execute(
+        'DELETE FROM recaudos WHERE planilla_id = ANY($1::int[])',
+        [planillaIds]
+      );
+
+      // Ahora eliminar las planillas
+      await execute(
+        'DELETE FROM planillas WHERE vehiculo_id = $1',
+        [vehiculoId]
+      );
+    }
 
     revalidatePath('/configuracion');
     revalidatePath('/planillas');
@@ -148,19 +169,36 @@ export async function eliminarPlanillasVehiculo(vehiculoId: number) {
 
 export async function eliminarTodasPlanillas() {
   try {
-    // Eliminar TODAS las planillas de TODOS los vehículos
-    await execute(
-      'DELETE FROM planillas WHERE id > 0',
-      []
-    );
+    // Eliminar TODAS las relaciones primero
+    await execute('DELETE FROM liquidaciones_detalle WHERE id > 0', []);
+    await execute('DELETE FROM recaudos WHERE id > 0', []);
+    await execute('DELETE FROM liquidaciones WHERE id > 0', []);
+    
+    // Ahora eliminar TODAS las planillas
+    await execute('DELETE FROM planillas WHERE id > 0', []);
 
     revalidatePath('/configuracion');
     revalidatePath('/planillas');
+    revalidatePath('/liquidaciones');
     return { 
       success: true, 
-      message: `Se eliminaron todas las planillas del sistema` 
+      message: `Se eliminaron todas las planillas, liquidaciones y recaudos del sistema` 
     };
   } catch (error: any) {
     return { error: error.message || 'Error al eliminar planillas', success: false };
+  }
+}
+
+export async function eliminarTodaAuditoria() {
+  try {
+    await execute('DELETE FROM auditoria WHERE id > 0', []);
+    
+    revalidatePath('/configuracion');
+    return { 
+      success: true, 
+      message: 'Se eliminaron todos los registros de auditoría' 
+    };
+  } catch (error: any) {
+    return { error: error.message || 'Error al eliminar auditoría', success: false };
   }
 }

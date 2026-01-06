@@ -2,7 +2,7 @@
 
 // --- handleEditOperador debe estar dentro del componente para acceder a los estados ---
 import { useState, useEffect } from 'react';
-import { updateConfiguracion, createOperador, deleteOperador, depurarVehiculos, eliminarPlanillasVehiculo, eliminarTodasPlanillas, updateOperador } from './actions';
+import { updateConfiguracion, createOperador, deleteOperador, depurarVehiculos, eliminarPlanillasVehiculo, eliminarTodasPlanillas, updateOperador, eliminarTodaAuditoria } from './actions';
 
 interface ConfiguracionClientProps {
   configuracion: any;
@@ -161,6 +161,27 @@ export default function ConfiguracionClient(props: ConfiguracionClientProps) {
       setError(result.error);
     } else {
       setMessage(result.message || 'Todas las planillas fueron eliminadas');
+      setTimeout(() => window.location.reload(), 2000);
+    }
+    
+    setLoading(false);
+  }
+
+  async function handleEliminarAuditoria() {
+    if (!confirm('⚠️ ADVERTENCIA: ¿Está seguro de eliminar TODOS los registros de auditoría?\n\nEsta acción NO se puede deshacer.\n\n¿Desea continuar?')) {
+      return;
+    }
+
+    setLoading(true);
+    setError('');
+    setMessage('');
+
+    const result = await eliminarTodaAuditoria();
+    
+    if (result.error) {
+      setError(result.error);
+    } else {
+      setMessage(result.message || 'Auditoría eliminada correctamente');
       setTimeout(() => window.location.reload(), 2000);
     }
     
@@ -425,6 +446,21 @@ export default function ConfiguracionClient(props: ConfiguracionClientProps) {
                 className="px-4 py-2 bg-yellow-600 text-white rounded hover:bg-yellow-700 disabled:opacity-50"
               >
                 Depurar Ahora
+              </button>
+            </div>
+
+            {/* Eliminar registros de auditoría */}
+            <div className="p-4 bg-orange-50 rounded border border-orange-300">
+              <h3 className="font-medium text-orange-900 mb-2">🗂️ Eliminar Auditoría</h3>
+              <p className="text-sm text-orange-700 mb-3">
+                Elimina todos los registros de auditoría para empezar desde cero. Esta acción NO se puede deshacer.
+              </p>
+              <button
+                onClick={handleEliminarAuditoria}
+                disabled={loading}
+                className="px-4 py-2 bg-orange-600 text-white rounded hover:bg-orange-700 disabled:opacity-50 font-semibold"
+              >
+                🗑️ Limpiar Auditoría
               </button>
             </div>
           </div>
