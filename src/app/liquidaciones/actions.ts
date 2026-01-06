@@ -71,16 +71,19 @@ export async function getPlanillasParaLiquidar() {
     console.log('Total planillas en BD:', planillas?.length || 0);
 
     // Filtrar: solo planillas que NO estén liquidadas
-    const planillasSinLiquidar = planillas?.filter((p) =>
-      p.estado !== 'liquidada' && p.estado !== 'pagada' && p.estado !== 'aprobada'
-    ) || [];
+    const planillasSinLiquidar = planillas?.filter((p) => {
+      const estado = (p.estado || '').toLowerCase();
+      return estado !== 'liquidada' && estado !== 'pagada' && estado !== 'aprobada';
+    }) || [];
 
     console.log('Planillas sin liquidar:', planillasSinLiquidar.length);
 
     // De esas, solo las de contado o crédito recaudado
-    const planillasFiltradas = planillasSinLiquidar.filter((p) =>
-      p.tipo_pago === 'contado' || (p.tipo_pago === 'credito' && p.estado === 'recaudada')
-    );
+    const planillasFiltradas = planillasSinLiquidar.filter((p) => {
+      const tipoPago = (p.tipo_pago || '').toLowerCase();
+      const estado = (p.estado || '').toLowerCase();
+      return tipoPago === 'contado' || (tipoPago === 'credito' && estado === 'recaudada');
+    });
 
     console.log('Planillas para liquidar (contado o crédito recaudado):', planillasFiltradas.length);
 

@@ -103,13 +103,13 @@ export default function EditarPlanilla({
             </label>
             <select
               name="vehiculo_id"
-              defaultValue={planilla.vehiculo_id}
+              defaultValue={String(planilla.vehiculo_id || '')}
               required
               className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
               <option value="">Seleccione un vehículo</option>
               {vehiculos.map((v) => (
-                <option key={v.id} value={v.id}>
+                <option key={v.id} value={String(v.id)}>
                   {v.codigo_vehiculo}
                 </option>
               ))}

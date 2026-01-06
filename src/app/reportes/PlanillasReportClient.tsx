@@ -101,10 +101,10 @@ export default function PlanillasReportClient({ planillas }: { planillas: any[] 
             {planillasFiltradas.map((p, i) => (
               <tr key={p.id} className="hover:bg-blue-50">
                 <td className="px-2 py-1 border">{p.numero_planilla}</td>
-                <td className="px-2 py-1 border">{new Date(p.fecha).toLocaleDateString("es-CO")}</td>
-                <td className="px-2 py-1 border">{p.vehiculos?.codigo_vehiculo || p.vehiculo_id}</td>
+                <td className="px-2 py-1 border">{p.fecha ? String(p.fecha).substring(0, 10).split('-').reverse().join('/') : ''}</td>
+                <td className="px-2 py-1 border">{p.codigo_vehiculo || ''}</td>
                 <td className="px-2 py-1 border">{p.conductor}</td>
-                <td className="px-2 py-1 border">${parseFloat(p.valor).toLocaleString("es-CO")}</td>
+                <td className="px-2 py-1 border">${(parseFloat(String(p.valor)) || 0).toLocaleString("es-CO")}</td>
                 <td className="px-2 py-1 border capitalize">{p.tipo_pago}</td>
                 <td className="px-2 py-1 border capitalize">{p.estado}</td>
               </tr>
