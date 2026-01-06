@@ -67,7 +67,7 @@ export default async function OperacionesPage() {
     LEFT JOIN vehiculos v ON p.vehiculo_id = v.id
     WHERE l.operador_id = $1 AND l.estado = 'pendiente'
     GROUP BY l.id
-    ORDER BY l.fecha_liquidacion DESC
+    ORDER BY l.fecha DESC
   `, [userRow?.id]);
 
   // Estadísticas del día

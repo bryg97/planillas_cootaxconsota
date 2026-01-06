@@ -17,7 +17,7 @@ export default async function ReportesPage() {
   `);
 
   const liquidaciones = await query(`
-    SELECT id, numero_liquidacion, fecha, conductor, valor, estado FROM liquidaciones
+    SELECT id, fecha, total as valor, estado FROM liquidaciones
   `);
 
   // Estadísticas generales
