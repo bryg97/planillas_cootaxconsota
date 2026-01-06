@@ -430,21 +430,21 @@ export default function LiquidacionesClient({
                   <div key={liquidacion.id} className="border rounded-lg p-4">
                     <div className="flex justify-between items-start mb-3">
                       <div>
-                        <h3 className="text-lg font-semibold">Operador: {liquidacion.usuarios?.usuario}</h3>
-                        <p className="text-sm text-gray-600">Fecha: {new Date(liquidacion.fecha).toLocaleDateString('es-CO', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</p>
+                        <h3 className="text-lg font-semibold">Operador: {liquidacion.usuario}</h3>
+                        <p className="text-sm text-gray-600">Fecha: {formatFechaColombia(liquidacion.fecha)}</p>
                       </div>
                       <div className="text-right">
-                        <p className="text-2xl font-bold text-green-600">${liquidacion.total.toLocaleString('es-CO')}</p>
+                        <p className="text-2xl font-bold text-green-600">${(parseFloat(String(liquidacion.total)) || 0).toLocaleString('es-CO')}</p>
                         <p className="text-sm text-gray-500">Total a recibir</p>
                       </div>
                     </div>
                     <div className="mb-3">
                       <p className="text-sm font-medium text-gray-700 mb-2">Planillas incluidas:</p>
                       <div className="space-y-1">
-                        {liquidacion.liquidaciones_detalle.map((detalle: any, idx: number) => (
+                        {(liquidacion.detalles || []).map((detalle: any, idx: number) => (
                           <div key={idx} className="text-sm flex justify-between bg-gray-50 p-2 rounded">
-                            <span>N° {detalle.planillas?.numero_planilla} - {detalle.planillas?.vehiculos?.codigo_vehiculo}</span>
-                            <span className="font-medium">${detalle.monto.toLocaleString('es-CO')}</span>
+                            <span>N° {detalle.numero_planilla} - {detalle.codigo_vehiculo}</span>
+                            <span className="font-medium">${(parseFloat(String(detalle.monto)) || 0).toLocaleString('es-CO')}</span>
                           </div>
                         ))}
                       </div>
