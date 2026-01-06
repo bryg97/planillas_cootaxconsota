@@ -212,10 +212,10 @@ export default function FormPlanilla({
                     <div className="flex-1 min-w-0">
                       <p className="font-medium text-sm">N° {planilla.numero_planilla}</p>
                       <p className="text-xs text-gray-600">
-                        {planilla.conductor} • {new Date(planilla.fecha).toLocaleDateString('es-CO')}
+                        {planilla.conductor} • {planilla.fecha ? String(planilla.fecha).substring(0, 10).split('-').reverse().join('/') : ''}
                       </p>
                     </div>
-                    <p className="font-bold text-red-600 ml-2">${planilla.valor.toLocaleString('es-CO')}</p>
+                    <p className="font-bold text-red-600 ml-2">${(parseFloat(String(planilla.valor)) || 0).toLocaleString('es-CO')}</p>
                   </label>
                 ))}
               </div>
@@ -226,7 +226,7 @@ export default function FormPlanilla({
                 <span className="text-xl font-bold text-red-600">
                   ${deudaVehiculo.planillas
                     .filter((p: any) => planillasRecaudar.includes(p.id))
-                    .reduce((sum: number, p: any) => sum + p.valor, 0)
+                    .reduce((sum: number, p: any) => sum + (parseFloat(String(p.valor)) || 0), 0)
                     .toLocaleString('es-CO')}
                 </span>
               </div>
