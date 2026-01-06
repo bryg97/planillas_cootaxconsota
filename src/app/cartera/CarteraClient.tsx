@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { procesarPagoVehiculo } from './actions';
 
 // Función para formatear fecha en formato Colombia (dd/mm/yyyy)
@@ -21,6 +21,22 @@ export default function CarteraClient({ vehiculos }: { vehiculos: any[] }) {
   const [vehiculoExpandido, setVehiculoExpandido] = useState<number | null>(null);
   const [planillasSeleccionadas, setPlanillasSeleccionadas] = useState<number[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
+  const [nombreOperador, setNombreOperador] = useState('');
+
+  // Obtener nombre del operador desde localStorage
+  useEffect(() => {
+    const stored = localStorage.getItem('operadorSeleccionado');
+    if (stored) {
+      try {
+        const op = JSON.parse(stored);
+        if (op && op.nombre) {
+          setNombreOperador(op.nombre);
+        }
+      } catch (e) {
+        console.error('Error parsing operador:', e);
+      }
+    }
+  }, []);
 
   function toggleVehiculo(vehiculoId: number) {
     setVehiculoExpandido(vehiculoExpandido === vehiculoId ? null : vehiculoId);
@@ -49,7 +65,7 @@ export default function CarteraClient({ vehiculos }: { vehiculos: any[] }) {
     setError('');
     setMessage('');
 
-    const result = await procesarPagoVehiculo(vehiculoId, planillasSeleccionadas);
+    const result = await procesarPagoVehiculo(vehiculoId, planillasSeleccionadas, nombreOperador);
 
     if (result.error) {
       setError(result.error);

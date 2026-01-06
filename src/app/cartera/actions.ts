@@ -82,7 +82,7 @@ export async function getCarteraVehiculos() {
   return Array.from(vehiculosMap.values());
 }
 
-export async function procesarPagoVehiculo(vehiculoId: number, planillaIds: number[]) {
+export async function procesarPagoVehiculo(vehiculoId: number, planillaIds: number[], nombreOperador?: string) {
   const user = await getCurrentUser();
   
   if (!user) {
@@ -133,8 +133,11 @@ export async function procesarPagoVehiculo(vehiculoId: number, planillaIds: numb
   }
 
   // Enviar notificación Telegram
-  const total = planillas.reduce((sum, p) => sum + (p.valor || 0), 0);
-  const fechaFormateada = new Date().toLocaleDateString('es-CO', {
+  const total = planillas.reduce((sum, p) => sum + (parseFloat(String(p.valor)) || 0), 0);
+  
+  // Usar hora de Bogotá, Colombia
+  const fechaFormateada = new Date().toLocaleString('es-CO', {
+    timeZone: 'America/Bogota',
     day: '2-digit',
     month: '2-digit',
     year: 'numeric',
@@ -145,10 +148,10 @@ export async function procesarPagoVehiculo(vehiculoId: number, planillaIds: numb
 
   await notificarPagoVehiculo({
     vehiculo: vehiculo?.[0]?.codigo_vehiculo || '',
-    autorizo: userData[0].usuario,
+    autorizo: nombreOperador || userData[0].usuario,
     planillas: planillas.map((p) => ({
       numero: p.numero_planilla,
-      monto: p.valor
+      monto: parseFloat(String(p.valor)) || 0
     })),
     total: total,
     fecha: fechaFormateada
