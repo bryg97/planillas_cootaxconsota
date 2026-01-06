@@ -93,7 +93,7 @@ export async function recaudarPlanillas(planillaIds: number[]) {
 
     // Obtener detalles de las planillas
     const planillasData = await query<PlanillaRecaudo>(
-      `SELECT p.id, p.numero_planilla, p.valor, p.tipo_pago, p.fecha, p.conductor, v.placa
+      `SELECT p.id, p.numero_planilla, p.valor, p.tipo_pago, p.fecha, p.conductor, v.codigo_vehiculo as placa
        FROM planillas p
        LEFT JOIN vehiculos v ON p.vehiculo_id = v.id
        WHERE p.id = ANY($1::int[])`,
