@@ -71,15 +71,15 @@ export default async function PlanillasPage() {
   // Formatear datos para el cliente
   const planillasFormateadas = planillas.map((p) => ({
     ...p,
-    vehiculos: { codigo_vehiculo: p.codigo_vehiculo }
+    vehiculos: { codigo_vehiculo: p.codigo_vehiculo || '' }
   }));
 
   return (
     <PlanillasClient
       planillas={planillasFormateadas}
-      vehiculos={vehiculos}
-      operadores={operadores}
-      valorDefecto={configuracion[0]?.valor_planilla_defecto}
+      vehiculos={vehiculos || []}
+      operadores={operadores || []}
+      valorDefecto={configuracion[0]?.valor_planilla_defecto || 0}
       rol={userData[0]?.rol || 'operador'}
     />
   );

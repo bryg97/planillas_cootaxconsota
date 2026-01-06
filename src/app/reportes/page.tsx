@@ -23,7 +23,8 @@ export default async function ReportesPage() {
   // Estadísticas generales
   const totalPlanillas = planillas?.length || 0;
   const totalRecaudado = planillas?.reduce((sum: number, p: any) => sum + parseFloat(p.valor || 0), 0) || 0;
-  const totalVehiculos = await query('SELECT COUNT(*) as count FROM vehiculos');
+  const vehiculosCount = await query<{ count: string }>('SELECT COUNT(*) as count FROM vehiculos');
+  const totalVehiculos = parseInt(vehiculosCount[0]?.count || '0', 10);
 
   return (
     <ReportesClient
