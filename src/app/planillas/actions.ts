@@ -109,15 +109,12 @@ export async function recaudarPlanillas(planillaIds: number[]) {
     // Auditoría: registrar UPDATE masivo
     for (const planillaId of planillaIds) {
       await execute(
-        `INSERT INTO auditoria (usuario, accion, detalles, created_at, tabla, registro_id)
-         VALUES ($1, $2, $3, $4, $5, $6)`,
+        `INSERT INTO auditoria (usuario, accion, detalles)
+         VALUES ($1, $2, $3)`,
         [
           session.user.email,
           'UPDATE',
-          `Recaudó planilla (ID: ${planillaId})`,
-          new Date().toISOString(),
-          'planillas',
-          planillaId
+          `Recaudó planilla (ID: ${planillaId}) en tabla planillas`
         ]
       );
     }
@@ -259,15 +256,12 @@ export async function createPlanilla(formData: FormData) {
     // Auditoría
     if (planillaId) {
       await execute(
-        `INSERT INTO auditoria (usuario, accion, detalles, created_at, tabla, registro_id)
-         VALUES ($1, $2, $3, $4, $5, $6)`,
+        `INSERT INTO auditoria (usuario, accion, detalles)
+         VALUES ($1, $2, $3)`,
         [
           operadorNombre,
           'INSERT',
-          `Creó planilla N° ${numeroPlanilla} para vehículo ${vehiculoId}`,
-          new Date().toISOString(),
-          'planillas',
-          planillaId
+          `Creó planilla N° ${numeroPlanilla} (ID: ${planillaId}) para vehículo ${vehiculoId}`
         ]
       );
     }
@@ -346,15 +340,12 @@ export async function updatePlanilla(formData: FormData) {
 
     // Auditoría
     await execute(
-      `INSERT INTO auditoria (usuario, accion, detalles, created_at, tabla, registro_id)
-       VALUES ($1, $2, $3, $4, $5, $6)`,
+      `INSERT INTO auditoria (usuario, accion, detalles)
+       VALUES ($1, $2, $3)`,
       [
         operadorNombre,
         'UPDATE',
-        `Editó planilla N° ${numeroPlanilla} (ID: ${id})`,
-        new Date().toISOString(),
-        'planillas',
-        id
+        `Editó planilla N° ${numeroPlanilla} (ID: ${id}) en tabla planillas`
       ]
     );
 

@@ -54,9 +54,9 @@ export async function editarUsuario(id: number | undefined, formData: FormData) 
 
     // Auditoría: registrar UPDATE
     await execute(
-      `INSERT INTO auditoria (usuario, accion, detalles, tabla, registro_id) 
-       VALUES ($1, $2, $3, $4, $5)`,
-      [usuario, 'UPDATE', `Actualizó usuario ${usuario} (ID: ${id})`, 'usuarios', id]
+      `INSERT INTO auditoria (usuario, accion, detalles) 
+       VALUES ($1, $2, $3)`,
+      [usuario, 'UPDATE', `Actualizó usuario ${usuario} (ID: ${id}) en tabla usuarios`]
     );
 
     revalidatePath('/usuarios');
@@ -95,9 +95,9 @@ export async function createUsuario(formData: FormData) {
 
     // Auditoría: registrar INSERT
     await execute(
-      `INSERT INTO auditoria (usuario, accion, detalles, tabla, registro_id) 
-       VALUES ($1, $2, $3, $4, $5)`,
-      [usuario, 'INSERT', `Creó usuario ${usuario} (ID: ${newId})`, 'usuarios', newId]
+      `INSERT INTO auditoria (usuario, accion, detalles) 
+       VALUES ($1, $2, $3)`,
+      [usuario, 'INSERT', `Creó usuario ${usuario} (ID: ${newId}) en tabla usuarios`]
     );
 
     revalidatePath('/usuarios');
@@ -123,9 +123,9 @@ export async function deleteUsuario(id: number) {
 
     // Auditoría: registrar DELETE
     await execute(
-      `INSERT INTO auditoria (usuario, accion, detalles, tabla, registro_id) 
-       VALUES ($1, $2, $3, $4, $5)`,
-      [usuarioRow?.[0]?.usuario || 'desconocido', 'DELETE', `Eliminó usuario ${usuarioRow?.[0]?.usuario || ''} (ID: ${id})`, 'usuarios', id]
+      `INSERT INTO auditoria (usuario, accion, detalles) 
+       VALUES ($1, $2, $3)`,
+      [usuarioRow?.[0]?.usuario || 'desconocido', 'DELETE', `Eliminó usuario ${usuarioRow?.[0]?.usuario || ''} (ID: ${id}) en tabla usuarios`]
     );
 
     revalidatePath('/usuarios');
