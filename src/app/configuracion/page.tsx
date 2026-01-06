@@ -1,40 +1,32 @@
 import { redirect } from 'next/navigation';
-import { createClient } from '@/lib/supabase/server';
-import { createAdminClient } from '@/lib/supabase/admin';
+import { getCurrentUser } from '@/lib/auth-helper';
+import { query } from '@/lib/db';
 import ConfiguracionClient from './ConfiguracionClient';
 
 export default async function ConfiguracionPage() {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getCurrentUser();
 
   if (!user) {
     redirect('/login');
   }
 
-  const adminClient = createAdminClient();
-  
   // Obtener configuración (siempre buscar id=1)
-  const { data: configuracion } = await adminClient
-    .from('configuracion')
-    .select('*')
-    .eq('id', 1)
-    .maybeSingle();
+  const configuracion = await query(
+    'SELECT * FROM configuracion WHERE id = 1'
+  );
 
   // Obtener operadores (guardados en modulos con descripcion='Operador')
-  const { data: operadores } = await adminClient
-    .from('modulos')
-    .select('*')
-    .eq('descripcion', 'Operador')
-    .order('nombre', { ascending: true });
+  const operadores = await query(
+    `SELECT * FROM modulos WHERE descripcion = 'Operador' ORDER BY nombre ASC`
+  );
 
   // Obtener vehículos para la depuración
-  const { data: vehiculos } = await adminClient
-    .from('vehiculos')
-    .select('id, codigo_vehiculo')
-    .order('codigo_vehiculo', { ascending: true });
+  const vehiculos = await query(
+    `SELECT id, codigo_vehiculo FROM vehiculos ORDER BY codigo_vehiculo ASC`
+  );
 
   return <ConfiguracionClient 
-    configuracion={configuracion} 
+    configuracion={configuracion?.[0]} 
     operadores={operadores || []} 
     vehiculos={vehiculos || []}
   />;

@@ -3,6 +3,8 @@ import { getCurrentUser } from '@/lib/auth-helper';
 import { query } from '@/lib/db';
 import { redirect } from 'next/navigation';
 
+type RolRow = { rol: string };
+
 export default async function DashboardPage() {
   const user = await getCurrentUser();
 
@@ -10,7 +12,7 @@ export default async function DashboardPage() {
     redirect('/login');
   }
 
-  const userData = await query(
+  const userData = await query<RolRow>(
     'SELECT rol FROM usuarios WHERE usuario = $1',
     [user.email]
   );

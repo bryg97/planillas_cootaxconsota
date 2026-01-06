@@ -1,5 +1,5 @@
 // Servicio de notificaciones de Telegram
-import { createAdminClient } from '@/lib/supabase/admin';
+import { query } from '@/lib/db';
 
 interface PlanillaNotificacion {
   operador: string;
@@ -42,14 +42,11 @@ interface RecaudoCredito {
 }
 
 async function getConfiguracion() {
-  const adminClient = createAdminClient();
-  const { data } = await adminClient
-    .from('configuracion')
-    .select('bot_telegram, canal_telegram')
-    .eq('id', 1)
-    .maybeSingle();
+  const result = await query(
+    'SELECT bot_telegram, canal_telegram FROM configuracion WHERE id = 1'
+  );
   
-  return data;
+  return result?.[0];
 }
 
 async function enviarMensajeTelegram(mensaje: string) {

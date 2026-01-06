@@ -3,6 +3,18 @@ import { getCurrentUser } from '@/lib/auth-helper';
 import { query } from '@/lib/db';
 import OperacionesClient from './OperacionesClient';
 
+type UsuarioRow = {
+  id: number;
+  usuario: string;
+  rol: string;
+};
+
+type PlanillaHoy = {
+  valor: number;
+  tipo_pago: string;
+  estado: string;
+};
+
 export default async function OperacionesPage() {
   const user = await getCurrentUser();
 
@@ -11,7 +23,7 @@ export default async function OperacionesPage() {
   }
 
   // Obtener datos del usuario actual
-  const userData = await query(
+  const userData = await query<UsuarioRow>(
     'SELECT id, usuario, rol FROM usuarios WHERE usuario = $1',
     [user.email]
   );
@@ -27,7 +39,7 @@ export default async function OperacionesPage() {
   const hoyLocal = `${yyyy}-${mm}-${dd}`;
 
   // Traer todas las planillas cuya fecha esté entre 00:00 y 23:59 del día local
-  const planillasHoy = await query(`
+  const planillasHoy = await query<PlanillaHoy>(`
     SELECT 
       p.*,
       v.codigo_vehiculo
@@ -59,10 +71,10 @@ export default async function OperacionesPage() {
   `, [userRow?.id]);
 
   // Estadísticas del día
-  const totalRecaudado = planillasHoy?.reduce((sum: number, p: any) => sum + parseFloat(p.valor?.toString() || '0'), 0) || 0;
-  const planillasContado = planillasHoy?.filter((p: any) => p.tipo_pago === 'contado').length || 0;
-  const planillasCredito = planillasHoy?.filter((p: any) => p.tipo_pago === 'credito').length || 0;
-  const planillasPendientes = planillasHoy?.filter((p: any) => p.estado === 'pendiente').length || 0;
+  const totalRecaudado = planillasHoy.reduce((sum, p) => sum + parseFloat(p.valor?.toString() || '0'), 0);
+  const planillasContado = planillasHoy.filter((p) => p.tipo_pago === 'contado').length;
+  const planillasCredito = planillasHoy.filter((p) => p.tipo_pago === 'credito').length;
+  const planillasPendientes = planillasHoy.filter((p) => p.estado === 'pendiente').length;
 
   return (
     <OperacionesClient

@@ -1,243 +1,300 @@
 'use server';
 
-import { createAdminClient } from '@/lib/supabase/admin';
-import { createClient } from '@/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
+import { query, execute } from '@/lib/db';
+import { getCurrentUser } from '@/lib/auth-helper';
 import { notificarDineroEntregado } from '@/lib/telegram';
 
-export async function getPlanillasParaLiquidar() {
-  const adminClient = createAdminClient();
-  
-  // Obtener TODAS las planillas sin filtro de estado para debugging
-  const { data, error } = await adminClient
-    .from('planillas')
-    .select(`
-      id,
-      numero_planilla,
-      valor,
-      fecha,
-      conductor,
-      operador,
-      tipo_pago,
-      estado,
-      vehiculo_id,
-      created_at,
-      vehiculos:vehiculo_id (codigo_vehiculo),
-      usuarios:operador_id (usuario, nombre)
-    `)
-    .order('fecha', { ascending: false });
+type PlanillaRow = {
+  id: number;
+  numero_planilla: string;
+  valor: number;
+  fecha: string;
+  conductor: string;
+  operador: string | null;
+  tipo_pago: string;
+  estado: string;
+  vehiculo_id: number;
+  created_at: string;
+  codigo_vehiculo: string | null;
+  usuario: string | null;
+  operador_nombre: string | null;
+};
 
-  if (error) {
+type UsuarioRow = {
+  id: number;
+  usuario: string;
+  nombre?: string | null;
+};
+
+type LiquidacionRow = {
+  id: number;
+  total: number;
+  fecha: string;
+  estado: string;
+  operador_id: number;
+  usuario: string | null;
+  nombre: string | null;
+};
+
+type DetalleRow = {
+  planilla_id: number;
+  monto: number;
+  numero_planilla: string;
+  codigo_vehiculo?: string | null;
+};
+
+export async function getPlanillasParaLiquidar() {
+  try {
+    // Obtener TODAS las planillas sin filtro de estado para debugging
+    const planillas = await query<PlanillaRow>(`
+      SELECT 
+        p.id,
+        p.numero_planilla,
+        p.valor,
+        p.fecha,
+        p.conductor,
+        p.operador,
+        p.tipo_pago,
+        p.estado,
+        p.vehiculo_id,
+        p.created_at,
+        v.codigo_vehiculo,
+        u.usuario,
+        u.nombre as operador_nombre
+      FROM planillas p
+      LEFT JOIN vehiculos v ON p.vehiculo_id = v.id
+      LEFT JOIN usuarios u ON p.operador_id = u.id
+      ORDER BY p.fecha DESC
+    `);
+
+    console.log('Total planillas en BD:', planillas?.length || 0);
+
+    // Filtrar: solo planillas que NO estén liquidadas
+    const planillasSinLiquidar = planillas?.filter((p) =>
+      p.estado !== 'liquidada' && p.estado !== 'pagada' && p.estado !== 'aprobada'
+    ) || [];
+
+    console.log('Planillas sin liquidar:', planillasSinLiquidar.length);
+
+    // De esas, solo las de contado o crédito recaudado
+    const planillasFiltradas = planillasSinLiquidar.filter((p) =>
+      p.tipo_pago === 'contado' || (p.tipo_pago === 'credito' && p.estado === 'recaudada')
+    );
+
+    console.log('Planillas para liquidar (contado o crédito recaudado):', planillasFiltradas.length);
+
+    return planillasFiltradas;
+  } catch (error) {
     console.error('Error al obtener planillas:', error);
     return [];
   }
-  
-  console.log('Total planillas en BD:', data?.length || 0);
-  
-  // Filtrar: solo planillas que NO estén liquidadas
-  const planillasSinLiquidar = data?.filter(p => 
-    p.estado !== 'liquidada' && p.estado !== 'pagada' && p.estado !== 'aprobada'
-  ) || [];
-  
-  console.log('Planillas sin liquidar:', planillasSinLiquidar.length);
-  
-  // De esas, solo las de contado o crédito recaudado
-  const planillasFiltradas = planillasSinLiquidar.filter(p => 
-    p.tipo_pago === 'contado' || (p.tipo_pago === 'credito' && p.estado === 'recaudada')
-  );
-  
-  console.log('Planillas para liquidar (contado o crédito recaudado):', planillasFiltradas.length);
-  
-  return planillasFiltradas;
 }
 
 export async function crearLiquidacion(planillaIds: number[]) {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  
-  if (!user) {
-    return { error: 'Usuario no autenticado' };
+  try {
+    const user = await getCurrentUser();
+
+    if (!user) {
+      return { error: 'Usuario no autenticado' };
+    }
+
+    // Obtener datos del operador
+    const userData = await query<UsuarioRow>(
+      'SELECT id, usuario FROM usuarios WHERE usuario = $1',
+      [user.email]
+    );
+
+    if (!userData || userData.length === 0) {
+      return { error: 'Usuario no encontrado' };
+    }
+
+    const operadorId = userData[0].id;
+
+    // Obtener planillas
+    const planillas = await query<PlanillaRow>(
+      'SELECT * FROM planillas WHERE id = ANY($1::int[])',
+      [planillaIds]
+    );
+
+    if (!planillas || planillas.length === 0) {
+      return { error: 'No se encontraron planillas' };
+    }
+
+    const total = planillas.reduce((sum, p) => sum + (p.valor || 0), 0);
+
+    // Crear registro de liquidación
+    const liquidacionResult = await query<{ id: number }>(
+      `INSERT INTO liquidaciones (operador_id, total, estado, fecha)
+       VALUES ($1, $2, $3, NOW())
+       RETURNING id`,
+      [operadorId, total, 'pendiente']
+    );
+
+    if (!liquidacionResult || liquidacionResult.length === 0) {
+      return { error: 'Error al crear liquidación' };
+    }
+
+    const liquidacionId = liquidacionResult[0].id;
+
+    // Crear detalle de liquidación
+    const detalles = planillaIds.map((planillaId) => {
+      const planilla = planillas.find((p) => p.id === planillaId);
+      return [liquidacionId, planillaId, planilla?.valor || 0];
+    });
+
+    for (const detalle of detalles) {
+      await execute(
+        'INSERT INTO liquidaciones_detalle (liquidacion_id, planilla_id, monto) VALUES ($1, $2, $3)',
+        detalle
+      );
+    }
+
+    // Actualizar estado de planillas a 'liquidada'
+    await execute(
+      'UPDATE planillas SET estado = $1 WHERE id = ANY($2::int[])',
+      ['liquidada', planillaIds]
+    );
+
+    revalidatePath('/liquidaciones');
+    return { success: true, liquidacionId };
+  } catch (error) {
+    console.error('Error al crear liquidación:', error);
+    return { error: 'Error al crear liquidación' };
   }
-
-  const adminClient = createAdminClient();
-  
-  // Obtener datos del operador
-  const { data: userData } = await adminClient
-    .from('usuarios')
-    .select('id, usuario')
-    .eq('usuario', user.email)
-    .single();
-
-  if (!userData) {
-    return { error: 'Usuario no encontrado' };
-  }
-
-  // Obtener planillas
-  const { data: planillas } = await adminClient
-    .from('planillas')
-    .select('*')
-    .in('id', planillaIds);
-
-  if (!planillas || planillas.length === 0) {
-    return { error: 'No se encontraron planillas' };
-  }
-
-  const total = planillas.reduce((sum, p) => sum + (p.valor || 0), 0);
-
-  // Crear registro de liquidación
-  const { data: liquidacion, error: liquidacionError } = await adminClient
-    .from('liquidaciones')
-    .insert({
-      operador_id: userData.id,
-      total: total,
-      estado: 'pendiente',
-      fecha: new Date().toISOString()
-    })
-    .select()
-    .single();
-
-  if (liquidacionError) {
-    return { error: liquidacionError.message };
-  }
-
-  // Crear detalle de liquidación
-  const detalles = planillaIds.map(planillaId => {
-    const planilla = planillas.find(p => p.id === planillaId);
-    return {
-      liquidacion_id: liquidacion.id,
-      planilla_id: planillaId,
-      monto: planilla?.valor || 0
-    };
-  });
-
-  const { error: detalleError } = await adminClient
-    .from('liquidaciones_detalle')
-    .insert(detalles);
-
-  if (detalleError) {
-    return { error: detalleError.message };
-  }
-
-  // Actualizar estado de planillas a 'liquidada'
-  const { error: updateError } = await adminClient
-    .from('planillas')
-    .update({ estado: 'liquidada' })
-    .in('id', planillaIds);
-
-  if (updateError) {
-    return { error: updateError.message };
-  }
-
-  revalidatePath('/liquidaciones');
-  return { success: true, liquidacionId: liquidacion.id };
 }
 
 export async function getLiquidacionesPendientes() {
-  const adminClient = createAdminClient();
-  
-  const { data } = await adminClient
-    .from('liquidaciones')
-    .select(`
-      id,
-      total,
-      fecha,
-      estado,
-      operador_id,
-      usuarios:operador_id (usuario, nombre),
-      liquidaciones_detalle (
-        planilla_id,
-        monto,
-        planillas:planilla_id (numero_planilla, vehiculos:vehiculo_id (codigo_vehiculo))
-      )
-    `)
-    .eq('estado', 'pendiente')
-    .order('fecha', { ascending: false });
+  try {
+    const liquidaciones = await query<LiquidacionRow>(`
+      SELECT 
+        l.id,
+        l.total,
+        l.fecha,
+        l.estado,
+        l.operador_id,
+        u.usuario,
+        u.nombre
+      FROM liquidaciones l
+      LEFT JOIN usuarios u ON l.operador_id = u.id
+      WHERE l.estado = 'pendiente'
+      ORDER BY l.fecha DESC
+    `);
 
-  return data || [];
+    // Obtener detalles para cada liquidación
+    const result = await Promise.all(
+      (liquidaciones || []).map(async (liq) => {
+        const detalles = await query<DetalleRow>(`
+          SELECT 
+            ld.planilla_id,
+            ld.monto,
+            p.numero_planilla,
+            v.codigo_vehiculo
+          FROM liquidaciones_detalle ld
+          LEFT JOIN planillas p ON ld.planilla_id = p.id
+          LEFT JOIN vehiculos v ON p.vehiculo_id = v.id
+          WHERE ld.liquidacion_id = $1
+        `, [liq.id]);
+
+        return {
+          ...liq,
+          detalles: detalles || []
+        };
+      })
+    );
+
+    return result;
+  } catch (error) {
+    console.error('Error al obtener liquidaciones pendientes:', error);
+    return [];
+  }
 }
 
 export async function aprobarLiquidacion(liquidacionId: number) {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  
-  if (!user) {
-    return { error: 'Usuario no autenticado' };
+  try {
+    const user = await getCurrentUser();
+
+    if (!user) {
+      return { error: 'Usuario no autenticado' };
+    }
+
+    // LOG: Mostrar el email que se busca
+    console.log('[AprobarLiquidacion] Buscando usuario con email:', user.email);
+    const tesorera = await query<UsuarioRow>(
+      'SELECT id, usuario FROM usuarios WHERE usuario = $1',
+      [user.email]
+    );
+
+    if (!tesorera || tesorera.length === 0) {
+      console.log('[AprobarLiquidacion] Error: usuario no encontrado');
+      return { error: 'Usuario no encontrado' };
+    }
+
+    const tesoreraId = tesorera[0].id;
+
+    // Obtener liquidación con detalles
+    const liquidacion = await query<LiquidacionRow>(`
+      SELECT 
+        l.id,
+        l.total,
+        l.fecha,
+        l.estado,
+        l.operador_id,
+        u.usuario,
+        u.nombre
+      FROM liquidaciones l
+      LEFT JOIN usuarios u ON l.operador_id = u.id
+      WHERE l.id = $1
+    `, [liquidacionId]);
+
+    if (!liquidacion || liquidacion.length === 0) {
+      return { error: 'Liquidación no encontrada' };
+    }
+
+    const liq = liquidacion[0];
+
+    // Obtener detalles
+    const detalles = await query<DetalleRow>(`
+      SELECT 
+        ld.planilla_id,
+        ld.monto,
+        p.numero_planilla
+      FROM liquidaciones_detalle ld
+      LEFT JOIN planillas p ON ld.planilla_id = p.id
+      WHERE ld.liquidacion_id = $1
+    `, [liquidacionId]);
+
+    // Actualizar estado de la liquidación
+    await execute(
+      `UPDATE liquidaciones 
+       SET estado = $1, aprobada_por = $2, fecha_aprobacion = NOW()
+       WHERE id = $3`,
+      ['aprobada', tesoreraId, liquidacionId]
+    );
+
+    // Enviar notificación Telegram
+    const planillas = (detalles || []).map((d) => ({
+      numero: d.numero_planilla,
+      monto: d.monto
+    }));
+
+    // Obtener el nombre del tesorera (usuario actual)
+    const tesoreraInfo = await query<{ nombre: string | null }>(
+      'SELECT nombre FROM usuarios WHERE id = $1',
+      [tesoreraId]
+    );
+
+    await notificarDineroEntregado({
+      operador: liq.nombre ?? liq.usuario ?? '',
+      recibe: tesoreraInfo?.[0]?.nombre ?? tesorera[0].usuario ?? '',
+      planillas: planillas
+    });
+
+    revalidatePath('/liquidaciones');
+    return { success: true };
+  } catch (error) {
+    console.error('Error al aprobar liquidación:', error);
+    return { error: 'Error al aprobar liquidación' };
   }
-
-  const adminClient = createAdminClient();
-  
-  // LOG: Mostrar el email que se busca
-  console.log('[AprobarLiquidacion] Buscando usuario con email:', user.email);
-  const { data: tesorera, error: tesoreraError } = await adminClient
-    .from('usuarios')
-    .select('id, usuario, auth_id')
-    .eq('usuario', user.email)
-    .single();
-  if (tesoreraError) {
-    console.log('[AprobarLiquidacion] Error al buscar usuario:', tesoreraError.message);
-  }
-  console.log('[AprobarLiquidacion] Usuario encontrado:', tesorera);
-
-  if (!tesorera) {
-    return { error: 'Usuario no encontrado' };
-  }
-  if (!tesorera.auth_id) {
-    return { error: 'El usuario no tiene auth_id, no se puede aprobar.' };
-  }
-
-  // Obtener liquidación con detalles
-  const { data: liquidacion } = await adminClient
-    .from('liquidaciones')
-    .select(`
-      *,
-      usuarios:operador_id (usuario, nombre),
-      liquidaciones_detalle (
-        planilla_id,
-        monto,
-        planillas:planilla_id (numero_planilla)
-      )
-    `)
-    .eq('id', liquidacionId)
-    .single();
-
-  if (!liquidacion) {
-    return { error: 'Liquidación no encontrada' };
-  }
-
-  // Actualizar estado de la liquidación
-  const { error: updateError } = await adminClient
-    .from('liquidaciones')
-    .update({ 
-      estado: 'aprobada',
-      aprobada_por: tesorera.auth_id,
-      fecha_aprobacion: new Date().toISOString()
-    })
-    .eq('id', liquidacionId);
-
-  if (updateError) {
-    return { error: updateError.message };
-  }
-
-  // Enviar notificación Telegram
-  const planillas = liquidacion.liquidaciones_detalle.map((d: any) => ({
-    numero: d.planillas.numero_planilla,
-    monto: d.monto
-  }));
-
-  // Obtener el nombre del tesorera (usuario actual)
-  const { data: tesoreraInfo } = await adminClient
-    .from('usuarios')
-    .select('nombre')
-    .eq('auth_id', tesorera.auth_id)
-    .single();
-
-  await notificarDineroEntregado({
-    operador: liquidacion.usuarios.nombre || liquidacion.usuarios.usuario,
-    recibe: tesoreraInfo?.nombre || tesorera.usuario,
-    planillas: planillas
-  });
-
-  revalidatePath('/liquidaciones');
-  return { success: true };
 }
 

@@ -1,16 +1,16 @@
 import { NextApiRequest, NextApiResponse } from 'next';
-import { createAdminClient } from '@/lib/supabase/admin';
+import { query } from '@/lib/db';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   const { correo } = req.query;
   if (!correo || typeof correo !== 'string') {
     return res.status(400).json([]);
   }
-  const adminClient = createAdminClient();
-  const { data } = await adminClient
-    .from('modulos')
-    .select('*')
-    .eq('descripcion', 'Operador')
-    .eq('correo', correo);
+  
+  const data = await query(
+    'SELECT * FROM modulos WHERE descripcion = $1 AND correo = $2',
+    ['Operador', correo]
+  );
+  
   res.status(200).json(data || []);
 }

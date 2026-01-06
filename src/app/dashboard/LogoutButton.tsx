@@ -1,18 +1,17 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
-import { createClient } from '@/lib/supabase/client'
+import { signOut } from 'next-auth/react'
 
 export default function LogoutButton() {
   const router = useRouter()
-  const supabase = createClient()
 
   const handleLogout = async () => {
     // Limpiar operador seleccionado al cerrar sesión
     if (typeof window !== 'undefined') {
       localStorage.removeItem('operadorSeleccionado');
     }
-    await supabase.auth.signOut()
+    await signOut({ redirect: false })
     router.push('/login')
     router.refresh()
   }

@@ -1,13 +1,14 @@
 "use client";
 import { useState } from "react";
+import { useSession } from "next-auth/react";
 import { useOperadorSeleccionado } from "../hooks/useOperadorSeleccionado";
 import * as XLSX from "xlsx";
 
 export default function LiquidacionesReportClient({ liquidaciones }: { liquidaciones: any[] }) {
   const [search, setSearch] = useState("");
-  // Obtener email del usuario autenticado desde localStorage (ya que es client component)
-  const user = typeof window !== 'undefined' ? JSON.parse(localStorage.getItem('supabase.auth.user') || 'null') : null;
-  const email = user?.email || '';
+  // Obtener email del usuario autenticado desde NextAuth
+  const { data: session } = useSession();
+  const email = session?.user?.email || '';
   const [operadorSeleccionado] = useOperadorSeleccionado(email);
 
   function handleExportExcel() {

@@ -1,7 +1,7 @@
 'use server';
 
-import { createAdminClient } from '@/lib/supabase/admin';
 import { revalidatePath } from 'next/cache';
+import { execute } from '@/lib/db';
 import * as XLSX from 'xlsx';
 
 export async function importarVehiculos(formData: FormData) {
@@ -59,30 +59,23 @@ export async function importarVehiculos(formData: FormData) {
     }
 
     // Insertar en la base de datos
-    const adminClient = createAdminClient();
-    
-    // Insertar en lotes de 100 para evitar timeouts
-    const batchSize = 100;
     let insertados = 0;
     let errores = 0;
 
-    for (let i = 0; i < vehiculosValidos.length; i += batchSize) {
-      const batch = vehiculosValidos.slice(i, i + batchSize);
-      
-      const { data: insertData, error } = await adminClient
-        .from('vehiculos')
-        .insert(batch)
-        .select();
-
-      if (error) {
-        // Si hay error por duplicados, contar cuántos se insertaron
-        if (error.code === '23505') {
-          errores += batch.length;
+    for (const vehiculo of vehiculosValidos) {
+      try {
+        await execute(
+          `INSERT INTO vehiculos (codigo_vehiculo, saldo, saldo_pendiente) VALUES ($1, $2, $3)`,
+          [vehiculo.codigo_vehiculo, vehiculo.saldo, vehiculo.saldo_pendiente]
+        );
+        insertados++;
+      } catch (error: any) {
+        // Si hay error por duplicados o constraint, contar como error
+        if (error.message && error.message.includes('duplicate') || error.message.includes('unique')) {
+          errores++;
         } else {
           return { error: `Error al insertar: ${error.message}` };
         }
-      } else {
-        insertados += insertData?.length || 0;
       }
     }
 

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createAdminClient } from '@/lib/supabase/admin';
+import { execute } from '@/lib/db';
 
 export async function POST(req: NextRequest) {
   try {
@@ -25,14 +25,16 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'No hay datos válidos para importar.' }, { status: 400 });
     }
 
-    const adminClient = createAdminClient();
-    const { error } = await adminClient
-      .from('planillas')
-      .insert(planillasValidas);
-
-    if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 });
+    // Insertar planillas
+    for (const planilla of planillasValidas) {
+      await execute(
+        `INSERT INTO planillas (numero_planilla, fecha, vehiculo_id, conductor, operador, origen, destino, valor, tipo_pago, estado)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`,
+        [planilla.numero_planilla, planilla.fecha, planilla.vehiculo_id, planilla.conductor, planilla.operador, 
+         planilla.origen, planilla.destino, planilla.valor, planilla.tipo_pago, planilla.estado]
+      );
     }
+
     return NextResponse.json({ success: true, cantidad: planillasValidas.length });
   } catch (e: any) {
     return NextResponse.json({ error: e.message || 'Error inesperado.' }, { status: 500 });

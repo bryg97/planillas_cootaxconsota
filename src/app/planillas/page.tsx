@@ -3,6 +3,21 @@ import { getCurrentUser } from '@/lib/auth-helper';
 import { query } from '@/lib/db';
 import PlanillasClient from './PlanillasClient';
 
+type PlanillaRow = {
+  id: number;
+  numero_planilla: string;
+  fecha: string;
+  conductor: string;
+  operador: string;
+  valor: number;
+  tipo_pago: string;
+  estado: string;
+  origen: string | null;
+  destino: string | null;
+  created_at: string;
+  codigo_vehiculo: string | null;
+};
+
 export default async function PlanillasPage() {
   const user = await getCurrentUser();
 
@@ -11,7 +26,7 @@ export default async function PlanillasPage() {
   }
 
   // Obtener planillas con datos de vehículos (solo pendientes y recaudadas)
-  const planillas = await query(`
+  const planillas = await query<PlanillaRow>(`
     SELECT 
       p.id,
       p.numero_planilla,
@@ -27,7 +42,7 @@ export default async function PlanillasPage() {
       v.codigo_vehiculo
     FROM planillas p
     LEFT JOIN vehiculos v ON p.vehiculo_id = v.id
-    WHERE p.estado IN ('pendiente', 'recaudada')
+    WHERE p.estado IN ('pendientes', 'recaudadas')
     ORDER BY p.fecha DESC
     LIMIT 500
   `);
@@ -43,18 +58,18 @@ export default async function PlanillasPage() {
   );
 
   // Obtener configuración para valor predeterminado
-  const configuracion = await query(
+  const configuracion = await query<{ valor_planilla_defecto: number }>(
     'SELECT valor_planilla_defecto FROM configuracion LIMIT 1'
   );
 
   // Obtener rol del usuario
-  const userData = await query(
+  const userData = await query<{ rol: string }>(
     'SELECT rol FROM usuarios WHERE usuario = $1',
     [user.email]
   );
 
   // Formatear datos para el cliente
-  const planillasFormateadas = planillas.map((p: any) => ({
+  const planillasFormateadas = planillas.map((p) => ({
     ...p,
     vehiculos: { codigo_vehiculo: p.codigo_vehiculo }
   }));

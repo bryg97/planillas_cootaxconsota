@@ -1,9 +1,17 @@
-import NextAuth from 'next-auth';
+import { type NextAuthOptions } from 'next-auth';
 import CredentialsProvider from 'next-auth/providers/credentials';
 import { query } from '@/lib/db';
 import bcrypt from 'bcryptjs';
 
-export const authOptions = {
+type DbUser = {
+  id: number;
+  usuario: string;
+  nombre: string;
+  password: string;
+  rol: string;
+};
+
+export const authOptions: NextAuthOptions = {
   providers: [
     CredentialsProvider({
       name: 'Credentials',
@@ -12,14 +20,17 @@ export const authOptions = {
         password: { label: 'Password', type: 'password' }
       },
       async authorize(credentials) {
-        if (!credentials?.email || !credentials?.password) {
+        const email = credentials?.email;
+        const password = credentials?.password;
+
+        if (typeof email !== 'string' || typeof password !== 'string') {
           return null;
         }
 
         try {
-          const users = await query(
+          const users = await query<DbUser>(
             'SELECT id, usuario, nombre, password, rol FROM usuarios WHERE usuario = $1',
-            [credentials.email]
+            [email]
           );
 
           if (users.length === 0) {
@@ -28,11 +39,7 @@ export const authOptions = {
 
           const user = users[0];
 
-          // Validar contraseña
-          const isPasswordValid = await bcrypt.compare(
-            credentials.password,
-            user.password
-          );
+          const isPasswordValid = await bcrypt.compare(password, user.password);
 
           if (!isPasswordValid) {
             return null;
@@ -61,8 +68,12 @@ export const authOptions = {
     },
     async session({ session, token }) {
       if (session.user) {
-        session.user.id = token.id as string;
-        session.user.role = token.role as string;
+        if (typeof token.id === 'string') {
+          session.user.id = token.id;
+        }
+        if (typeof token.role === 'string') {
+          session.user.role = token.role;
+        }
       }
       return session;
     }
@@ -75,7 +86,5 @@ export const authOptions = {
     strategy: 'jwt',
     maxAge: 24 * 60 * 60 // 24 horas
   },
-  secret: process.env.NEXTAUTH_SECRET
+  secret: process.env.NEXTAUTH_SECRET || 'default-secret-key-change-in-production'
 };
-
-export const { handlers, auth, signIn, signOut } = NextAuth(authOptions);

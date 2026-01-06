@@ -5,6 +5,31 @@ import { getSession } from '@/lib/auth-helper';
 import { revalidatePath } from 'next/cache';
 import { notificarNuevaPlanillaCredito, notificarRecaudoCredito } from '@/lib/telegram';
 
+// Tipos de ayuda para resultados de BD
+interface PlanillaDeuda {
+  id: number;
+  numero_planilla: string;
+  valor: number;
+  fecha: string;
+  conductor: string;
+}
+
+interface UsuarioBasico {
+  id: number;
+  nombre: string | null;
+  rol?: string;
+}
+
+interface PlanillaRecaudo {
+  id: number;
+  numero_planilla: string;
+  valor: number;
+  tipo_pago: string;
+  fecha: string;
+  conductor: string;
+  placa: string | null;
+}
+
 export async function verificarNumeroPlanillaExiste(numeroPlanilla: string) {
   try {
     const result = await queryOne(
@@ -20,7 +45,7 @@ export async function verificarNumeroPlanillaExiste(numeroPlanilla: string) {
 
 export async function verificarDeudaVehiculo(vehiculoId: number) {
   try {
-    const planillas = await query(
+    const planillas = await query<PlanillaDeuda>(
       `SELECT id, numero_planilla, valor, fecha, conductor 
        FROM planillas 
        WHERE vehiculo_id = $1 AND tipo_pago = 'credito' AND estado = 'pendiente'
@@ -32,7 +57,7 @@ export async function verificarDeudaVehiculo(vehiculoId: number) {
       return null;
     }
 
-    const total = planillas.reduce((sum: number, p: any) => sum + (p.valor || 0), 0);
+    const total = planillas.reduce((sum, p) => sum + (p.valor || 0), 0);
 
     return {
       planillas,
@@ -57,7 +82,7 @@ export async function recaudarPlanillas(planillaIds: number[]) {
     }
 
     // Obtener datos del usuario
-    const userData = await queryOne(
+    const userData = await queryOne<UsuarioBasico>(
       'SELECT id, nombre FROM usuarios WHERE usuario = $1',
       [session.user.email]
     );
@@ -67,7 +92,7 @@ export async function recaudarPlanillas(planillaIds: number[]) {
     }
 
     // Obtener detalles de las planillas
-    const planillasData = await query(
+    const planillasData = await query<PlanillaRecaudo>(
       `SELECT p.id, p.numero_planilla, p.valor, p.tipo_pago, p.fecha, p.conductor, v.placa
        FROM planillas p
        LEFT JOIN vehiculos v ON p.vehiculo_id = v.id
@@ -108,7 +133,7 @@ export async function recaudarPlanillas(planillaIds: number[]) {
 
     // Notificar recaudos de crédito
     if (planillasData && planillasData.length > 0) {
-      const planillasCredito = planillasData.filter((p: any) => p.tipo_pago === 'credito');
+      const planillasCredito = planillasData.filter((p) => p.tipo_pago === 'credito');
 
       if (planillasCredito.length > 0) {
         const fecha = new Date().toLocaleDateString('es-CO', {
@@ -121,11 +146,11 @@ export async function recaudarPlanillas(planillaIds: number[]) {
           hour12: true
         });
 
-        const totalRecaudado = planillasCredito.reduce((sum: number, p: any) => sum + p.valor, 0);
+        const totalRecaudado = planillasCredito.reduce((sum, p) => sum + p.valor, 0);
 
         await notificarRecaudoCredito({
-          operador: userData.nombre,
-          planillas: planillasCredito.map((p: any) => ({
+          operador: userData.nombre ?? 'Operador',
+          planillas: planillasCredito.map((p) => ({
             numero: p.numero_planilla,
             monto: p.valor,
             vehiculo: p.placa || 'N/A',
@@ -191,7 +216,7 @@ export async function createPlanilla(formData: FormData) {
     }
 
     // Obtener el ID del usuario
-    const userData = await queryOne(
+    const userData = await queryOne<{ id: number }>(
       'SELECT id FROM usuarios WHERE usuario = $1',
       [session.user.email]
     );
@@ -201,13 +226,13 @@ export async function createPlanilla(formData: FormData) {
     }
 
     // Obtener datos del vehículo
-    const vehiculo = await queryOne(
+    const vehiculo = await queryOne<{ codigo_vehiculo: string; saldo: number }>(
       'SELECT codigo_vehiculo, saldo FROM vehiculos WHERE id = $1',
       [vehiculoId]
     );
 
     // Insertar planilla
-    const result = await queryOne(
+    const result = await queryOne<{ id: number }>(
       `INSERT INTO planillas (
         vehiculo_id, conductor, operador, valor, numero_planilla, fecha,
         operador_id, pagada, tipo_pago, estado, origen, destino
@@ -352,7 +377,7 @@ export async function eliminarPlanilla(planillaId: number) {
     }
 
     // Verificar que el usuario sea admin
-    const userData = await queryOne(
+    const userData = await queryOne<{ rol: string }>(
       'SELECT rol FROM usuarios WHERE usuario = $1',
       [session.user.email]
     );

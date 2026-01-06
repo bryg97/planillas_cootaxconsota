@@ -12,7 +12,7 @@ export default async function VehiculosPage() {
   }
 
   // Obtener el rol del usuario
-  const usuarioRow = await query(
+  const usuarioRow = await query<{ rol: string }>(
     'SELECT rol FROM usuarios WHERE usuario = $1',
     [user.email]
   );

@@ -1,48 +1,80 @@
 'use server';
 
-import { createAdminClient } from '@/lib/supabase/admin';
-import { createClient } from '@/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
+import { query, execute } from '@/lib/db';
+import { getCurrentUser } from '@/lib/auth-helper';
 import { notificarPagoVehiculo } from '@/lib/telegram';
 
-export async function getCarteraVehiculos() {
-  const adminClient = createAdminClient();
-  
-  // Obtener vehículos con planillas pendientes
-  const { data } = await adminClient
-    .from('planillas')
-    .select(`
-      id,
-      numero_planilla,
-      valor,
-      fecha,
-      conductor,
-      vehiculo_id,
-      vehiculos:vehiculo_id (id, codigo_vehiculo)
-    `)
-    .eq('tipo_pago', 'credito')
-    .eq('estado', 'pendiente')
-    .order('fecha', { ascending: false });
+type PlanillaPendiente = {
+  id: number;
+  numero_planilla: string;
+  valor: number;
+  fecha: string;
+  conductor: string;
+  vehiculo_id: number;
+  codigo_vehiculo: string;
+};
 
-  if (!data) return [];
+type UsuarioRow = {
+  id: number;
+  usuario: string;
+};
+
+type VehiculoRow = {
+  codigo_vehiculo: string;
+};
+
+type PlanillaPago = {
+  id: number;
+  numero_planilla: string;
+  valor: number;
+};
+
+export async function getCarteraVehiculos() {
+  // Obtener vehículos con planillas pendientes de crédito
+  const planillas = await query<PlanillaPendiente>(`
+    SELECT 
+      p.id,
+      p.numero_planilla,
+      p.valor,
+      p.fecha,
+      p.conductor,
+      p.vehiculo_id,
+      v.codigo_vehiculo
+    FROM planillas p
+    LEFT JOIN vehiculos v ON p.vehiculo_id = v.id
+    WHERE p.tipo_pago = 'credito' AND p.estado = 'pendiente'
+    ORDER BY p.fecha DESC
+  `);
+
+  if (!planillas || planillas.length === 0) return [];
 
   // Agrupar por vehículo
-  const vehiculosMap = new Map();
+  const vehiculosMap = new Map<
+    number,
+    {
+      vehiculo_id: number;
+      codigo_vehiculo: string;
+      planillas: PlanillaPendiente[];
+      total: number;
+    }
+  >();
   
-  data.forEach((planilla: any) => {
+  planillas.forEach((planilla) => {
     const vehiculoId = planilla.vehiculo_id;
-    const vehiculoCodigo = planilla.vehiculos?.codigo_vehiculo;
+    const vehiculoCodigo = planilla.codigo_vehiculo;
     
-    if (!vehiculosMap.has(vehiculoId)) {
-      vehiculosMap.set(vehiculoId, {
+    let vehiculo = vehiculosMap.get(vehiculoId);
+    if (!vehiculo) {
+      vehiculo = {
         vehiculo_id: vehiculoId,
         codigo_vehiculo: vehiculoCodigo,
         planillas: [],
         total: 0
-      });
+      };
+      vehiculosMap.set(vehiculoId, vehiculo);
     }
     
-    const vehiculo = vehiculosMap.get(vehiculoId);
     vehiculo.planillas.push(planilla);
     vehiculo.total += planilla.valor || 0;
   });
@@ -51,70 +83,53 @@ export async function getCarteraVehiculos() {
 }
 
 export async function procesarPagoVehiculo(vehiculoId: number, planillaIds: number[]) {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getCurrentUser();
   
   if (!user) {
     return { error: 'Usuario no autenticado' };
   }
 
-  const adminClient = createAdminClient();
-  
   // Obtener datos del usuario (tesorera)
-  const { data: userData } = await adminClient
-    .from('usuarios')
-    .select('id, usuario')
-    .eq('usuario', user.email)
-    .single();
+  const userData = await query<UsuarioRow>(
+    'SELECT id, usuario FROM usuarios WHERE usuario = $1',
+    [user.email]
+  );
 
-  if (!userData) {
+  if (!userData || userData.length === 0) {
     return { error: 'Usuario no encontrado' };
   }
 
-  // Obtener datos del vehículo y planillas
-  const { data: vehiculo } = await adminClient
-    .from('vehiculos')
-    .select('codigo_vehiculo')
-    .eq('id', vehiculoId)
-    .single();
+  const tesoreraId = userData[0].id;
 
-  const { data: planillas } = await adminClient
-    .from('planillas')
-    .select('id, numero_planilla, valor')
-    .in('id', planillaIds);
+  // Obtener datos del vehículo y planillas
+  const vehiculo = await query<VehiculoRow>(
+    'SELECT codigo_vehiculo FROM vehiculos WHERE id = $1',
+    [vehiculoId]
+  );
+
+  const planillas = await query<PlanillaPago>(
+    'SELECT id, numero_planilla, valor FROM planillas WHERE id = ANY($1::int[])',
+    [planillaIds]
+  );
 
   if (!planillas || planillas.length === 0) {
     return { error: 'No se encontraron planillas' };
   }
 
   // Actualizar estado de planillas a 'pagada'
-  const { error: updateError } = await adminClient
-    .from('planillas')
-    .update({ estado: 'pagada' })
-    .in('id', planillaIds);
-
-  if (updateError) {
-    return { error: updateError.message };
-  }
+  await execute(
+    'UPDATE planillas SET estado = $1 WHERE id = ANY($2::int[])',
+    ['pagada', planillaIds]
+  );
 
   // Registrar recaudos
-  const recaudos = planillaIds.map(planillaId => {
-    const planilla = planillas.find(p => p.id === planillaId);
-    return {
-      planilla_id: planillaId,
-      vehiculo_id: vehiculoId,
-      monto: planilla?.valor || 0,
-      tipo: 'pago_tesorera',
-      recaudado_por: userData.id
-    };
-  });
-
-  const { error: recaudoError } = await adminClient
-    .from('recaudos')
-    .insert(recaudos);
-
-  if (recaudoError) {
-    console.error('Error registrando recaudos:', recaudoError);
+  for (const planillaId of planillaIds) {
+    const planilla = planillas.find((p) => p.id === planillaId);
+    await execute(
+      `INSERT INTO recaudos (planilla_id, vehiculo_id, monto, tipo, recaudado_por) 
+       VALUES ($1, $2, $3, $4, $5)`,
+      [planillaId, vehiculoId, planilla?.valor || 0, 'pago_tesorera', tesoreraId]
+    );
   }
 
   // Enviar notificación Telegram
@@ -129,9 +144,9 @@ export async function procesarPagoVehiculo(vehiculoId: number, planillaIds: numb
   });
 
   await notificarPagoVehiculo({
-    vehiculo: vehiculo?.codigo_vehiculo || '',
-    autorizo: userData.usuario,
-    planillas: planillas.map(p => ({
+    vehiculo: vehiculo?.[0]?.codigo_vehiculo || '',
+    autorizo: userData[0].usuario,
+    planillas: planillas.map((p) => ({
       numero: p.numero_planilla,
       monto: p.valor
     })),

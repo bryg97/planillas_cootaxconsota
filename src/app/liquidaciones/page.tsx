@@ -4,6 +4,8 @@ import { query } from '@/lib/db';
 import LiquidacionesClient from './LiquidacionesClient';
 import { getPlanillasParaLiquidar, getLiquidacionesPendientes } from './actions';
 
+type UsuarioRolRow = { rol: string; id: number };
+
 export default async function LiquidacionesPage() {
   const user = await getCurrentUser();
 
@@ -12,7 +14,7 @@ export default async function LiquidacionesPage() {
   }
 
   // Obtener rol del usuario
-  const userData = await query(
+  const userData = await query<UsuarioRolRow>(
     'SELECT rol, id FROM usuarios WHERE usuario = $1',
     [user.email]
   );
