@@ -198,23 +198,23 @@ export default function PlanillasClient({ planillas, vehiculos, operadores, valo
                         {planilla.numero_planilla}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {planilla.fecha ? planilla.fecha.substring(0, 10).split('-').reverse().join('/') : ''}
+                        {planilla.fecha ? String(planilla.fecha).substring(0, 10).split('-').reverse().join('/') : ''}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {planilla.vehiculos?.codigo_vehiculo}
+                        {planilla.vehiculos?.codigo_vehiculo || ''}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {planilla.conductor}
+                        {planilla.conductor || ''}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                         <span className={`px-2 py-1 rounded-full text-xs ${
                           planilla.tipo_pago === 'contado' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
                         }`}>
-                          {planilla.tipo_pago}
+                          {planilla.tipo_pago || ''}
                         </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        ${parseFloat(planilla.valor).toLocaleString('es-CO')}
+                        ${(parseFloat(planilla.valor) || 0).toLocaleString('es-CO')}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm">
                         <span className={`px-2 py-1 rounded-full text-xs ${
