@@ -286,12 +286,12 @@ export async function aprobarLiquidacion(liquidacionId: number) {
       WHERE ld.liquidacion_id = $1
     `, [liquidacionId]);
 
-    // Actualizar estado de la liquidación
+    // Actualizar estado de la liquidación (sin aprobada_por para evitar conflictos de tipo)
     await execute(
       `UPDATE liquidaciones 
-       SET estado = $1, aprobada_por = $2, fecha_aprobacion = NOW()
-       WHERE id = $3`,
-      ['aprobada', tesoreraId, liquidacionId]
+       SET estado = $1, fecha_aprobacion = NOW()
+       WHERE id = $2`,
+      ['aprobada', liquidacionId]
     );
 
     // Enviar notificación Telegram
