@@ -7,13 +7,13 @@ export default function Home() {
         <div className="mb-8">
           <div className="text-7xl mb-4">🚖</div>
           <h1 className="text-5xl font-bold text-gray-900 dark:text-white mb-4">
-            Cootaxconsota
+            Brayan Arroyave - Coordinador de Comunicaciones
           </h1>
           <p className="text-2xl font-semibold text-blue-600 dark:text-blue-400 mb-2">
-            Sistema de Planillas
+            Sistema de planillas de viaje ocasional
           </p>
           <p className="text-lg text-gray-600 dark:text-gray-300 max-w-2xl">
-            Gestión eficiente de recaudo, liquidaciones y cartera para la cooperativa de taxis
+            Gestión de registro, recaudo, liquidaciones y cartera.
           </p>
         </div>
 
@@ -99,7 +99,7 @@ export default function Home() {
             <div className="text-3xl">⚡</div>
             <div className="text-left">
               <h3 className="text-lg font-semibold text-yellow-900 dark:text-yellow-100 mb-2">
-                Sistema Optimizado para tu Cooperativa
+                Sistema Optimizado
               </h3>
               <ul className="text-sm text-yellow-800 dark:text-yellow-200 space-y-1">
                 <li>✓ Control de roles: Administrador, Supervisor y Operador</li>
