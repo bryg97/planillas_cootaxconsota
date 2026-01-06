@@ -91,9 +91,9 @@ export async function recaudarPlanillas(planillaIds: number[]) {
       return { error: 'Usuario no encontrado' };
     }
 
-    // Obtener detalles de las planillas
-    const planillasData = await query<PlanillaRecaudo>(
-      `SELECT p.id, p.numero_planilla, p.valor, p.tipo_pago, p.fecha, p.conductor, v.codigo_vehiculo as placa
+    // Obtener detalles de las planillas (incluir operador para notificación)
+    const planillasData = await query<PlanillaRecaudo & { operador?: string }>(
+      `SELECT p.id, p.numero_planilla, p.valor, p.tipo_pago, p.fecha, p.conductor, p.operador, v.codigo_vehiculo as placa
        FROM planillas p
        LEFT JOIN vehiculos v ON p.vehiculo_id = v.id
        WHERE p.id = ANY($1::int[])`,
@@ -145,8 +145,11 @@ export async function recaudarPlanillas(planillaIds: number[]) {
 
         const totalRecaudado = planillasCredito.reduce((sum, p) => sum + (parseFloat(String(p.valor)) || 0), 0);
 
+        // Obtener el nombre del operador de la primera planilla
+        const nombreOperador = planillasCredito[0]?.operador || userData.usuario || 'Operador';
+
         await notificarRecaudoCredito({
-          operador: userData.usuario ?? 'Operador',
+          operador: nombreOperador,
           planillas: planillasCredito.map((p) => ({
             numero: p.numero_planilla,
             monto: parseFloat(String(p.valor)) || 0,

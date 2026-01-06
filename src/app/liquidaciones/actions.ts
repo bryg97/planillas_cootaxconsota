@@ -275,12 +275,13 @@ export async function aprobarLiquidacion(liquidacionId: number) {
 
     const liq = liquidacion[0];
 
-    // Obtener detalles
-    const detalles = await query<DetalleRow>(`
+    // Obtener detalles (incluir operador de la planilla para notificación)
+    const detalles = await query<DetalleRow & { operador?: string }>(`
       SELECT 
         ld.planilla_id,
         ld.monto,
-        p.numero_planilla
+        p.numero_planilla,
+        p.operador
       FROM liquidaciones_detalle ld
       LEFT JOIN planillas p ON ld.planilla_id = p.id
       WHERE ld.liquidacion_id = $1
@@ -297,18 +298,20 @@ export async function aprobarLiquidacion(liquidacionId: number) {
     // Enviar notificación Telegram
     const planillas = (detalles || []).map((d) => ({
       numero: d.numero_planilla,
-      monto: d.monto
+      monto: parseFloat(String(d.monto)) || 0
     }));
 
-    // Obtener el nombre del tesorera (usuario actual)
-    const tesoreraInfo = await query<{ usuario: string | null }>(
-      'SELECT usuario FROM usuarios WHERE id = $1',
-      [tesoreraId]
-    );
+    // Obtener nombre del operador desde la primera planilla
+    const nombreOperador = detalles?.[0]?.operador || liq.usuario || 'Operador';
+
+    // El nombre de quien recibe es el operador seleccionado en la sesión
+    // Como no tenemos columna 'nombre' en usuarios, usamos el nombre del operador de las planillas
+    // En este caso, la tesorera recibe, pero usamos un nombre genérico
+    const nombreRecibe = 'Tesorería';
 
     await notificarDineroEntregado({
-      operador: liq.usuario ?? '',
-      recibe: tesoreraInfo?.[0]?.usuario ?? tesorera[0].usuario ?? '',
+      operador: nombreOperador,
+      recibe: nombreRecibe,
       planillas: planillas
     });
 
