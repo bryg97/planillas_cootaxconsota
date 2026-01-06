@@ -34,7 +34,6 @@ type LiquidacionRow = {
   estado: string;
   operador_id: number;
   usuario: string | null;
-  nombre: string | null;
 };
 
 type DetalleRow = {
@@ -63,7 +62,7 @@ export async function getPlanillasParaLiquidar() {
         p.created_at,
         v.codigo_vehiculo,
         u.usuario,
-        u.nombre as operador_nombre
+        u.usuario as operador_nombre
       FROM planillas p
       LEFT JOIN vehiculos v ON p.vehiculo_id = v.id
       LEFT JOIN usuarios u ON p.operador_id = u.id
@@ -180,8 +179,7 @@ export async function getLiquidacionesPendientes() {
         l.fecha,
         l.estado,
         l.operador_id,
-        u.usuario,
-        u.nombre
+        u.usuario
       FROM liquidaciones l
       LEFT JOIN usuarios u ON l.operador_id = u.id
       WHERE l.estado = 'pendiente'
@@ -247,8 +245,7 @@ export async function aprobarLiquidacion(liquidacionId: number) {
         l.fecha,
         l.estado,
         l.operador_id,
-        u.usuario,
-        u.nombre
+        u.usuario
       FROM liquidaciones l
       LEFT JOIN usuarios u ON l.operador_id = u.id
       WHERE l.id = $1
