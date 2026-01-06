@@ -259,6 +259,7 @@ export default function OperacionesClient({
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">N° Planilla</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Vehículo</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Conductor</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Operador</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Tipo</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Valor</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Estado</th>
@@ -272,10 +273,13 @@ export default function OperacionesClient({
                         {planilla.numero_planilla}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {planilla.vehiculos?.codigo_vehiculo}
+                        {planilla.codigo_vehiculo || ''}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {planilla.conductor}
+                        {planilla.conductor || ''}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        {planilla.operador || ''}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm">
                         <span className={`px-2 py-1 rounded-full text-xs font-medium ${
@@ -303,7 +307,7 @@ export default function OperacionesClient({
                   ))
                 ) : (
                   <tr>
-                    <td colSpan={6} className="px-6 py-8 text-center text-gray-500">
+                    <td colSpan={7} className="px-6 py-8 text-center text-gray-500">
                       {filtro === 'todas' 
                         ? 'No hay planillas registradas hoy' 
                         : `No hay planillas ${filtro === 'pendientes' ? 'pendientes' : 'de ' + filtro} hoy`}

@@ -108,7 +108,7 @@ export default function CarteraClient({ vehiculos }: { vehiculos: any[] }) {
                   </div>
                   <div className="text-right">
                     <p className="text-xl font-bold text-red-600">
-                      ${vehiculo.total.toLocaleString('es-CO')}
+                      ${(parseFloat(String(vehiculo.total)) || 0).toLocaleString('es-CO')}
                     </p>
                     <p className="text-sm text-gray-500">Total adeudado</p>
                   </div>
@@ -131,10 +131,10 @@ export default function CarteraClient({ vehiculos }: { vehiculos: any[] }) {
                           <div className="flex-1">
                             <p className="font-medium">N° {planilla.numero_planilla}</p>
                             <p className="text-sm text-gray-600">
-                              {planilla.conductor} - {new Date(planilla.fecha).toLocaleDateString('es-CO')}
+                              {planilla.conductor} - {new Date(planilla.fecha).toLocaleDateString('es-CO', { timeZone: 'America/Bogota' })}
                             </p>
                           </div>
-                          <p className="font-bold">${planilla.valor.toLocaleString('es-CO')}</p>
+                          <p className="font-bold">${(parseFloat(String(planilla.valor)) || 0).toLocaleString('es-CO')}</p>
                         </label>
                       ))}
                     </div>
@@ -145,7 +145,7 @@ export default function CarteraClient({ vehiculos }: { vehiculos: any[] }) {
                           Total seleccionado: $
                           {vehiculo.planillas
                             .filter((p: any) => planillasSeleccionadas.includes(p.id))
-                            .reduce((sum: number, p: any) => sum + p.valor, 0)
+                            .reduce((sum: number, p: any) => sum + (parseFloat(String(p.valor)) || 0), 0)
                             .toLocaleString('es-CO')}
                         </p>
                         <button

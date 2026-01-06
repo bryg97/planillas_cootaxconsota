@@ -76,7 +76,7 @@ export async function getCarteraVehiculos() {
     }
     
     vehiculo.planillas.push(planilla);
-    vehiculo.total += planilla.valor || 0;
+    vehiculo.total += parseFloat(String(planilla.valor)) || 0;
   });
 
   return Array.from(vehiculosMap.values());
