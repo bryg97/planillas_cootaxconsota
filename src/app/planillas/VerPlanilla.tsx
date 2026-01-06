@@ -37,7 +37,7 @@ export default function VerPlanilla({
               Fecha
             </label>
             <p className="text-lg font-semibold text-gray-900">
-              {planilla.fecha ? planilla.fecha.substring(0, 10).split('-').reverse().join('/') : ''}
+              {planilla.fecha ? String(planilla.fecha).substring(0, 10).split('-').reverse().join('/') : ''}
             </p>
           </div>
 
@@ -46,7 +46,7 @@ export default function VerPlanilla({
               Vehículo
             </label>
             <p className="text-lg font-semibold text-gray-900">
-              {planilla.vehiculos?.codigo_vehiculo}
+              {planilla.vehiculos?.codigo_vehiculo || ''}
             </p>
           </div>
 
@@ -55,7 +55,7 @@ export default function VerPlanilla({
               Conductor
             </label>
             <p className="text-lg font-semibold text-gray-900">
-              {planilla.conductor}
+              {planilla.conductor || ''}
             </p>
           </div>
 
@@ -73,7 +73,7 @@ export default function VerPlanilla({
               Valor
             </label>
             <p className="text-2xl font-bold text-green-600">
-              ${parseFloat(planilla.valor).toLocaleString('es-CO')}
+              ${(parseFloat(planilla.valor) || 0).toLocaleString('es-CO')}
             </p>
           </div>
 
@@ -86,7 +86,7 @@ export default function VerPlanilla({
                 ? 'bg-green-100 text-green-800' 
                 : 'bg-yellow-100 text-yellow-800'
             }`}>
-              {planilla.tipo_pago}
+              {planilla.tipo_pago || ''}
             </span>
           </div>
 
