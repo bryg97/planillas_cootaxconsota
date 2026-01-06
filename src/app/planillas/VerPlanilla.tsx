@@ -1,5 +1,24 @@
 'use client';
 
+// Función para formatear fecha en formato Colombia (dd/mm/yyyy)
+function formatFechaColombia(fecha: any): string {
+  if (!fecha) return '';
+  const fechaStr = typeof fecha === 'string' ? fecha : fecha.toISOString?.() || String(fecha);
+  const match = fechaStr.match(/(\d{4})-(\d{2})-(\d{2})/);
+  if (match) {
+    return `${match[3]}/${match[2]}/${match[1]}`;
+  }
+  return fechaStr;
+}
+
+// Función para obtener fecha ISO para input date
+function getFechaISO(fecha: any): string {
+  if (!fecha) return '';
+  const fechaStr = typeof fecha === 'string' ? fecha : fecha.toISOString?.() || String(fecha);
+  const match = fechaStr.match(/(\d{4}-\d{2}-\d{2})/);
+  return match ? match[1] : '';
+}
+
 export default function VerPlanilla({ 
   planilla, 
   onClose 
@@ -37,7 +56,7 @@ export default function VerPlanilla({
               Fecha
             </label>
             <p className="text-lg font-semibold text-gray-900">
-              {planilla.fecha ? String(planilla.fecha).substring(0, 10).split('-').reverse().join('/') : ''}
+              {formatFechaColombia(planilla.fecha)}
             </p>
           </div>
 

@@ -7,6 +7,19 @@ import VerPlanilla from './VerPlanilla';
 import EditarPlanilla from './EditarPlanilla';
 import { eliminarPlanilla } from './actions';
 
+// Función para formatear fecha en formato Colombia (dd/mm/yyyy)
+function formatFechaColombia(fecha: any): string {
+  if (!fecha) return '';
+  // Si es string ISO (2026-01-06) o Date object
+  const fechaStr = typeof fecha === 'string' ? fecha : fecha.toISOString?.() || String(fecha);
+  // Extraer solo la parte de fecha YYYY-MM-DD
+  const match = fechaStr.match(/(\d{4})-(\d{2})-(\d{2})/);
+  if (match) {
+    return `${match[3]}/${match[2]}/${match[1]}`; // dd/mm/yyyy
+  }
+  return fechaStr;
+}
+
 export default function PlanillasClient({ planillas, vehiculos, operadores, valorDefecto, rol }: { planillas: any[]; vehiculos: any[]; operadores: any[]; valorDefecto?: number; rol: string }) {
   const [showForm, setShowForm] = useState(false);
   const [planillaVer, setPlanillaVer] = useState<any>(null);
@@ -199,7 +212,7 @@ export default function PlanillasClient({ planillas, vehiculos, operadores, valo
                         {planilla.numero_planilla}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {planilla.fecha ? String(planilla.fecha).substring(0, 10).split('-').reverse().join('/') : ''}
+                        {formatFechaColombia(planilla.fecha)}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                         {planilla.vehiculos?.codigo_vehiculo || ''}

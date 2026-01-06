@@ -4,6 +4,25 @@ import { useState } from "react";
 import { crearLiquidacion, aprobarLiquidacion } from "./actions";
 import * as XLSX from 'xlsx';
 
+// Función para formatear fecha en formato Colombia (dd/mm/yyyy)
+function formatFechaColombia(fecha: any): string {
+  if (!fecha) return '';
+  const fechaStr = typeof fecha === 'string' ? fecha : fecha.toISOString?.() || String(fecha);
+  const match = fechaStr.match(/(\d{4})-(\d{2})-(\d{2})/);
+  if (match) {
+    return `${match[3]}/${match[2]}/${match[1]}`;
+  }
+  return fechaStr;
+}
+
+// Función para obtener fecha ISO (YYYY-MM-DD) de cualquier formato
+function getFechaISO(fecha: any): string {
+  if (!fecha) return '';
+  const fechaStr = typeof fecha === 'string' ? fecha : fecha.toISOString?.() || String(fecha);
+  const match = fechaStr.match(/(\d{4}-\d{2}-\d{2})/);
+  return match ? match[1] : '';
+}
+
 export default function LiquidacionesClient({ 
   rol,
   planillas,
@@ -50,8 +69,8 @@ export default function LiquidacionesClient({
       
       if (!fechaDesde && !fechaHasta) return true;
       
-      // Comparar fechas como strings para evitar problemas de zona horaria
-      const fechaPlanilla = String(p.fecha).substring(0, 10);
+      // Usar getFechaISO para obtener formato YYYY-MM-DD consistente
+      const fechaPlanilla = getFechaISO(p.fecha);
       
       if (fechaDesde && fechaHasta) {
         return fechaPlanilla >= fechaDesde && fechaPlanilla <= fechaHasta;
@@ -113,7 +132,7 @@ export default function LiquidacionesClient({
     function exportarPlanillas() {
       const datosExportar = planillasFiltradas.map(p => ({
         'N° Planilla': p.numero_planilla,
-        'Fecha': p.fecha ? String(p.fecha).substring(0, 10).split('-').reverse().join('/') : '',
+        'Fecha': formatFechaColombia(p.fecha),
         'Vehículo': p.codigo_vehiculo || '',
         'Conductor': p.conductor,
         'Tipo': p.tipo_pago,
@@ -253,7 +272,7 @@ export default function LiquidacionesClient({
                       <span className={`px-2 py-0.5 rounded-full text-xs ${planilla.estado === 'recaudada' ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-800'}`}>{planilla.estado}</span>
                     </div>
                     <p className="text-sm text-gray-600 mt-1">
-                      <span className="font-medium">{planilla.codigo_vehiculo || ''}</span> • {planilla.conductor || ''} • {planilla.fecha ? String(planilla.fecha).substring(0, 10).split('-').reverse().join('/') : ''}
+                      <span className="font-medium">{planilla.codigo_vehiculo || ''}</span> • {planilla.conductor || ''} • {formatFechaColombia(planilla.fecha)}
                     </p>
                   </div>
                   <p className="font-bold text-lg text-gray-900 ml-3">${(parseFloat(String(planilla.valor)) || 0).toLocaleString('es-CO')}</p>

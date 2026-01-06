@@ -3,6 +3,17 @@
 import { useState } from 'react';
 import { procesarPagoVehiculo } from './actions';
 
+// Función para formatear fecha en formato Colombia (dd/mm/yyyy)
+function formatFechaColombia(fecha: any): string {
+  if (!fecha) return '';
+  const fechaStr = typeof fecha === 'string' ? fecha : fecha.toISOString?.() || String(fecha);
+  const match = fechaStr.match(/(\d{4})-(\d{2})-(\d{2})/);
+  if (match) {
+    return `${match[3]}/${match[2]}/${match[1]}`;
+  }
+  return fechaStr;
+}
+
 export default function CarteraClient({ vehiculos }: { vehiculos: any[] }) {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
@@ -131,7 +142,7 @@ export default function CarteraClient({ vehiculos }: { vehiculos: any[] }) {
                           <div className="flex-1">
                             <p className="font-medium">N° {planilla.numero_planilla}</p>
                             <p className="text-sm text-gray-600">
-                              {planilla.conductor} - {planilla.fecha ? String(planilla.fecha).substring(0, 10).split('-').reverse().join('/') : ''}
+                              {planilla.conductor} - {formatFechaColombia(planilla.fecha)}
                             </p>
                           </div>
                           <p className="font-bold">${(parseFloat(String(planilla.valor)) || 0).toLocaleString('es-CO')}</p>
