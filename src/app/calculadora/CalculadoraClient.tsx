@@ -126,9 +126,9 @@ export default function CalculadoraClient({ nombreUsuario }: CalculadoraClientPr
 
     // Hablar el resultado
     const valorPesos = valorServicio.toLocaleString('es-CO');
-    const mensaje = `${nombreUsuario}, el tiempo total es ${horas} ${horas === 1 ? 'hora' : 'horas'} y ${minutos} ${minutos === 1 ? 'minuto' : 'minutos'}. El valor total del servicio es ${valorPesos} pesos.`;
+    const mensaje = `${nombreOperador}, el tiempo total es ${horas} ${horas === 1 ? 'hora' : 'horas'} y ${minutos} ${minutos === 1 ? 'minuto' : 'minutos'}. El valor total del servicio es ${valorPesos} pesos.`;
     hablarTexto(mensaje);
-  }, [horaInicio, horaFin, nombreUsuario, hablarTexto]);
+  }, [horaInicio, horaFin, nombreOperador, hablarTexto]);
 
   // Calcular automáticamente cuando cambian las horas
   useEffect(() => {
