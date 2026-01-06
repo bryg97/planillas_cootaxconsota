@@ -13,6 +13,22 @@ export default function CalculadoraClient({ nombreUsuario }: CalculadoraClientPr
   const [resultado, setResultado] = useState<{ horas: number; minutos: number; valor: number } | null>(null);
   const [mensajeAgente, setMensajeAgente] = useState('¡Hola!');
   const [saludoInicial, setSaludoInicial] = useState(false);
+  const [nombreOperador, setNombreOperador] = useState(nombreUsuario);
+
+  // Obtener nombre del operador seleccionado desde localStorage
+  useEffect(() => {
+    const stored = localStorage.getItem('operadorSeleccionado');
+    if (stored) {
+      try {
+        const op = JSON.parse(stored);
+        if (op && op.nombre) {
+          setNombreOperador(op.nombre);
+        }
+      } catch (e) {
+        console.error('Error parsing operador:', e);
+      }
+    }
+  }, []);
 
   // Función para hablar texto (Text-to-Speech)
   const hablarTexto = useCallback((texto: string) => {
@@ -55,11 +71,11 @@ export default function CalculadoraClient({ nombreUsuario }: CalculadoraClientPr
     if (saludoInicial) return;
     
     const hora = new Date().getHours();
-    let saludo = `¡Hola ${nombreUsuario}!`;
+    let saludo = `¡Hola ${nombreOperador}!`;
 
-    if (hora < 12) saludo = `¡Buenos días, ${nombreUsuario}!`;
-    else if (hora < 18) saludo = `¡Buenas tardes, ${nombreUsuario}!`;
-    else saludo = `¡Buenas noches, ${nombreUsuario}!`;
+    if (hora < 12) saludo = `¡Buenos días, ${nombreOperador}!`;
+    else if (hora < 18) saludo = `¡Buenas tardes, ${nombreOperador}!`;
+    else saludo = `¡Buenas noches, ${nombreOperador}!`;
 
     const timer = setTimeout(() => {
       hablarTexto(saludo);
@@ -67,7 +83,7 @@ export default function CalculadoraClient({ nombreUsuario }: CalculadoraClientPr
     }, 1000);
 
     return () => clearTimeout(timer);
-  }, [nombreUsuario, hablarTexto, saludoInicial]);
+  }, [nombreOperador, hablarTexto, saludoInicial]);
 
   // Calcular horas y valor del servicio
   const calcularHoras = useCallback(() => {

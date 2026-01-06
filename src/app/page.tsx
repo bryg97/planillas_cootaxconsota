@@ -7,14 +7,13 @@ export default function Home() {
         <div className="mb-8">
           <div className="text-7xl mb-4">🚖</div>
           <h1 className="text-5xl font-bold text-gray-900 dark:text-white mb-4">
-            Brayan Arroyave - Coordinador de Comunicaciones
+            By Brayan Arroyave
           </h1>
           <p className="text-2xl font-semibold text-blue-600 dark:text-blue-400 mb-2">
             Sistema de planillas de viaje ocasional
           </p>
           <p className="text-lg text-gray-600 dark:text-gray-300 max-w-2xl">
-            Gestión de registro, recaudo, liquidaciones y cartera.
-          </p>
+            Gestión de registro, recaudo, liquidaciones y cartera.</p>
         </div>
 
         <div className="flex flex-col sm:flex-row gap-4 mt-8">

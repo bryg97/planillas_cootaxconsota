@@ -9,8 +9,9 @@ export default async function CalculadoraPage() {
     redirect('/login');
   }
 
-  // Obtener el nombre del usuario (sin el email)
-  const nombreUsuario = user.name || user.email?.split('@')[0] || 'Usuario';
+  // El nombre real del operador se obtiene desde localStorage en el cliente
+  // Aquí solo pasamos un fallback
+  const nombreUsuario = user.email?.split('@')[0] || 'Usuario';
 
   return <CalculadoraClient nombreUsuario={nombreUsuario} />;
 }
