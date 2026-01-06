@@ -122,9 +122,9 @@ export async function recaudarPlanillas(planillaIds: number[]) {
     // Crear registros de recaudos
     for (const planillaId of planillaIds) {
       await execute(
-        `INSERT INTO recaudos (planilla_id, usuario_id, fecha_recaudo)
-         VALUES ($1, $2, $3)`,
-        [planillaId, userData.id, new Date().toISOString()]
+        `INSERT INTO recaudos (planilla_id, recaudado_por, monto, tipo)
+         VALUES ($1, $2, $3, $4)`,
+        [planillaId, userData.id, 0, 'recaudo']
       );
     }
 
