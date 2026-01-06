@@ -16,7 +16,7 @@ interface PlanillaDeuda {
 
 interface UsuarioBasico {
   id: number;
-  nombre: string | null;
+  usuario: string | null;
   rol?: string;
 }
 
@@ -83,7 +83,7 @@ export async function recaudarPlanillas(planillaIds: number[]) {
 
     // Obtener datos del usuario
     const userData = await queryOne<UsuarioBasico>(
-      'SELECT id, nombre FROM usuarios WHERE usuario = $1',
+      'SELECT id, usuario FROM usuarios WHERE usuario = $1',
       [session.user.email]
     );
 
@@ -146,7 +146,7 @@ export async function recaudarPlanillas(planillaIds: number[]) {
         const totalRecaudado = planillasCredito.reduce((sum, p) => sum + p.valor, 0);
 
         await notificarRecaudoCredito({
-          operador: userData.nombre ?? 'Operador',
+          operador: userData.usuario ?? 'Operador',
           planillas: planillasCredito.map((p) => ({
             numero: p.numero_planilla,
             monto: p.valor,
