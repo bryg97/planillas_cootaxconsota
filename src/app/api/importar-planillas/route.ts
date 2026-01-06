@@ -13,13 +13,14 @@ export async function POST(req: NextRequest) {
     // Usar la función que convierte codigo_vehiculo -> vehiculo_id
     const resultado = await importarPlanillasDesdeExcel(planillas);
 
-    if (resultado.error) {
+    if ('error' in resultado) {
       return NextResponse.json({ error: resultado.error }, { status: 400 });
     }
 
     return NextResponse.json(resultado);
-  } catch (e: any) {
+  } catch (e: unknown) {
     console.error('Error importando planillas:', e);
-    return NextResponse.json({ error: e.message || 'Error inesperado.' }, { status: 500 });
+    const message = e instanceof Error ? e.message : 'Error inesperado.';
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }
