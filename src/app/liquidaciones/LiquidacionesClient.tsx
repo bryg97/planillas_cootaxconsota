@@ -317,7 +317,9 @@ export default function LiquidacionesClient({
               <p className="text-gray-500">No hay liquidaciones pendientes</p>
             ) : (
               <div className="space-y-4">
-                {liquidacionesPendientes.map((liquidacion) => (
+                {liquidacionesPendientes.map((liquidacion) => {
+                  const totalCalculado = (liquidacion.detalles || []).reduce((sum: number, d: any) => sum + (parseFloat(String(d.monto)) || 0), 0);
+                  return (
                   <div key={liquidacion.id} className="border rounded-lg p-4">
                     <div className="flex justify-between items-start mb-3">
                       <div>
@@ -325,7 +327,7 @@ export default function LiquidacionesClient({
                         <p className="text-sm text-gray-600">Fecha: {formatFechaColombia(liquidacion.fecha)}</p>
                       </div>
                       <div className="text-right">
-                        <p className="text-2xl font-bold text-green-600">${(parseFloat(String(liquidacion.total)) || 0).toLocaleString('es-CO')}</p>
+                        <p className="text-2xl font-bold text-green-600">${totalCalculado.toLocaleString('es-CO')}</p>
                         <p className="text-sm text-gray-500">Total a recibir</p>
                       </div>
                     </div>
@@ -342,7 +344,8 @@ export default function LiquidacionesClient({
                     </div>
                     <button onClick={() => handleAprobarLiquidacion(liquidacion.id)} disabled={loading} className="w-full bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 disabled:opacity-50">{loading ? 'Procesando...' : 'Confirmar Recepción de Dinero'}</button>
                   </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </div>
@@ -426,7 +429,9 @@ export default function LiquidacionesClient({
               <p className="text-gray-500 mb-8">No hay liquidaciones pendientes</p>
             ) : (
               <div className="space-y-4 mb-8">
-                {liquidacionesPendientes.map((liquidacion) => (
+                {liquidacionesPendientes.map((liquidacion) => {
+                  const totalCalculado = (liquidacion.detalles || []).reduce((sum: number, d: any) => sum + (parseFloat(String(d.monto)) || 0), 0);
+                  return (
                   <div key={liquidacion.id} className="border rounded-lg p-4">
                     <div className="flex justify-between items-start mb-3">
                       <div>
@@ -434,7 +439,7 @@ export default function LiquidacionesClient({
                         <p className="text-sm text-gray-600">Fecha: {formatFechaColombia(liquidacion.fecha)}</p>
                       </div>
                       <div className="text-right">
-                        <p className="text-2xl font-bold text-green-600">${(parseFloat(String(liquidacion.total)) || 0).toLocaleString('es-CO')}</p>
+                        <p className="text-2xl font-bold text-green-600">${totalCalculado.toLocaleString('es-CO')}</p>
                         <p className="text-sm text-gray-500">Total a recibir</p>
                       </div>
                     </div>
@@ -451,7 +456,8 @@ export default function LiquidacionesClient({
                     </div>
                     <button onClick={() => handleAprobarLiquidacion(liquidacion.id)} disabled={loading} className="w-full bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 disabled:opacity-50">{loading ? 'Procesando...' : 'Confirmar Recepción de Dinero'}</button>
                   </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </>
