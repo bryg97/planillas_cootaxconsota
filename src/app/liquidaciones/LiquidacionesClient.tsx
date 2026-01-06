@@ -43,21 +43,22 @@ export default function LiquidacionesClient({
       const cumpleBusqueda = !busqueda || (
         p.numero_planilla?.toLowerCase().includes(textoBusqueda) ||
         p.conductor?.toLowerCase().includes(textoBusqueda) ||
-        p.vehiculos?.codigo_vehiculo?.toLowerCase().includes(textoBusqueda)
+        p.codigo_vehiculo?.toLowerCase().includes(textoBusqueda)
       );
       
       if (!cumpleBusqueda) return false;
       
       if (!fechaDesde && !fechaHasta) return true;
-      const fechaPlanilla = new Date(p.fecha);
-      const desde = fechaDesde ? new Date(fechaDesde) : null;
-      const hasta = fechaHasta ? new Date(fechaHasta) : null;
-      if (desde && hasta) {
-        return fechaPlanilla >= desde && fechaPlanilla <= hasta;
-      } else if (desde) {
-        return fechaPlanilla >= desde;
-      } else if (hasta) {
-        return fechaPlanilla <= hasta;
+      
+      // Comparar fechas como strings para evitar problemas de zona horaria
+      const fechaPlanilla = String(p.fecha).substring(0, 10);
+      
+      if (fechaDesde && fechaHasta) {
+        return fechaPlanilla >= fechaDesde && fechaPlanilla <= fechaHasta;
+      } else if (fechaDesde) {
+        return fechaPlanilla >= fechaDesde;
+      } else if (fechaHasta) {
+        return fechaPlanilla <= fechaHasta;
       }
       return true;
     });
@@ -112,8 +113,8 @@ export default function LiquidacionesClient({
     function exportarPlanillas() {
       const datosExportar = planillasFiltradas.map(p => ({
         'N° Planilla': p.numero_planilla,
-        'Fecha': p.fecha ? p.fecha.split('-').reverse().join('/') : '',
-        'Vehículo': p.vehiculos?.codigo_vehiculo || '',
+        'Fecha': p.fecha ? String(p.fecha).substring(0, 10).split('-').reverse().join('/') : '',
+        'Vehículo': p.codigo_vehiculo || '',
         'Conductor': p.conductor,
         'Tipo': p.tipo_pago,
         'Valor': p.valor,
@@ -252,10 +253,10 @@ export default function LiquidacionesClient({
                       <span className={`px-2 py-0.5 rounded-full text-xs ${planilla.estado === 'recaudada' ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-800'}`}>{planilla.estado}</span>
                     </div>
                     <p className="text-sm text-gray-600 mt-1">
-                      <span className="font-medium">{planilla.vehiculos?.codigo_vehiculo}</span> • {planilla.conductor} • {planilla.fecha}
+                      <span className="font-medium">{planilla.codigo_vehiculo || ''}</span> • {planilla.conductor || ''} • {planilla.fecha ? String(planilla.fecha).substring(0, 10).split('-').reverse().join('/') : ''}
                     </p>
                   </div>
-                  <p className="font-bold text-lg text-gray-900 ml-3">${planilla.valor.toLocaleString('es-CO')}</p>
+                  <p className="font-bold text-lg text-gray-900 ml-3">${(parseFloat(String(planilla.valor)) || 0).toLocaleString('es-CO')}</p>
                   <button
                     onClick={(e) => {
                       e.preventDefault();
@@ -278,7 +279,7 @@ export default function LiquidacionesClient({
               <div>
                 <p className="text-sm text-gray-600">Total a liquidar:</p>
                 <p className="text-2xl font-bold text-blue-900">
-                  ${planillas.filter(p => planillasSeleccionadas.includes(p.id)).reduce((sum, p) => sum + p.valor, 0).toLocaleString('es-CO')}
+                  ${planillas.filter(p => planillasSeleccionadas.includes(p.id)).reduce((sum, p) => sum + (parseFloat(String(p.valor)) || 0), 0).toLocaleString('es-CO')}
                 </p>
                 <p className="text-xs text-gray-600 mt-1">{planillasSeleccionadas.length} planilla(s) seleccionada(s)</p>
               </div>

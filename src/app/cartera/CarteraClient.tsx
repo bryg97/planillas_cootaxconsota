@@ -131,7 +131,7 @@ export default function CarteraClient({ vehiculos }: { vehiculos: any[] }) {
                           <div className="flex-1">
                             <p className="font-medium">N° {planilla.numero_planilla}</p>
                             <p className="text-sm text-gray-600">
-                              {planilla.conductor} - {new Date(planilla.fecha).toLocaleDateString('es-CO', { timeZone: 'America/Bogota' })}
+                              {planilla.conductor} - {planilla.fecha ? String(planilla.fecha).substring(0, 10).split('-').reverse().join('/') : ''}
                             </p>
                           </div>
                           <p className="font-bold">${(parseFloat(String(planilla.valor)) || 0).toLocaleString('es-CO')}</p>
