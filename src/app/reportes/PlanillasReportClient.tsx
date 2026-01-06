@@ -4,6 +4,21 @@ import { useSession } from "next-auth/react";
 import { useOperadorSeleccionado } from "../hooks/useOperadorSeleccionado";
 import * as XLSX from "xlsx";
 
+// Helper para formatear fecha a dd/mm/yyyy sin usar new Date() (evita problemas de timezone)
+function formatFechaColombia(fecha: string | Date | null | undefined): string {
+  if (!fecha) return '';
+  // Si es un Date object, convertirlo a ISO string
+  const fechaStr = fecha instanceof Date ? fecha.toISOString() : String(fecha);
+  // Extraer solo la parte YYYY-MM-DD (primeros 10 caracteres)
+  const match = fechaStr.match(/(\d{4})-(\d{2})-(\d{2})/);
+  if (match) {
+    const [, year, month, day] = match;
+    return `${day}/${month}/${year}`;
+  }
+  // Si no tiene formato ISO, intentar devolver como está
+  return fechaStr.substring(0, 10);
+}
+
 export default function PlanillasReportClient({ planillas }: { planillas: any[] }) {
   const [fechaInicio, setFechaInicio] = useState("");
   const [fechaFin, setFechaFin] = useState("");
@@ -101,7 +116,7 @@ export default function PlanillasReportClient({ planillas }: { planillas: any[] 
             {planillasFiltradas.map((p, i) => (
               <tr key={p.id} className="hover:bg-blue-50">
                 <td className="px-2 py-1 border">{p.numero_planilla}</td>
-                <td className="px-2 py-1 border">{p.fecha ? String(p.fecha).substring(0, 10).split('-').reverse().join('/') : ''}</td>
+                <td className="px-2 py-1 border">{formatFechaColombia(p.fecha)}</td>
                 <td className="px-2 py-1 border">{p.codigo_vehiculo || ''}</td>
                 <td className="px-2 py-1 border">{p.conductor}</td>
                 <td className="px-2 py-1 border">${(parseFloat(String(p.valor)) || 0).toLocaleString("es-CO")}</td>
