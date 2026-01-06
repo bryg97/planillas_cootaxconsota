@@ -46,6 +46,8 @@ type DetalleRow = {
 
 export async function getPlanillasParaLiquidar() {
   try {
+    console.log('=== getPlanillasParaLiquidar INICIO ===');
+    
     // Obtener TODAS las planillas sin filtro de estado para debugging
     const planillas = await query<PlanillaRow>(`
       SELECT 
@@ -69,6 +71,9 @@ export async function getPlanillasParaLiquidar() {
     `);
 
     console.log('Total planillas en BD:', planillas?.length || 0);
+    if (planillas && planillas.length > 0) {
+      console.log('Primera planilla:', JSON.stringify(planillas[0]));
+    }
 
     // Filtrar: solo planillas que NO estén liquidadas, pagadas o aprobadas
     // Mostrar: contado (cualquier estado), crédito recaudado, y crédito pendiente
