@@ -283,14 +283,14 @@ export async function aprobarLiquidacion(liquidacionId: number) {
     }));
 
     // Obtener el nombre del tesorera (usuario actual)
-    const tesoreraInfo = await query<{ nombre: string | null }>(
-      'SELECT nombre FROM usuarios WHERE id = $1',
+    const tesoreraInfo = await query<{ usuario: string | null }>(
+      'SELECT usuario FROM usuarios WHERE id = $1',
       [tesoreraId]
     );
 
     await notificarDineroEntregado({
-      operador: liq.nombre ?? liq.usuario ?? '',
-      recibe: tesoreraInfo?.[0]?.nombre ?? tesorera[0].usuario ?? '',
+      operador: liq.usuario ?? '',
+      recibe: tesoreraInfo?.[0]?.usuario ?? tesorera[0].usuario ?? '',
       planillas: planillas
     });
 
