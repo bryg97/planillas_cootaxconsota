@@ -21,8 +21,8 @@ export async function importarPlanillasDesdeExcel(planillas: any[]) {
     const p = planillas[i];
     const fila = i + 2; // +2 porque Excel empieza en 1 y hay encabezado
 
-    // Buscar vehiculo_id por codigo_vehiculo o id directo
-    const vehiculoKey = p.vehiculo_id?.toString().trim().toUpperCase() || p.codigo_vehiculo?.toString().trim().toUpperCase();
+    // Buscar vehiculo_id por codigo_vehiculo
+    const vehiculoKey = p.codigo_vehiculo?.toString().trim().toUpperCase() || p.vehiculo_id?.toString().trim().toUpperCase();
     const vehiculoId = vehiculoMap.get(vehiculoKey);
 
     if (!vehiculoId) {

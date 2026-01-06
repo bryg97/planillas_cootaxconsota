@@ -9,8 +9,8 @@ export default function ImportarPlanillasModal({ onClose, onImport }: { onClose:
 
   function handleDownloadTemplate() {
     const ws = XLSX.utils.aoa_to_sheet([
-      ['numero_planilla', 'fecha', 'vehiculo_id', 'conductor', 'operador', 'origen', 'destino', 'valor', 'tipo_pago', 'estado'],
-      ['PL-12345678', '2025-12-29', 'ABC123', 'Juan Pérez', 'Operador Ejemplo', 'Cúcuta', 'Pamplona', '10000', 'contado', 'pendiente'],
+      ['numero_planilla', 'fecha', 'codigo_vehiculo', 'conductor', 'operador', 'origen', 'destino', 'valor', 'tipo_pago', 'estado'],
+      ['PL-12345678', '2025-12-29', 'J-001', 'Juan Pérez', 'Operador Ejemplo', 'Pereira', 'Consotá', '10000', 'contado', 'pendiente'],
     ]);
     // Agregar nota sobre vehiculo_id
     ws['!cols'] = [
@@ -68,7 +68,7 @@ export default function ImportarPlanillasModal({ onClose, onImport }: { onClose:
       <div className="bg-white rounded-lg p-8 max-w-md w-full mx-4 max-h-[90vh] overflow-y-auto">
         <h2 className="text-2xl font-bold mb-6">Importar Planillas desde Excel</h2>
         <div className="mb-4 p-3 bg-blue-50 text-blue-800 rounded text-sm">
-          <strong>💡 Nota:</strong> En la columna <code>vehiculo_id</code> puede usar el código del vehículo (ej: ABC123) o el ID numérico.
+          <strong>💡 Nota:</strong> En la columna <code>codigo_vehiculo</code> use el código del vehículo tal como está registrado (ej: J-001, J-002).
         </div>
         <button onClick={handleDownloadTemplate} className="mb-4 bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">Descargar plantilla Excel</button>
         <input type="file" accept=".xlsx,.xls" ref={fileInputRef} onChange={handleFileChange} className="mb-4 block" />
