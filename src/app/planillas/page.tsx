@@ -42,7 +42,7 @@ export default async function PlanillasPage() {
       v.codigo_vehiculo
     FROM planillas p
     LEFT JOIN vehiculos v ON p.vehiculo_id = v.id
-    WHERE p.estado IN ('pendientes', 'recaudadas')
+    WHERE p.estado IN ('pendiente', 'recaudada')
     ORDER BY p.fecha DESC
     LIMIT 500
   `);
