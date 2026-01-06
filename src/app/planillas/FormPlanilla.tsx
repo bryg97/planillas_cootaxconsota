@@ -4,6 +4,17 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+
+// Helper para formatear fecha a dd/mm/yyyy sin usar new Date() (evita problemas de timezone)
+function formatFechaColombia(fecha: any): string {
+  if (!fecha) return '';
+  const fechaStr = fecha instanceof Date ? fecha.toISOString() : String(fecha);
+  const match = fechaStr.match(/(\d{4})-(\d{2})-(\d{2})/);
+  if (match) {
+    return `${match[3]}/${match[2]}/${match[1]}`;
+  }
+  return fechaStr.substring(0, 10);
+}
 import { useOperadorSeleccionado } from '../hooks/useOperadorSeleccionado';
 import { createPlanilla, verificarDeudaVehiculo, recaudarPlanillas, verificarNumeroPlanillaExiste } from './actions';
 import { useSession } from 'next-auth/react';
@@ -212,7 +223,7 @@ export default function FormPlanilla({
                     <div className="flex-1 min-w-0">
                       <p className="font-medium text-sm">N° {planilla.numero_planilla}</p>
                       <p className="text-xs text-gray-600">
-                        {planilla.conductor} • {planilla.fecha ? String(planilla.fecha).substring(0, 10).split('-').reverse().join('/') : ''}
+                        {planilla.conductor} • {formatFechaColombia(planilla.fecha)}
                       </p>
                     </div>
                     <p className="font-bold text-red-600 ml-2">${(parseFloat(String(planilla.valor)) || 0).toLocaleString('es-CO')}</p>

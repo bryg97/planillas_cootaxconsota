@@ -75,15 +75,28 @@ export async function getPlanillasParaLiquidar() {
     }
 
     // Filtrar: solo planillas que NO estén liquidadas, pagadas o aprobadas
-    // Mostrar: contado (cualquier estado), crédito recaudado, y crédito pendiente
+    // Y que sean: contado (cualquier estado) O crédito SOLO si ya fue recaudado
     const planillasFiltradas = planillas?.filter((p) => {
       const estado = (p.estado || '').toLowerCase();
-      // Excluir las que ya fueron procesadas
+      const tipoPago = (p.tipo_pago || '').toLowerCase();
+      
+      // Excluir las que ya fueron procesadas completamente
       if (estado === 'liquidada' || estado === 'pagada' || estado === 'aprobada') {
         return false;
       }
-      // Incluir todas las demás (contado pendiente, contado recaudada, crédito recaudada, crédito pendiente)
-      return true;
+      
+      // Si es contado, incluir siempre (no importa el estado)
+      if (tipoPago === 'contado') {
+        return true;
+      }
+      
+      // Si es crédito, solo incluir si ya fue recaudado
+      if (tipoPago === 'credito' && estado === 'recaudada') {
+        return true;
+      }
+      
+      // No incluir créditos pendientes
+      return false;
     }) || [];
 
     console.log('Planillas para liquidar:', planillasFiltradas.length);
