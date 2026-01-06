@@ -6,8 +6,7 @@ import bcrypt from 'bcryptjs';
 type DbUser = {
   id: number;
   usuario: string;
-  nombre: string;
-  password: string;
+  clave: string;
   rol: string;
 };
 
@@ -29,7 +28,7 @@ export const authOptions: NextAuthOptions = {
 
         try {
           const users = await query<DbUser>(
-            'SELECT id, usuario, nombre, password, rol FROM usuarios WHERE usuario = $1',
+            'SELECT id, usuario, clave, rol FROM usuarios WHERE usuario = $1',
             [email]
           );
 
@@ -39,7 +38,7 @@ export const authOptions: NextAuthOptions = {
 
           const user = users[0];
 
-          const isPasswordValid = await bcrypt.compare(password, user.password);
+          const isPasswordValid = await bcrypt.compare(password, user.clave);
 
           if (!isPasswordValid) {
             return null;
@@ -48,7 +47,7 @@ export const authOptions: NextAuthOptions = {
           return {
             id: user.id.toString(),
             email: user.usuario,
-            name: user.nombre,
+            name: user.usuario,
             role: user.rol
           };
         } catch (error) {
