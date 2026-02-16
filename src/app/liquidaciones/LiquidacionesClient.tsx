@@ -309,8 +309,8 @@ export default function LiquidacionesClient({
           </>
         )}
 
-        {/* Sección tesorera */}
-        {rol === 'tesorera' && (
+        {/* Sección para aprobar liquidaciones (operador, tesorera y administrador) */}
+        {(rol === 'operador' || rol === 'tesorera') && (
           <div className="bg-white rounded-lg shadow p-6 mt-8">
             <h2 className="text-xl font-semibold mb-4">Liquidaciones Pendientes de Aprobar</h2>
             {liquidacionesPendientes.length === 0 ? (

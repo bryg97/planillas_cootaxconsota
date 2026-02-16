@@ -22,6 +22,7 @@ function formatFechaColombia(fecha: string | Date | null | undefined): string {
 export default function PlanillasReportClient({ planillas }: { planillas: any[] }) {
   const [fechaInicio, setFechaInicio] = useState("");
   const [fechaFin, setFechaFin] = useState("");
+  const [tipoPagoFiltro, setTipoPagoFiltro] = useState("");
   // Obtener email del usuario autenticado desde NextAuth
   const { data: session } = useSession();
   const email = session?.user?.email || '';
@@ -72,12 +73,16 @@ export default function PlanillasReportClient({ planillas }: { planillas: any[] 
   }
 
   const planillasFiltradas = planillas.filter(p => {
-    if (!fechaInicio && !fechaFin) return true;
-    const fecha = new Date(p.fecha);
-    const desde = fechaInicio ? new Date(fechaInicio) : null;
-    const hasta = fechaFin ? new Date(fechaFin) : null;
-    if (desde && fecha < desde) return false;
-    if (hasta && fecha > hasta) return false;
+    // Filtro de fecha
+    if (fechaInicio || fechaFin) {
+      const fecha = new Date(p.fecha);
+      const desde = fechaInicio ? new Date(fechaInicio) : null;
+      const hasta = fechaFin ? new Date(fechaFin) : null;
+      if (desde && fecha < desde) return false;
+      if (hasta && fecha > hasta) return false;
+    }
+    // Filtro de tipo de pago
+    if (tipoPagoFiltro && p.tipo_pago !== tipoPagoFiltro) return false;
     return true;
   });
 
@@ -92,11 +97,25 @@ export default function PlanillasReportClient({ planillas }: { planillas: any[] 
           <button onClick={handleExportExcel} className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">Exportar Excel</button>
           <button onClick={handlePrint} className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 print:hidden">Imprimir</button>
         </div>
-        <div className="flex gap-2 items-center w-full md:w-1/2">
-          <label>Desde:</label>
-          <input type="date" value={fechaInicio} onChange={e => setFechaInicio(e.target.value)} className="border px-3 py-2 rounded w-full md:w-48" />
-          <label>Hasta:</label>
-          <input type="date" value={fechaFin} onChange={e => setFechaFin(e.target.value)} className="border px-3 py-2 rounded w-full md:w-48" />
+        <div className="flex flex-col gap-2 w-full">
+          <div className="flex gap-2 items-center">
+            <label className="text-sm font-medium">Desde:</label>
+            <input type="date" value={fechaInicio} onChange={e => setFechaInicio(e.target.value)} className="border px-3 py-2 rounded w-full md:w-48" />
+            <label className="text-sm font-medium">Hasta:</label>
+            <input type="date" value={fechaFin} onChange={e => setFechaFin(e.target.value)} className="border px-3 py-2 rounded w-full md:w-48" />
+          </div>
+          <div className="flex gap-2 items-center">
+            <label className="text-sm font-medium">Tipo de Pago:</label>
+            <select 
+              value={tipoPagoFiltro} 
+              onChange={e => setTipoPagoFiltro(e.target.value)} 
+              className="border px-3 py-2 rounded w-full md:w-48"
+            >
+              <option value="">Todos</option>
+              <option value="contado">Contado</option>
+              <option value="credito">Crédito</option>
+            </select>
+          </div>
         </div>
       </div>
       <div className="overflow-x-auto" id="planillas-table">

@@ -1,10 +1,9 @@
 "use client";
 import dynamic from "next/dynamic";
 
-const LiquidacionesReportClient = dynamic(() => import("./LiquidacionesReportClient"), { ssr: false });
 const PlanillasReportClient = dynamic(() => import("./PlanillasReportClient"), { ssr: false });
 
-export default function ReportesClient({ planillas, liquidaciones, totalPlanillas, totalVehiculos, totalRecaudado }: any) {
+export default function ReportesClient({ planillas, totalPlanillas, totalVehiculos, totalRecaudado }: any) {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50">
       <header className="bg-white shadow">
@@ -33,15 +32,9 @@ export default function ReportesClient({ planillas, liquidaciones, totalPlanilla
             </div>
           </div>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          <div>
-            <h2 className="text-lg font-bold mb-2 text-blue-700">Reporte de Liquidaciones</h2>
-            <LiquidacionesReportClient liquidaciones={liquidaciones || []} />
-          </div>
-          <div>
-            <h2 className="text-lg font-bold mb-2 text-blue-700">Reporte de Planillas por Rango de Fechas</h2>
-            <PlanillasReportClient planillas={planillas || []} />
-          </div>
+        <div>
+          <h2 className="text-lg font-bold mb-2 text-blue-700">Reporte de Planillas por Rango de Fechas</h2>
+          <PlanillasReportClient planillas={planillas || []} />
         </div>
       </main>
     </div>

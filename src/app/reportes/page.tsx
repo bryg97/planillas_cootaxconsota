@@ -16,10 +16,6 @@ export default async function ReportesPage() {
     LEFT JOIN vehiculos v ON p.vehiculo_id = v.id
   `);
 
-  const liquidaciones = await query(`
-    SELECT id, fecha, total as valor, estado FROM liquidaciones
-  `);
-
   // Estadísticas generales
   const totalPlanillas = planillas?.length || 0;
   const totalRecaudado = planillas?.reduce((sum: number, p: any) => sum + parseFloat(p.valor || 0), 0) || 0;
@@ -29,7 +25,6 @@ export default async function ReportesPage() {
   return (
     <ReportesClient
       planillas={planillas || []}
-      liquidaciones={liquidaciones || []}
       totalPlanillas={totalPlanillas}
       totalVehiculos={totalVehiculos}
       totalRecaudado={totalRecaudado}

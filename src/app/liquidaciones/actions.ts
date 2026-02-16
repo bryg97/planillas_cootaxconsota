@@ -243,17 +243,18 @@ export async function aprobarLiquidacion(liquidacionId: number) {
 
     // LOG: Mostrar el email que se busca
     console.log('[AprobarLiquidacion] Buscando usuario con email:', user.email);
-    const tesorera = await query<UsuarioRow>(
-      'SELECT id, usuario FROM usuarios WHERE usuario = $1',
+    const usuarioAprueba = await query<UsuarioRow & { nombre?: string }>(
+      'SELECT id, usuario, nombre FROM usuarios WHERE usuario = $1',
       [user.email]
     );
 
-    if (!tesorera || tesorera.length === 0) {
+    if (!usuarioAprueba || usuarioAprueba.length === 0) {
       console.log('[AprobarLiquidacion] Error: usuario no encontrado');
       return { error: 'Usuario no encontrado' };
     }
 
-    const tesoreraId = tesorera[0].id;
+    const usuarioId = usuarioAprueba[0].id;
+    const nombreUsuarioAprueba = usuarioAprueba[0].nombre || usuarioAprueba[0].usuario;
 
     // Obtener liquidación con detalles
     const liquidacion = await query<LiquidacionRow>(`
@@ -304,10 +305,8 @@ export async function aprobarLiquidacion(liquidacionId: number) {
     // Obtener nombre del operador desde la primera planilla
     const nombreOperador = detalles?.[0]?.operador || liq.usuario || 'Operador';
 
-    // El nombre de quien recibe es el operador seleccionado en la sesión
-    // Como no tenemos columna 'nombre' en usuarios, usamos el nombre del operador de las planillas
-    // En este caso, la tesorera recibe, pero usamos un nombre genérico
-    const nombreRecibe = 'Tesorería';
+    // El nombre de quien aprueba es el usuario actual
+    const nombreRecibe = nombreUsuarioAprueba;
 
     await notificarDineroEntregado({
       operador: nombreOperador,
