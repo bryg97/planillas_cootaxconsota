@@ -21,7 +21,7 @@ export default async function CalculadoraPage() {
 
   return <CalculadoraClient 
     nombreUsuario={nombreUsuario}
-    valorHora={configuracion?.[0]?.valor_hora_calculadora || 30000}
-    valorMinuto={configuracion?.[0]?.valor_minuto_calculadora || 500}
+    valorHora={Number(configuracion?.[0]?.valor_hora_calculadora) || 30000}
+    valorMinuto={Number(configuracion?.[0]?.valor_minuto_calculadora) || 500}
   />;
 }

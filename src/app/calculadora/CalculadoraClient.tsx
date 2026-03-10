@@ -111,19 +111,19 @@ export default function CalculadoraClient({ nombreUsuario, valorHora, valorMinut
 
     if (horas === 0) {
       // Menos de 1 hora (0 a 60 minutos): cobrar hora completa
-      valorServicio = valorHora;
+      valorServicio = Number(valorHora);
     } else {
       // 1 hora o más: aplicar fórmula
       // Calcular horas completas
-      valorServicio = horas * valorHora;
+      valorServicio = horas * Number(valorHora);
       
       // Calcular minutos adicionales
       if (minutos > 0 && minutos <= 40) {
         // De 1 a 40 minutos: cobrar por minuto
-        valorServicio += minutos * valorMinuto;
+        valorServicio += minutos * Number(valorMinuto);
       } else if (minutos > 40) {
         // De 41 a 59 minutos: cobrar hora completa adicional
-        valorServicio += valorHora;
+        valorServicio += Number(valorHora);
       }
     }
 
