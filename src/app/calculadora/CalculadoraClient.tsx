@@ -5,9 +5,11 @@ import Link from 'next/link';
 
 interface CalculadoraClientProps {
   nombreUsuario: string;
+  valorHora: number;
+  valorMinuto: number;
 }
 
-export default function CalculadoraClient({ nombreUsuario }: CalculadoraClientProps) {
+export default function CalculadoraClient({ nombreUsuario, valorHora, valorMinuto }: CalculadoraClientProps) {
   const [horaInicio, setHoraInicio] = useState('');
   const [horaFin, setHoraFin] = useState('');
   const [resultado, setResultado] = useState<{ horas: number; minutos: number; valor: number } | null>(null);
@@ -109,16 +111,16 @@ export default function CalculadoraClient({ nombreUsuario }: CalculadoraClientPr
 
     if (horas === 0 && minutos > 0) {
       // Menos de una hora pero con minutos
-      valorServicio = 30000;
+      valorServicio = valorHora;
     } else {
       // Horas completas
-      valorServicio = horas * 30000;
+      valorServicio = horas * valorHora;
       // Minutos adicionales
       if (minutos > 0 && minutos <= 40) {
-        valorServicio += minutos * 500;
+        valorServicio += minutos * valorMinuto;
       } else if (minutos > 40) {
         // Más de 40 minutos = hora completa adicional
-        valorServicio += 30000;
+        valorServicio += valorHora;
       }
     }
 
@@ -128,7 +130,7 @@ export default function CalculadoraClient({ nombreUsuario }: CalculadoraClientPr
     const valorPesos = valorServicio.toLocaleString('es-CO');
     const mensaje = `${nombreOperador}, el tiempo total es ${horas} ${horas === 1 ? 'hora' : 'horas'} y ${minutos} ${minutos === 1 ? 'minuto' : 'minutos'}. El valor total del servicio es ${valorPesos} pesos.`;
     hablarTexto(mensaje);
-  }, [horaInicio, horaFin, nombreOperador, hablarTexto]);
+  }, [horaInicio, horaFin, nombreOperador, hablarTexto, valorHora, valorMinuto]);
 
   // Calcular automáticamente cuando cambian las horas
   useEffect(() => {
@@ -215,8 +217,8 @@ export default function CalculadoraClient({ nombreUsuario }: CalculadoraClientPr
             <div className="bg-gray-50 rounded-lg p-4 mt-6">
               <h3 className="text-sm font-semibold text-gray-600 mb-3">📋 Tarifas</h3>
               <ul className="text-sm text-gray-600 space-y-1">
-                <li>• Hora completa: <strong>$30.000</strong></li>
-                <li>• Minuto adicional (1-40 min): <strong>$500/min</strong></li>
+                <li>• Hora completa: <strong>${valorHora.toLocaleString('es-CO')}</strong></li>
+                <li>• Minuto adicional (1-40 min): <strong>${valorMinuto.toLocaleString('es-CO')}/min</strong></li>
                 <li>• Más de 40 minutos: <strong>hora completa adicional</strong></li>
               </ul>
             </div>

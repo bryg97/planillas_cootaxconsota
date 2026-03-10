@@ -36,6 +36,8 @@ export async function updateConfiguracion(formData: FormData) {
   const valorPlanillaDefecto = parseFloat(formData.get('valor_planilla_defecto') as string);
   const canalTelegram = formData.get('canal_telegram') as string;
   const botTelegram = formData.get('bot_telegram') as string;
+  const valorHoraCalculadora = parseFloat(formData.get('valor_hora_calculadora') as string) || 30000;
+  const valorMinutoCalculadora = parseFloat(formData.get('valor_minuto_calculadora') as string) || 500;
 
   try {
     // Siempre actualizar el registro con id=1, si no existe lo crea
@@ -43,13 +45,13 @@ export async function updateConfiguracion(formData: FormData) {
     
     if (exists && exists.length > 0) {
       await execute(
-        `UPDATE configuracion SET valor_planilla_defecto = $1, canal_telegram = $2, bot_telegram = $3 WHERE id = 1`,
-        [valorPlanillaDefecto, canalTelegram, botTelegram]
+        `UPDATE configuracion SET valor_planilla_defecto = $1, canal_telegram = $2, bot_telegram = $3, valor_hora_calculadora = $4, valor_minuto_calculadora = $5 WHERE id = 1`,
+        [valorPlanillaDefecto, canalTelegram, botTelegram, valorHoraCalculadora, valorMinutoCalculadora]
       );
     } else {
       await execute(
-        `INSERT INTO configuracion (id, valor_planilla_defecto, canal_telegram, bot_telegram) VALUES (1, $1, $2, $3)`,
-        [valorPlanillaDefecto, canalTelegram, botTelegram]
+        `INSERT INTO configuracion (id, valor_planilla_defecto, canal_telegram, bot_telegram, valor_hora_calculadora, valor_minuto_calculadora) VALUES (1, $1, $2, $3, $4, $5)`,
+        [valorPlanillaDefecto, canalTelegram, botTelegram, valorHoraCalculadora, valorMinutoCalculadora]
       );
     }
 
