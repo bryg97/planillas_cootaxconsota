@@ -4,6 +4,7 @@ import { useState } from 'react';
 import FormVehiculo from './FormVehiculo';
 import VerVehiculo from './VerVehiculo';
 import EditarVehiculo from './EditarVehiculo';
+import { deleteVehiculo } from './actions';
 
 export default function VehiculosClient({ vehiculos }: { vehiculos: any[] }) {
   const [showForm, setShowForm] = useState(false);
@@ -12,6 +13,8 @@ export default function VehiculosClient({ vehiculos }: { vehiculos: any[] }) {
   const [vehiculoSeleccionado, setVehiculoSeleccionado] = useState<any>(null);
   const [showRecaudoModal, setShowRecaudoModal] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [vehiculoEliminar, setVehiculoEliminar] = useState<any>(null);
 
   // Filtrar vehículos por búsqueda
   const vehiculosFiltrados = vehiculos?.filter(v => 
@@ -31,6 +34,27 @@ export default function VehiculosClient({ vehiculos }: { vehiculos: any[] }) {
     }
     setVehiculoSeleccionado(vehiculo);
     setShowEditar(true);
+  }
+
+  function handleEliminar(vehiculo: any) {
+    setVehiculoEliminar(vehiculo);
+    setShowDeleteConfirm(true);
+  }
+
+  async function confirmarEliminacion() {
+    if (!vehiculoEliminar) return;
+
+    const result = await deleteVehiculo(vehiculoEliminar.id);
+    
+    if (result.error) {
+      alert(`❌ ${result.error}`);
+    } else {
+      alert('✅ Vehículo eliminado exitosamente');
+      window.location.reload();
+    }
+    
+    setShowDeleteConfirm(false);
+    setVehiculoEliminar(null);
   }
 
   return (
@@ -120,9 +144,15 @@ export default function VehiculosClient({ vehiculos }: { vehiculos: any[] }) {
                         </button>
                         <button 
                           onClick={() => handleEditar(vehiculo)}
-                          className="text-green-600 hover:text-green-900"
+                          className="text-green-600 hover:text-green-900 mr-3"
                         >
                           Editar
+                        </button>
+                        <button 
+                          onClick={() => handleEliminar(vehiculo)}
+                          className="text-red-600 hover:text-red-900"
+                        >
+                          Eliminar
                         </button>
                       </td>
                     </tr>
@@ -165,6 +195,35 @@ export default function VehiculosClient({ vehiculos }: { vehiculos: any[] }) {
             >
               Entendido
             </button>
+          </div>
+        </div>
+      )}
+      {showDeleteConfirm && vehiculoEliminar && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-8 max-w-md w-full mx-4 text-center">
+            <h2 className="text-2xl font-bold mb-4 text-red-700">⚠️ Confirmar Eliminación</h2>
+            <p className="mb-6 text-gray-700">
+              ¿Está seguro que desea eliminar el vehículo <b>{vehiculoEliminar.codigo_vehiculo}</b>?
+              <br/>
+              <span className="text-red-600 text-sm mt-2 block">Esta acción no se puede deshacer.</span>
+            </p>
+            <div className="flex gap-3">
+              <button
+                onClick={confirmarEliminacion}
+                className="flex-1 px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 font-semibold"
+              >
+                Sí, Eliminar
+              </button>
+              <button
+                onClick={() => {
+                  setShowDeleteConfirm(false);
+                  setVehiculoEliminar(null);
+                }}
+                className="flex-1 px-4 py-2 bg-gray-400 text-white rounded hover:bg-gray-500 font-semibold"
+              >
+                Cancelar
+              </button>
+            </div>
           </div>
         </div>
       )}

@@ -47,3 +47,29 @@ export async function updateVehiculo(id: number, formData: FormData) {
   revalidatePath('/vehiculos');
   return { success: true, data: result[0] };
 }
+
+export async function deleteVehiculo(id: number) {
+  try {
+    // Verificar si el vehículo tiene planillas asociadas
+    const planillas = await query(
+      'SELECT id FROM planillas WHERE vehiculo_id = $1 LIMIT 1',
+      [id]
+    );
+
+    if (planillas && planillas.length > 0) {
+      return { error: 'No se puede eliminar el vehículo porque tiene planillas asociadas. Elimine primero las planillas.' };
+    }
+
+    // Eliminar el vehículo
+    await execute(
+      'DELETE FROM vehiculos WHERE id = $1',
+      [id]
+    );
+
+    revalidatePath('/vehiculos');
+    return { success: true };
+  } catch (error) {
+    console.error('Error al eliminar vehículo:', error);
+    return { error: 'Error al eliminar vehículo' };
+  }
+}

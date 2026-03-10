@@ -271,9 +271,10 @@ export async function createPlanilla(formData: FormData) {
 
     // Si se usó saldo a favor, actualizar el saldo del vehículo
     if (usarSaldoFavor && vehiculo && vehiculo.saldo > 0) {
+      const nuevoSaldo = Math.max(0, vehiculo.saldo - valor);
       await execute(
-        'UPDATE vehiculos SET saldo = 0 WHERE id = $1',
-        [vehiculoId]
+        'UPDATE vehiculos SET saldo = $1 WHERE id = $2',
+        [nuevoSaldo, vehiculoId]
       );
     }
 
