@@ -109,16 +109,22 @@ export default function CalculadoraClient({ nombreUsuario, valorHora, valorMinut
 
     let valorServicio = 0;
 
-    // Calcular horas completas
-    valorServicio = horas * valorHora;
-    
-    // Calcular minutos adicionales
-    if (minutos > 0 && minutos <= 40) {
-      // De 1 a 40 minutos: cobrar por minuto
-      valorServicio += minutos * valorMinuto;
-    } else if (minutos > 40) {
-      // De 41 a 59 minutos: cobrar hora completa adicional
-      valorServicio += valorHora;
+    if (horas === 0) {
+      // Menos de 1 hora (0 a 60 minutos): cobrar hora completa
+      valorServicio = valorHora;
+    } else {
+      // 1 hora o más: aplicar fórmula
+      // Calcular horas completas
+      valorServicio = horas * valorHora;
+      
+      // Calcular minutos adicionales
+      if (minutos > 0 && minutos <= 40) {
+        // De 1 a 40 minutos: cobrar por minuto
+        valorServicio += minutos * valorMinuto;
+      } else if (minutos > 40) {
+        // De 41 a 59 minutos: cobrar hora completa adicional
+        valorServicio += valorHora;
+      }
     }
 
     setResultado({ horas, minutos, valor: valorServicio });
@@ -214,9 +220,10 @@ export default function CalculadoraClient({ nombreUsuario, valorHora, valorMinut
             <div className="bg-gray-50 rounded-lg p-4 mt-6">
               <h3 className="text-sm font-semibold text-gray-600 mb-3">📋 Tarifas</h3>
               <ul className="text-sm text-gray-600 space-y-1">
-                <li>• Hora completa: <strong>${valorHora.toLocaleString('es-CO')}</strong></li>
-                <li>• Minuto adicional (1-40 min): <strong>${valorMinuto.toLocaleString('es-CO')}/min</strong></li>
-                <li>• Más de 40 minutos: <strong>hora completa adicional</strong></li>
+                <li>• Menos de 1 hora (0-60 min): <strong>${valorHora.toLocaleString('es-CO')}</strong></li>
+                <li>• Después de 1 hora:</li>
+                <li className="ml-4">- Minutos 1-40: <strong>${valorMinuto.toLocaleString('es-CO')}/min</strong></li>
+                <li className="ml-4">- Minutos 41-59: <strong>+1 hora completa</strong></li>
               </ul>
             </div>
           </div>
