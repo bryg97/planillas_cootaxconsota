@@ -43,7 +43,7 @@ export default function LoginPage() {
       <div className="w-full max-w-md">
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl p-8">
           <h1 className="text-3xl font-bold text-center text-gray-900 dark:text-white mb-8">
-            Iniciar Sesión
+            PVO
           </h1>
 
           {error && (
@@ -101,19 +101,12 @@ export default function LoginPage() {
             </button>
           </form>
 
-          <div className="mt-6 text-center">
-            <p className="text-sm text-gray-600 dark:text-gray-400">
-              ¿No tienes una cuenta?{' '}
-              <Link href="/register" className="text-blue-600 hover:text-blue-700 font-semibold">
-                Regístrate
-              </Link>
+          <div className="mt-6 rounded-lg border border-amber-300 bg-amber-50 p-3 text-center">
+            <p className="text-xs leading-relaxed text-amber-900">
+              Copyright © {new Date().getFullYear()} Brayan Arroyave. Todos los derechos reservados.
+              El software, su diseno, estructura, codigo fuente, logica y marca PVO son propiedad exclusiva de Brayan Arroyave.
+              La titularidad de los datos registrados por terceros no transfiere derechos sobre la plataforma.
             </p>
-          </div>
-
-          <div className="mt-4 text-center">
-            <Link href="/" className="text-sm text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300">
-              ← Volver al inicio
-            </Link>
           </div>
         </div>
       </div>
