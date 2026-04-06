@@ -2,7 +2,6 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import Link from 'next/link'
 import { signIn } from 'next-auth/react'
 
 export default function LoginPage() {
@@ -83,15 +82,6 @@ export default function LoginPage() {
               />
             </div>
 
-            <div className="flex items-center justify-end mb-4">
-              <Link
-                href="/forgot-password"
-                className="text-sm text-blue-600 hover:text-blue-700 font-medium"
-              >
-                ¿Olvidaste tu contraseña?
-              </Link>
-            </div>
-
             <button
               type="submit"
               disabled={loading}
@@ -104,8 +94,12 @@ export default function LoginPage() {
           <div className="mt-6 rounded-lg border border-amber-300 bg-amber-50 p-3 text-center">
             <p className="text-xs leading-relaxed text-amber-900">
               Copyright © {new Date().getFullYear()} Brayan Arroyave. Todos los derechos reservados.
-              El software, su diseno, estructura, codigo fuente, logica y marca PVO son propiedad exclusiva de Brayan Arroyave.
-              La titularidad de los datos registrados por terceros no transfiere derechos sobre la plataforma.
+            </p>
+            <p className="mt-2 text-xs leading-relaxed text-amber-900">
+              Este software ha sido desarrollado por Brayan Arroyave, quien se reconoce como su autor. Todos los derechos sobre el mismo se entienden reservados en la medida permitida por la ley.
+            </p>
+            <p className="mt-2 text-xs leading-relaxed text-amber-900">
+              Este aviso no constituye por si mismo una cesion de derechos ni modifica las condiciones contractuales que puedan existir entre las partes.
             </p>
           </div>
         </div>
