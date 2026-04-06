@@ -49,7 +49,17 @@ export default async function PlanillasPage() {
 
   // Obtener vehículos para el formulario
   const vehiculos = await query(
-    'SELECT id, codigo_vehiculo, saldo FROM vehiculos ORDER BY codigo_vehiculo ASC'
+    `SELECT
+      id,
+      codigo_vehiculo,
+      saldo,
+      credito_sin_limite,
+      autorizado_por_nombre,
+      autorizado_por_identificacion,
+      autorizado_desde,
+      autorizado_hasta
+    FROM vehiculos
+    ORDER BY codigo_vehiculo ASC`
   );
 
   // Obtener operadores

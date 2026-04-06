@@ -48,7 +48,12 @@ export async function importarVehiculos(formData: FormData) {
     const vehiculos = data.map((row: any) => ({
       codigo_vehiculo: row.codigo_vehiculo?.toString().trim() || '',
       saldo: parseFloat(row.saldo?.toString() || '0') || 0,
-      saldo_pendiente: parseFloat(row.saldo_pendiente?.toString() || '0') || 0
+      saldo_pendiente: parseFloat(row.saldo_pendiente?.toString() || '0') || 0,
+      credito_sin_limite: String(row.credito_sin_limite || '').toLowerCase() === 'true' || String(row.credito_sin_limite || '') === '1',
+      autorizado_por_nombre: row.autorizado_por_nombre?.toString().trim() || null,
+      autorizado_por_identificacion: row.autorizado_por_identificacion?.toString().trim() || null,
+      autorizado_desde: row.autorizado_desde?.toString().trim() || null,
+      autorizado_hasta: row.autorizado_hasta?.toString().trim() || null
     }));
 
     // Filtrar registros válidos
@@ -65,8 +70,26 @@ export async function importarVehiculos(formData: FormData) {
     for (const vehiculo of vehiculosValidos) {
       try {
         await execute(
-          `INSERT INTO vehiculos (codigo_vehiculo, saldo, saldo_pendiente) VALUES ($1, $2, $3)`,
-          [vehiculo.codigo_vehiculo, vehiculo.saldo, vehiculo.saldo_pendiente]
+          `INSERT INTO vehiculos (
+            codigo_vehiculo,
+            saldo,
+            saldo_pendiente,
+            credito_sin_limite,
+            autorizado_por_nombre,
+            autorizado_por_identificacion,
+            autorizado_desde,
+            autorizado_hasta
+          ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
+          [
+            vehiculo.codigo_vehiculo,
+            vehiculo.saldo,
+            vehiculo.saldo_pendiente,
+            vehiculo.credito_sin_limite,
+            vehiculo.credito_sin_limite ? vehiculo.autorizado_por_nombre : null,
+            vehiculo.credito_sin_limite ? vehiculo.autorizado_por_identificacion : null,
+            vehiculo.credito_sin_limite ? vehiculo.autorizado_desde : null,
+            vehiculo.credito_sin_limite ? vehiculo.autorizado_hasta : null
+          ]
         );
         insertados++;
       } catch (error: any) {

@@ -2,7 +2,6 @@
 
 import { useState } from 'react';
 import FormVehiculo from './FormVehiculo';
-import VerVehiculo from './VerVehiculo';
 import EditarVehiculo from './EditarVehiculo';
 import { deleteVehiculo } from './actions';
 
@@ -27,11 +26,6 @@ export default function VehiculosClient({ vehiculos }: { vehiculos: any[] }) {
   }
 
   function handleEditar(vehiculo: any) {
-    if (vehiculo.saldo_pendiente > 0) {
-      setVehiculoSeleccionado(vehiculo);
-      setShowRecaudoModal(true);
-      return;
-    }
     setVehiculoSeleccionado(vehiculo);
     setShowEditar(true);
   }
@@ -111,6 +105,7 @@ export default function VehiculosClient({ vehiculos }: { vehiculos: any[] }) {
               <thead className="bg-gray-50">
                 <tr>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Código</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Crédito</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Saldo</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Saldo Pendiente</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Fecha Registro</th>
@@ -123,6 +118,17 @@ export default function VehiculosClient({ vehiculos }: { vehiculos: any[] }) {
                     <tr key={vehiculo.id}>
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                         {vehiculo.codigo_vehiculo}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm">
+                        {vehiculo.credito_sin_limite ? (
+                          <span className="inline-flex px-2 py-1 rounded-full bg-blue-100 text-blue-800 font-semibold">
+                            Sin límite
+                          </span>
+                        ) : (
+                          <span className="inline-flex px-2 py-1 rounded-full bg-gray-100 text-gray-700 font-semibold">
+                            Estándar
+                          </span>
+                        )}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                         ${parseFloat(vehiculo.saldo).toLocaleString('es-CO')}
@@ -159,7 +165,7 @@ export default function VehiculosClient({ vehiculos }: { vehiculos: any[] }) {
                   ))
                 ) : (
                   <tr>
-                    <td colSpan={5} className="px-6 py-4 text-center text-gray-500">
+                    <td colSpan={6} className="px-6 py-4 text-center text-gray-500">
                       No hay vehículos registrados
                     </td>
                   </tr>

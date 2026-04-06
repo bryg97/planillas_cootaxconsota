@@ -55,6 +55,7 @@ export default function FormPlanilla({
   const [tipoPago, setTipoPago] = useState('contado');
   const [saldoFavor, setSaldoFavor] = useState(0);
   const [usarSaldoFavor, setUsarSaldoFavor] = useState(false);
+  const vehiculoActual = vehiculos.find((v) => v.id === parseInt(vehiculoSeleccionado || '0'));
 
   // Sin autollenado: el usuario debe ingresar manualmente el número de planilla
 
@@ -66,15 +67,19 @@ export default function FormPlanilla({
     setSaldoFavor(0);
     setUsarSaldoFavor(false);
     if (vehiculoId) {
-      // Verificar si el vehículo tiene deudas
-      const deuda = await verificarDeudaVehiculo(parseInt(vehiculoId));
-      if (deuda && deuda.total > 0) {
-        setDeudaVehiculo(deuda);
-        setMostrarDetalleDeuda(true);
-        setPlanillasRecaudar(deuda.planillas.map((p: any) => p.id));
-      }
-      // Buscar el saldo a favor del vehículo seleccionado
       const vehiculo = vehiculos.find((v) => v.id === parseInt(vehiculoId));
+
+      // Verificar si el vehículo tiene deudas
+      if (!vehiculo?.credito_sin_limite) {
+        const deuda = await verificarDeudaVehiculo(parseInt(vehiculoId));
+        if (deuda && deuda.total > 0) {
+          setDeudaVehiculo(deuda);
+          setMostrarDetalleDeuda(true);
+          setPlanillasRecaudar(deuda.planillas.map((p: any) => p.id));
+        }
+      }
+
+      // Buscar el saldo a favor del vehículo seleccionado
       if (vehiculo && vehiculo.saldo > 0) {
         setSaldoFavor(vehiculo.saldo);
       }
@@ -404,6 +409,27 @@ export default function FormPlanilla({
             />
           </div>
         </div>
+
+        {vehiculoActual?.credito_sin_limite && (
+          <div className="mb-4 p-4 border-2 border-blue-300 bg-blue-50 rounded-lg">
+            <div className="flex items-start gap-2">
+              <svg className="h-6 w-6 text-blue-700 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <div className="text-sm text-blue-900">
+                <p className="font-bold">Vehículo con crédito sin límite autorizado</p>
+                <p><span className="font-semibold">Autorizado por:</span> {vehiculoActual.autorizado_por_nombre || 'Sin registrar'}</p>
+                <p><span className="font-semibold">Identificación:</span> {vehiculoActual.autorizado_por_identificacion || 'Sin registrar'}</p>
+                <p>
+                  <span className="font-semibold">Vigencia:</span> {vehiculoActual.autorizado_desde ? formatFechaColombia(vehiculoActual.autorizado_desde) : 'Sin fecha inicial'}
+                  {' '}a{' '}
+                  {vehiculoActual.autorizado_hasta ? formatFechaColombia(vehiculoActual.autorizado_hasta) : 'Sin fecha final'}
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Notificación y opción de saldo a favor */}
         {saldoFavor > 0 && (
           <div className="mb-4 p-4 bg-green-50 border-2 border-green-400 rounded">

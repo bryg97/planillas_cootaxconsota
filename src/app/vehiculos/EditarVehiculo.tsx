@@ -13,6 +13,7 @@ interface EditarVehiculoProps {
 export default function EditarVehiculo({ vehiculo, onClose, readOnly = false }: EditarVehiculoProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [creditoSinLimite, setCreditoSinLimite] = useState(Boolean(vehiculo.credito_sin_limite));
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -91,6 +92,88 @@ export default function EditarVehiculo({ vehiculo, onClose, readOnly = false }: 
               disabled={readOnly}
             />
           </div>
+
+          <div className="mb-4">
+            <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
+              <input
+                type="checkbox"
+                name="credito_sin_limite"
+                value="1"
+                defaultChecked={creditoSinLimite}
+                onChange={(e) => setCreditoSinLimite(e.target.checked)}
+                className="h-4 w-4"
+                disabled={readOnly}
+              />
+              Crédito sin límite
+            </label>
+          </div>
+
+          <div className="mb-6 rounded-lg border border-blue-200 bg-blue-50 p-4">
+            <p className="text-sm font-semibold text-blue-800 mb-1">Formulario de autorización</p>
+            <p className="text-xs text-blue-700 mb-3">
+              Diligencie quién autoriza el crédito. Estos datos son obligatorios cuando activa "Crédito sin límite".
+            </p>
+            <div className="mb-3">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Nombre de quien autoriza {creditoSinLimite ? '*' : ''}
+              </label>
+              <input
+                type="text"
+                name="autorizado_por_nombre"
+                defaultValue={vehiculo.autorizado_por_nombre || ''}
+                required={creditoSinLimite && !readOnly}
+                className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="Nombre completo"
+                readOnly={readOnly}
+                disabled={readOnly}
+              />
+            </div>
+            <div className="mb-3">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Identificación de quien autoriza {creditoSinLimite ? '*' : ''}
+              </label>
+              <input
+                type="text"
+                name="autorizado_por_identificacion"
+                defaultValue={vehiculo.autorizado_por_identificacion || ''}
+                required={creditoSinLimite && !readOnly}
+                className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="Cédula / NIT"
+                readOnly={readOnly}
+                disabled={readOnly}
+              />
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Fecha inicial {creditoSinLimite ? '*' : ''}
+                </label>
+                <input
+                  type="date"
+                  name="autorizado_desde"
+                  defaultValue={vehiculo.autorizado_desde ? String(vehiculo.autorizado_desde).slice(0, 10) : ''}
+                  required={creditoSinLimite && !readOnly}
+                  className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  readOnly={readOnly}
+                  disabled={readOnly}
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Fecha final
+                </label>
+                <input
+                  type="date"
+                  name="autorizado_hasta"
+                  defaultValue={vehiculo.autorizado_hasta ? String(vehiculo.autorizado_hasta).slice(0, 10) : ''}
+                  className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  readOnly={readOnly}
+                  disabled={readOnly}
+                />
+              </div>
+            </div>
+          </div>
+
           <div className="flex gap-3">
             <button
               type="button"

@@ -16,6 +16,11 @@ CREATE TABLE IF NOT EXISTS vehiculos (
     codigo_vehiculo VARCHAR(50) UNIQUE NOT NULL,
     saldo DECIMAL(10,2) DEFAULT 0.00,
     saldo_pendiente DECIMAL(10,2) DEFAULT 0.00,
+    credito_sin_limite BOOLEAN DEFAULT false,
+    autorizado_por_nombre VARCHAR(255),
+    autorizado_por_identificacion VARCHAR(100),
+    autorizado_desde DATE,
+    autorizado_hasta DATE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 

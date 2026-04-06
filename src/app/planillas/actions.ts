@@ -45,6 +45,15 @@ export async function verificarNumeroPlanillaExiste(numeroPlanilla: string) {
 
 export async function verificarDeudaVehiculo(vehiculoId: number) {
   try {
+    const vehiculo = await queryOne<{ credito_sin_limite: boolean }>(
+      'SELECT credito_sin_limite FROM vehiculos WHERE id = $1',
+      [vehiculoId]
+    );
+
+    if (vehiculo?.credito_sin_limite) {
+      return null;
+    }
+
     const planillas = await query<PlanillaDeuda>(
       `SELECT id, numero_planilla, valor, fecha, conductor 
        FROM planillas 
@@ -226,10 +235,17 @@ export async function createPlanilla(formData: FormData) {
     }
 
     // Obtener datos del vehículo
-    const vehiculo = await queryOne<{ codigo_vehiculo: string; saldo: number }>(
-      'SELECT codigo_vehiculo, saldo FROM vehiculos WHERE id = $1',
+    const vehiculo = await queryOne<{ codigo_vehiculo: string; saldo: number; credito_sin_limite: boolean }>(
+      'SELECT codigo_vehiculo, saldo, credito_sin_limite FROM vehiculos WHERE id = $1',
       [vehiculoId]
     );
+
+    if (tipoPago === 'credito' && !vehiculo?.credito_sin_limite) {
+      const deudaVehiculo = await verificarDeudaVehiculo(vehiculoId);
+      if (deudaVehiculo && deudaVehiculo.total > 0) {
+        return { error: 'Este vehículo tiene planillas a crédito pendientes por recaudar y no tiene autorización de crédito sin límite.' };
+      }
+    }
 
     // Insertar planilla
     const result = await queryOne<{ id: number }>(

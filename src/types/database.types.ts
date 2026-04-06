@@ -36,18 +36,33 @@ export interface Database {
           codigo_vehiculo: string
           saldo: number
           saldo_pendiente: number
+          credito_sin_limite: boolean
+          autorizado_por_nombre: string | null
+          autorizado_por_identificacion: string | null
+          autorizado_desde: string | null
+          autorizado_hasta: string | null
           created_at: string
         }
         Insert: {
           codigo_vehiculo: string
           saldo?: number
           saldo_pendiente?: number
+          credito_sin_limite?: boolean
+          autorizado_por_nombre?: string | null
+          autorizado_por_identificacion?: string | null
+          autorizado_desde?: string | null
+          autorizado_hasta?: string | null
           created_at?: string
         }
         Update: {
           codigo_vehiculo?: string
           saldo?: number
           saldo_pendiente?: number
+          credito_sin_limite?: boolean
+          autorizado_por_nombre?: string | null
+          autorizado_por_identificacion?: string | null
+          autorizado_desde?: string | null
+          autorizado_hasta?: string | null
           created_at?: string
         }
       }
