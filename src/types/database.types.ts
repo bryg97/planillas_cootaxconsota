@@ -102,6 +102,69 @@ export interface Database {
           created_at?: string
         }
       }
+      convenios_empresariales: {
+        Row: {
+          id: number
+          nombre: string
+          activo: boolean
+          creado_por_id: number | null
+          created_at: string
+        }
+        Insert: {
+          nombre: string
+          activo?: boolean
+          creado_por_id?: number | null
+          created_at?: string
+        }
+        Update: {
+          nombre?: string
+          activo?: boolean
+          creado_por_id?: number | null
+          created_at?: string
+        }
+      }
+      viajes: {
+        Row: {
+          id: number
+          vehiculo_id: number
+          conductor: string
+          convenio_id: number
+          origen: string
+          destino: string
+          medio_contacto: string
+          omite_consecutivo: boolean
+          motivo_omision: string | null
+          creado_por_id: number | null
+          creado_por_usuario: string | null
+          created_at: string
+        }
+        Insert: {
+          vehiculo_id: number
+          conductor: string
+          convenio_id: number
+          origen: string
+          destino: string
+          medio_contacto: string
+          omite_consecutivo?: boolean
+          motivo_omision?: string | null
+          creado_por_id?: number | null
+          creado_por_usuario?: string | null
+          created_at?: string
+        }
+        Update: {
+          vehiculo_id?: number
+          conductor?: string
+          convenio_id?: number
+          origen?: string
+          destino?: string
+          medio_contacto?: string
+          omite_consecutivo?: boolean
+          motivo_omision?: string | null
+          creado_por_id?: number | null
+          creado_por_usuario?: string | null
+          created_at?: string
+        }
+      }
       liquidaciones: {
         Row: {
           id: number
