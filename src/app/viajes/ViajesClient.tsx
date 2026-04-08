@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { crearConvenio, crearViaje, eliminarConvenio, guardarValidacionAutorizador, eliminarValidacionAutorizador } from './actions';
+import { crearConvenio, crearViaje, eliminarConvenio, guardarValidacionAutorizador, eliminarValidacionAutorizador, eliminarViajesPorLateral } from './actions';
 
 type Vehiculo = {
   id: number;
@@ -81,6 +81,7 @@ export default function ViajesClient({
   const [loadingEliminarConvenio, setLoadingEliminarConvenio] = useState<number | null>(null);
   const [loadingValidacion, setLoadingValidacion] = useState(false);
   const [loadingEliminarValidacion, setLoadingEliminarValidacion] = useState<number | null>(null);
+  const [loadingEliminarViajes, setLoadingEliminarViajes] = useState(false);
   const [error, setError] = useState('');
   const [convenioError, setConvenioError] = useState('');
   const [validacionError, setValidacionError] = useState('');
@@ -92,6 +93,8 @@ export default function ViajesClient({
   const [cedulaConfig, setCedulaConfig] = useState('');
   const [respuestaConfig, setRespuestaConfig] = useState('');
   const [editandoValidacionOperadorId, setEditandoValidacionOperadorId] = useState<number | null>(null);
+  const [lateralEliminarId, setLateralEliminarId] = useState('');
+  const [errorEliminarViajes, setErrorEliminarViajes] = useState('');
 
   const vehiculoBloqueado = useMemo(() => {
     if (!ultimoViaje || omiteConsecutivo) return null;
@@ -203,6 +206,33 @@ export default function ViajesClient({
       return;
     }
 
+    window.location.reload();
+  }
+
+  async function handleEliminarViajesPorLateral() {
+    if (!lateralEliminarId) {
+      setErrorEliminarViajes('Seleccione un lateral para eliminar sus registros.');
+      return;
+    }
+
+    const lateral = vehiculos.find((v) => String(v.id) === lateralEliminarId);
+    const confirmar = window.confirm(
+      `Se eliminarán todos los registros de viajes del lateral ${lateral?.codigo_vehiculo || lateralEliminarId}. Esta acción no se puede deshacer.`
+    );
+
+    if (!confirmar) return;
+
+    setLoadingEliminarViajes(true);
+    setErrorEliminarViajes('');
+
+    const result = await eliminarViajesPorLateral(parseInt(lateralEliminarId, 10));
+    if (result.error) {
+      setErrorEliminarViajes(result.error);
+      setLoadingEliminarViajes(false);
+      return;
+    }
+
+    alert(`Se eliminaron ${result.eliminados || 0} registro(s) de viajes.`);
     window.location.reload();
   }
 
@@ -583,6 +613,44 @@ export default function ViajesClient({
 
         <section className="bg-white rounded-xl border border-slate-200 shadow-sm p-6">
           <h3 className="text-lg font-semibold text-slate-900 mb-4">Últimos viajes registrados</h3>
+
+          {rol === 'administrador' && (
+            <div className="mb-4 rounded-lg border border-red-200 bg-red-50 p-4">
+              <p className="text-sm font-semibold text-red-900 mb-2">Administración de histórico por lateral</p>
+              <p className="text-xs text-red-800 mb-3">
+                Esta opción elimina todos los registros de viajes del lateral seleccionado.
+              </p>
+              {errorEliminarViajes && (
+                <div className="mb-3 rounded border border-red-300 bg-white p-2 text-xs text-red-700">
+                  {errorEliminarViajes}
+                </div>
+              )}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-2 items-end">
+                <div className="md:col-span-2">
+                  <label className="block text-xs font-medium text-red-900 mb-1">Lateral</label>
+                  <select
+                    value={lateralEliminarId}
+                    onChange={(e) => setLateralEliminarId(e.target.value)}
+                    className="w-full rounded-lg border border-red-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-500"
+                  >
+                    <option value="">Seleccione lateral</option>
+                    {vehiculos.map((v) => (
+                      <option key={v.id} value={v.id}>{v.codigo_vehiculo}</option>
+                    ))}
+                  </select>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleEliminarViajesPorLateral}
+                  className="rounded-lg bg-red-700 px-4 py-2 text-sm font-medium text-white hover:bg-red-800 disabled:opacity-50"
+                  disabled={loadingEliminarViajes}
+                >
+                  {loadingEliminarViajes ? 'Eliminando...' : 'Eliminar registros'}
+                </button>
+              </div>
+            </div>
+          )}
+
           <div className="overflow-x-auto">
             <table className="min-w-full divide-y divide-slate-200">
               <thead className="bg-slate-50">

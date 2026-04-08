@@ -187,6 +187,54 @@ export async function eliminarValidacionAutorizador(operadorId: number) {
   }
 }
 
+export async function eliminarViajesPorLateral(vehiculoId: number) {
+  try {
+    const session = await getSession();
+    if (!session?.user?.email) {
+      return { error: 'Usuario no autenticado' };
+    }
+
+    const usuario = await queryOne<UsuarioRol>(
+      'SELECT id, usuario, rol FROM usuarios WHERE usuario = $1',
+      [session.user.email]
+    );
+
+    if (!usuario || usuario.rol !== 'administrador') {
+      return { error: 'Solo el administrador puede eliminar registros de viajes' };
+    }
+
+    const lateral = await queryOne<{ codigo_vehiculo: string }>(
+      'SELECT codigo_vehiculo FROM vehiculos WHERE id = $1',
+      [vehiculoId]
+    );
+
+    if (!lateral) {
+      return { error: 'Lateral no encontrado' };
+    }
+
+    const eliminacion = await execute(
+      'DELETE FROM viajes WHERE vehiculo_id = $1',
+      [vehiculoId]
+    );
+
+    await execute(
+      `INSERT INTO auditoria (usuario, accion, detalles)
+       VALUES ($1, $2, $3)`,
+      [
+        usuario.usuario,
+        'DELETE',
+        `Eliminó ${eliminacion.rowCount || 0} registro(s) de viajes del lateral ${lateral.codigo_vehiculo}`
+      ]
+    );
+
+    revalidatePath('/viajes');
+    return { success: true, eliminados: eliminacion.rowCount || 0 };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Error al eliminar registros de viajes';
+    return { error: message };
+  }
+}
+
 export async function crearConvenio(formData: FormData) {
   try {
     const session = await getSession();
