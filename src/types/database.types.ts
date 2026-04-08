@@ -136,6 +136,10 @@ export interface Database {
           motivo_omision: string | null
           creado_por_id: number | null
           creado_por_usuario: string | null
+          autorizador_id: number | null
+          autorizador_usuario: string | null
+          cedula_autorizador: string | null
+          respuesta_autorizacion: string | null
           created_at: string
         }
         Insert: {
@@ -149,6 +153,10 @@ export interface Database {
           motivo_omision?: string | null
           creado_por_id?: number | null
           creado_por_usuario?: string | null
+          autorizador_id?: number | null
+          autorizador_usuario?: string | null
+          cedula_autorizador?: string | null
+          respuesta_autorizacion?: string | null
           created_at?: string
         }
         Update: {
@@ -162,7 +170,38 @@ export interface Database {
           motivo_omision?: string | null
           creado_por_id?: number | null
           creado_por_usuario?: string | null
+          autorizador_id?: number | null
+          autorizador_usuario?: string | null
+          cedula_autorizador?: string | null
+          respuesta_autorizacion?: string | null
           created_at?: string
+        }
+      }
+      viajes_autorizadores_validacion: {
+        Row: {
+          id: number
+          autorizador_id: number
+          cedula: string
+          respuesta: string
+          activo: boolean
+          actualizado_por_id: number | null
+          updated_at: string
+        }
+        Insert: {
+          autorizador_id: number
+          cedula: string
+          respuesta: string
+          activo?: boolean
+          actualizado_por_id?: number | null
+          updated_at?: string
+        }
+        Update: {
+          autorizador_id?: number
+          cedula?: string
+          respuesta?: string
+          activo?: boolean
+          actualizado_por_id?: number | null
+          updated_at?: string
         }
       }
       liquidaciones: {

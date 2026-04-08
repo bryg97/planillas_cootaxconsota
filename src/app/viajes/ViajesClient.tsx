@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { crearConvenio, crearViaje } from './actions';
+import { crearConvenio, crearViaje, eliminarConvenio, guardarValidacionAutorizador } from './actions';
 
 type Vehiculo = {
   id: number;
@@ -11,6 +11,18 @@ type Vehiculo = {
 type Convenio = {
   id: number;
   nombre: string;
+};
+
+type UsuarioSimple = {
+  id: number;
+  usuario: string;
+};
+
+type ValidacionAutorizador = {
+  autorizador_id: number;
+  autorizador_usuario: string;
+  cedula: string;
+  respuesta: string;
 };
 
 type UltimoViaje = {
@@ -32,6 +44,8 @@ type ViajeListado = {
   codigo_vehiculo: string;
   convenio_nombre: string;
   creado_por_usuario: string;
+  autorizador_usuario: string | null;
+  cedula_autorizador: string | null;
 };
 
 function formatearMedioContacto(medio: string) {
@@ -45,22 +59,32 @@ export default function ViajesClient({
   rol,
   vehiculos,
   convenios,
+  autorizadores,
+  validacionesAutorizador,
   ultimoViaje,
   viajes
 }: {
   rol: string;
   vehiculos: Vehiculo[];
   convenios: Convenio[];
+  autorizadores: UsuarioSimple[];
+  validacionesAutorizador: ValidacionAutorizador[];
   ultimoViaje: UltimoViaje;
   viajes: ViajeListado[];
 }) {
   const [loadingViaje, setLoadingViaje] = useState(false);
   const [loadingConvenio, setLoadingConvenio] = useState(false);
+  const [loadingEliminarConvenio, setLoadingEliminarConvenio] = useState<number | null>(null);
+  const [loadingValidacion, setLoadingValidacion] = useState(false);
   const [error, setError] = useState('');
   const [convenioError, setConvenioError] = useState('');
+  const [validacionError, setValidacionError] = useState('');
   const [omiteConsecutivo, setOmiteConsecutivo] = useState(false);
   const [vehiculoId, setVehiculoId] = useState('');
   const [nuevoConvenio, setNuevoConvenio] = useState('');
+  const [autorizadorIdConfig, setAutorizadorIdConfig] = useState('');
+  const [cedulaConfig, setCedulaConfig] = useState('');
+  const [respuestaConfig, setRespuestaConfig] = useState('');
 
   const vehiculoBloqueado = useMemo(() => {
     if (!ultimoViaje || omiteConsecutivo) return null;
@@ -105,6 +129,40 @@ export default function ViajesClient({
     window.location.reload();
   }
 
+  async function handleEliminarConvenio(convenioId: number) {
+    setLoadingEliminarConvenio(convenioId);
+    setConvenioError('');
+
+    const result = await eliminarConvenio(convenioId);
+    if (result.error) {
+      setConvenioError(result.error);
+      setLoadingEliminarConvenio(null);
+      return;
+    }
+
+    window.location.reload();
+  }
+
+  async function handleGuardarValidacion(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    setLoadingValidacion(true);
+    setValidacionError('');
+
+    const formData = new FormData();
+    formData.set('autorizador_id', autorizadorIdConfig);
+    formData.set('cedula', cedulaConfig);
+    formData.set('respuesta', respuestaConfig);
+
+    const result = await guardarValidacionAutorizador(formData);
+    if (result.error) {
+      setValidacionError(result.error);
+      setLoadingValidacion(false);
+      return;
+    }
+
+    window.location.reload();
+  }
+
   return (
     <div className="min-h-screen bg-slate-100">
       <header className="bg-white border-b border-slate-200 shadow-sm">
@@ -127,9 +185,9 @@ export default function ViajesClient({
           </p>
           <ol className="list-decimal pl-5 text-sm text-slate-700 space-y-1">
             <li>Validar que el conductor cuente con la aplicación de despacho satelital activa.</li>
-            <li>Realizar el proceso de contacto en orden consecutivo, iniciando desde la unidad 001 en adelante.</li>
-            <li>En caso de que las unidades contactadas (ejemplo: del 001 al 040) no respondan o no cuenten con la aplicación, se deberá dejar constancia detallada del proceso realizado.</li>
-            <li>Una vez se logre contacto efectivo (ejemplo: unidad 041), el operador deberá coordinar directamente con el conductor la prestación del servicio.</li>
+            <li>Realizar el proceso de contacto en orden consecutivo, iniciando desde el lateral 001 en adelante.</li>
+            <li>En caso de que los laterales contactados (ejemplo: del 001 al 040) no respondan o no cuenten con la aplicación, se deberá dejar constancia detallada del proceso realizado.</li>
+            <li>Una vez se logre contacto efectivo (ejemplo: lateral 041), el operador deberá coordinar directamente con el conductor la prestación del servicio.</li>
           </ol>
           <p className="text-sm text-slate-700 mt-3">
             Es importante aclarar que la correcta ejecución y registro de este procedimiento es responsabilidad exclusiva del operador que gestiona el servicio, garantizando transparencia, trazabilidad y cumplimiento de los lineamientos establecidos por la central.
@@ -145,7 +203,7 @@ export default function ViajesClient({
         {ultimoViaje && (
           <section className="bg-blue-50 border border-blue-200 rounded-xl p-4 shadow-sm">
             <p className="text-sm text-blue-900">
-              Última unidad asignada: <span className="font-bold">{ultimoViaje.codigo_vehiculo}</span>. La siguiente solicitud debe continuar con otra unidad, salvo omisión justificada.
+              Último lateral asignado: <span className="font-bold">{ultimoViaje.codigo_vehiculo}</span>. La siguiente solicitud debe continuar con otro lateral, salvo omisión justificada.
             </p>
           </section>
         )}
@@ -163,7 +221,7 @@ export default function ViajesClient({
             <form onSubmit={handleCrearViaje} className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Unidad (vehículo) *</label>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">Lateral *</label>
                   <select
                     name="vehiculo_id"
                     value={vehiculoId}
@@ -171,14 +229,14 @@ export default function ViajesClient({
                     required
                     className="w-full rounded-lg border border-slate-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
                   >
-                    <option value="">Seleccione una unidad</option>
+                    <option value="">Seleccione un lateral</option>
                     {vehiculos.map((v) => (
                       <option
                         key={v.id}
                         value={v.id}
                         disabled={vehiculoBloqueado === v.id}
                       >
-                        {v.codigo_vehiculo}{vehiculoBloqueado === v.id ? ' (bloqueada por consecutivo)' : ''}
+                        {v.codigo_vehiculo}{vehiculoBloqueado === v.id ? ' (bloqueado por consecutivo)' : ''}
                       </option>
                     ))}
                   </select>
@@ -242,6 +300,42 @@ export default function ViajesClient({
                     required
                     className="w-full rounded-lg border border-slate-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
                     placeholder="Punto de llegada"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">Autoriza (usuario) *</label>
+                  <select
+                    name="autorizador_id"
+                    required
+                    className="w-full rounded-lg border border-slate-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  >
+                    <option value="">Seleccione usuario</option>
+                    {autorizadores.map((u) => (
+                      <option key={u.id} value={u.id}>{u.usuario}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">Cédula del autorizador *</label>
+                  <input
+                    type="text"
+                    name="cedula_autorizador"
+                    required
+                    className="w-full rounded-lg border border-slate-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="Documento validado"
+                  />
+                </div>
+
+                <div className="md:col-span-2">
+                  <label className="block text-sm font-medium text-slate-700 mb-1">Respuesta de validación *</label>
+                  <input
+                    type="text"
+                    name="respuesta_autorizacion"
+                    required
+                    className="w-full rounded-lg border border-slate-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="Respuesta previamente configurada por administrador"
                   />
                 </div>
               </div>
@@ -320,14 +414,90 @@ export default function ViajesClient({
             <ul className="space-y-2 max-h-72 overflow-y-auto">
               {convenios.length > 0 ? (
                 convenios.map((c) => (
-                  <li key={c.id} className="rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-700">
-                    {c.nombre}
+                  <li key={c.id} className="rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-700 flex items-center justify-between gap-2">
+                    <span>{c.nombre}</span>
+                    {rol === 'administrador' && (
+                      <button
+                        type="button"
+                        onClick={() => handleEliminarConvenio(c.id)}
+                        className="text-xs rounded bg-red-600 text-white px-2 py-1 hover:bg-red-700 disabled:opacity-50"
+                        disabled={loadingEliminarConvenio === c.id}
+                      >
+                        {loadingEliminarConvenio === c.id ? 'Eliminando...' : 'Eliminar'}
+                      </button>
+                    )}
                   </li>
                 ))
               ) : (
                 <li className="text-sm text-slate-500">No hay convenios registrados.</li>
               )}
             </ul>
+
+            {rol === 'administrador' && (
+              <div className="mt-6 pt-5 border-t border-slate-200">
+                <h4 className="text-sm font-semibold text-slate-900 mb-2">Vincular validación por usuario</h4>
+                <p className="text-xs text-slate-600 mb-3">
+                  Configure la cédula y respuesta que se validarán al autorizar viajes.
+                </p>
+
+                {validacionError && (
+                  <div className="rounded-lg border border-red-200 bg-red-50 p-2 text-xs text-red-700 mb-3">
+                    {validacionError}
+                  </div>
+                )}
+
+                <form onSubmit={handleGuardarValidacion} className="space-y-2">
+                  <select
+                    value={autorizadorIdConfig}
+                    onChange={(e) => setAutorizadorIdConfig(e.target.value)}
+                    className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    required
+                  >
+                    <option value="">Seleccione usuario</option>
+                    {autorizadores.map((u) => (
+                      <option key={u.id} value={u.id}>{u.usuario}</option>
+                    ))}
+                  </select>
+                  <input
+                    type="text"
+                    value={cedulaConfig}
+                    onChange={(e) => setCedulaConfig(e.target.value)}
+                    className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="Cédula"
+                    required
+                  />
+                  <input
+                    type="text"
+                    value={respuestaConfig}
+                    onChange={(e) => setRespuestaConfig(e.target.value)}
+                    className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="Respuesta de validación"
+                    required
+                  />
+                  <button
+                    type="submit"
+                    className="w-full rounded-lg bg-slate-900 text-white px-3 py-2 text-sm font-medium hover:bg-slate-800 disabled:opacity-50"
+                    disabled={loadingValidacion}
+                  >
+                    {loadingValidacion ? 'Guardando...' : 'Guardar validación'}
+                  </button>
+                </form>
+
+                <div className="mt-4 max-h-40 overflow-y-auto space-y-2">
+                  {validacionesAutorizador.length > 0 ? (
+                    validacionesAutorizador.map((v) => (
+                      <div key={v.autorizador_id} className="rounded border border-slate-200 p-2 text-xs text-slate-700">
+                        <p><span className="font-semibold">Usuario:</span> {v.autorizador_usuario}</p>
+                        <p><span className="font-semibold">Cédula:</span> {v.cedula}</p>
+                        <p><span className="font-semibold">Respuesta:</span> {v.respuesta}</p>
+                      </div>
+                    ))
+                  ) : (
+                    <p className="text-xs text-slate-500">Sin validaciones configuradas.</p>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
         </section>
 
@@ -338,11 +508,12 @@ export default function ViajesClient({
               <thead className="bg-slate-50">
                 <tr>
                   <th className="px-3 py-2 text-left text-xs font-semibold text-slate-600 uppercase">Fecha</th>
-                  <th className="px-3 py-2 text-left text-xs font-semibold text-slate-600 uppercase">Unidad</th>
+                  <th className="px-3 py-2 text-left text-xs font-semibold text-slate-600 uppercase">Lateral</th>
                   <th className="px-3 py-2 text-left text-xs font-semibold text-slate-600 uppercase">Conductor</th>
                   <th className="px-3 py-2 text-left text-xs font-semibold text-slate-600 uppercase">Convenio</th>
                   <th className="px-3 py-2 text-left text-xs font-semibold text-slate-600 uppercase">Ruta</th>
                   <th className="px-3 py-2 text-left text-xs font-semibold text-slate-600 uppercase">Contacto</th>
+                  <th className="px-3 py-2 text-left text-xs font-semibold text-slate-600 uppercase">Autorizó</th>
                   <th className="px-3 py-2 text-left text-xs font-semibold text-slate-600 uppercase">Registro</th>
                 </tr>
               </thead>
@@ -365,12 +536,16 @@ export default function ViajesClient({
                           </span>
                         )}
                       </td>
+                      <td className="px-3 py-2 text-sm text-slate-700">
+                        <span className="font-medium">{v.autorizador_usuario || 'N/A'}</span>
+                        <span className="block text-xs text-slate-500">CC: {v.cedula_autorizador || 'N/A'}</span>
+                      </td>
                       <td className="px-3 py-2 text-sm text-slate-700">{v.creado_por_usuario}</td>
                     </tr>
                   ))
                 ) : (
                   <tr>
-                    <td colSpan={7} className="px-3 py-4 text-center text-sm text-slate-500">
+                    <td colSpan={8} className="px-3 py-4 text-center text-sm text-slate-500">
                       Aún no hay viajes registrados.
                     </td>
                   </tr>

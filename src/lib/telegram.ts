@@ -41,6 +41,27 @@ interface RecaudoCredito {
   fecha: string;
 }
 
+interface NuevoViaje {
+  operador: string;
+  lateral: string;
+  conductor: string;
+  convenio: string;
+  origen: string;
+  destino: string;
+  medioContacto: string;
+  autorizador: string;
+  fecha: string;
+  omiteConsecutivo: boolean;
+  motivoOmision: string | null;
+}
+
+function formatearMedioContacto(medio: string) {
+  if (medio === 'llamada_telefonica') return 'Llamada telefonica';
+  if (medio === 'whatsapp') return 'WhatsApp';
+  if (medio === 'mensajeria_app') return 'Mensajeria de la aplicacion';
+  return medio;
+}
+
 async function getConfiguracion() {
   const result = await query(
     'SELECT bot_telegram, canal_telegram FROM configuracion WHERE id = 1'
@@ -143,6 +164,26 @@ export async function notificarRecaudoCredito(data: RecaudoCredito) {
 ${listaPlanillas}
 
 💸 Total recaudado: $${data.total.toLocaleString('es-CO')}
+🕒 ${data.fecha}`;
+
+  return await enviarMensajeTelegram(mensaje);
+}
+
+export async function notificarNuevoViaje(data: NuevoViaje) {
+  const bloqueOmision = data.omiteConsecutivo
+    ? `\n⚠️ Omitio consecutivo: SI\n📝 Motivo: ${data.motivoOmision || 'Sin detalle'}`
+    : '\n⚠️ Omitio consecutivo: NO';
+
+  const mensaje = `🧭 <b>NUEVO VIAJE REGISTRADO</b>
+
+👤 Operador: ${data.operador}
+🚕 Lateral: ${data.lateral}
+🧑 Conductor: ${data.conductor}
+🏢 Convenio: ${data.convenio}
+📍 Origen: ${data.origen}
+🏁 Destino: ${data.destino}
+📞 Contacto: ${formatearMedioContacto(data.medioContacto)}
+✅ Autorizo: ${data.autorizador}${bloqueOmision}
 🕒 ${data.fecha}`;
 
   return await enviarMensajeTelegram(mensaje);

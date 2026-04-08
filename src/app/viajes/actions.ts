@@ -3,6 +3,7 @@
 import { revalidatePath } from 'next/cache';
 import { execute, queryOne } from '@/lib/db';
 import { getSession } from '@/lib/auth-helper';
+import { notificarNuevoViaje } from '@/lib/telegram';
 
 type UsuarioRol = {
   id: number;
@@ -15,6 +16,121 @@ type UltimoViaje = {
   vehiculo_id: number;
   codigo_vehiculo: string;
 };
+
+type UsuarioSimple = {
+  id: number;
+  usuario: string;
+};
+
+export async function eliminarConvenio(convenioId: number) {
+  try {
+    const session = await getSession();
+    if (!session?.user?.email) {
+      return { error: 'Usuario no autenticado' };
+    }
+
+    const usuario = await queryOne<UsuarioRol>(
+      'SELECT id, usuario, rol FROM usuarios WHERE usuario = $1',
+      [session.user.email]
+    );
+
+    if (!usuario || usuario.rol !== 'administrador') {
+      return { error: 'Solo el administrador puede eliminar convenios' };
+    }
+
+    const convenio = await queryOne<{ nombre: string }>(
+      'SELECT nombre FROM convenios_empresariales WHERE id = $1',
+      [convenioId]
+    );
+
+    if (!convenio) {
+      return { error: 'Convenio no encontrado' };
+    }
+
+    await execute(
+      'UPDATE convenios_empresariales SET activo = false WHERE id = $1',
+      [convenioId]
+    );
+
+    await execute(
+      `INSERT INTO auditoria (usuario, accion, detalles)
+       VALUES ($1, $2, $3)`,
+      [usuario.usuario, 'UPDATE', `Inactivó convenio empresarial ${convenio.nombre}`]
+    );
+
+    revalidatePath('/viajes');
+    return { success: true };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Error al eliminar convenio';
+    return { error: message };
+  }
+}
+
+export async function guardarValidacionAutorizador(formData: FormData) {
+  try {
+    const session = await getSession();
+    if (!session?.user?.email) {
+      return { error: 'Usuario no autenticado' };
+    }
+
+    const usuario = await queryOne<UsuarioRol>(
+      'SELECT id, usuario, rol FROM usuarios WHERE usuario = $1',
+      [session.user.email]
+    );
+
+    if (!usuario || usuario.rol !== 'administrador') {
+      return { error: 'Solo el administrador puede configurar validaciones' };
+    }
+
+    const autorizadorId = parseInt(formData.get('autorizador_id') as string, 10);
+    const cedula = ((formData.get('cedula') as string) || '').trim();
+    const respuesta = ((formData.get('respuesta') as string) || '').trim();
+
+    if (!autorizadorId || !cedula || !respuesta) {
+      return { error: 'Usuario, cédula y respuesta son obligatorios' };
+    }
+
+    const autorizador = await queryOne<UsuarioSimple>(
+      'SELECT id, usuario FROM usuarios WHERE id = $1',
+      [autorizadorId]
+    );
+
+    if (!autorizador) {
+      return { error: 'Usuario autorizador no encontrado' };
+    }
+
+    await execute(
+      `INSERT INTO viajes_autorizadores_validacion (
+        autorizador_id,
+        cedula,
+        respuesta,
+        activo,
+        actualizado_por_id,
+        updated_at
+      ) VALUES ($1, $2, $3, true, $4, CURRENT_TIMESTAMP)
+      ON CONFLICT (autorizador_id)
+      DO UPDATE SET
+        cedula = EXCLUDED.cedula,
+        respuesta = EXCLUDED.respuesta,
+        activo = true,
+        actualizado_por_id = EXCLUDED.actualizado_por_id,
+        updated_at = CURRENT_TIMESTAMP`,
+      [autorizadorId, cedula, respuesta, usuario.id]
+    );
+
+    await execute(
+      `INSERT INTO auditoria (usuario, accion, detalles)
+       VALUES ($1, $2, $3)`,
+      [usuario.usuario, 'UPDATE', `Configuró validación de autorización para ${autorizador.usuario}`]
+    );
+
+    revalidatePath('/viajes');
+    return { success: true };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Error al guardar validación';
+    return { error: message };
+  }
+}
 
 export async function crearConvenio(formData: FormData) {
   try {
@@ -80,10 +196,13 @@ export async function crearViaje(formData: FormData) {
     const origen = ((formData.get('origen') as string) || '').trim();
     const destino = ((formData.get('destino') as string) || '').trim();
     const medioContacto = ((formData.get('medio_contacto') as string) || '').trim();
+    const autorizadorId = parseInt(formData.get('autorizador_id') as string, 10);
+    const cedulaAutorizador = ((formData.get('cedula_autorizador') as string) || '').trim();
+    const respuestaAutorizacion = ((formData.get('respuesta_autorizacion') as string) || '').trim();
     const omiteConsecutivo = formData.get('omite_consecutivo') === '1';
     const motivoOmision = ((formData.get('motivo_omision') as string) || '').trim();
 
-    if (!vehiculoId || !conductor || !convenioId || !origen || !destino || !medioContacto) {
+    if (!vehiculoId || !conductor || !convenioId || !origen || !destino || !medioContacto || !autorizadorId || !cedulaAutorizador || !respuestaAutorizacion) {
       return { error: 'Todos los campos del viaje son obligatorios' };
     }
 
@@ -93,6 +212,29 @@ export async function crearViaje(formData: FormData) {
 
     if (omiteConsecutivo && motivoOmision.length < 10) {
       return { error: 'Debe dejar una justificación clara (mínimo 10 caracteres) para omitir el consecutivo' };
+    }
+
+    const autorizador = await queryOne<UsuarioSimple>(
+      'SELECT id, usuario FROM usuarios WHERE id = $1',
+      [autorizadorId]
+    );
+
+    if (!autorizador) {
+      return { error: 'El usuario que autoriza no existe' };
+    }
+
+    const validacion = await queryOne<{ id: number }>(
+      `SELECT id
+       FROM viajes_autorizadores_validacion
+       WHERE autorizador_id = $1
+         AND cedula = $2
+         AND LOWER(respuesta) = LOWER($3)
+         AND activo = true`,
+      [autorizadorId, cedulaAutorizador, respuestaAutorizacion]
+    );
+
+    if (!validacion) {
+      return { error: 'La validación de autorización no coincide. Verifique usuario, cédula y respuesta.' };
     }
 
     const ultimoViaje = await queryOne<UltimoViaje>(
@@ -105,9 +247,19 @@ export async function crearViaje(formData: FormData) {
 
     if (ultimoViaje && ultimoViaje.vehiculo_id === vehiculoId && !omiteConsecutivo) {
       return {
-        error: `No se puede repetir consecutivamente la unidad ${ultimoViaje.codigo_vehiculo}. Si debe usarla, active la omisión y justifique el motivo.`
+        error: `No se puede repetir consecutivamente el lateral ${ultimoViaje.codigo_vehiculo}. Si debe usarlo, active la omisión y justifique el motivo.`
       };
     }
+
+    const lateral = await queryOne<{ codigo_vehiculo: string }>(
+      'SELECT codigo_vehiculo FROM vehiculos WHERE id = $1',
+      [vehiculoId]
+    );
+
+    const convenio = await queryOne<{ nombre: string }>(
+      'SELECT nombre FROM convenios_empresariales WHERE id = $1',
+      [convenioId]
+    );
 
     const viaje = await queryOne<{ id: number }>(
       `INSERT INTO viajes (
@@ -120,8 +272,12 @@ export async function crearViaje(formData: FormData) {
         omite_consecutivo,
         motivo_omision,
         creado_por_id,
-        creado_por_usuario
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+        creado_por_usuario,
+        autorizador_id,
+        autorizador_usuario,
+        cedula_autorizador,
+        respuesta_autorizacion
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
       RETURNING id`,
       [
         vehiculoId,
@@ -133,7 +289,11 @@ export async function crearViaje(formData: FormData) {
         omiteConsecutivo,
         omiteConsecutivo ? motivoOmision : null,
         usuario.id,
-        usuario.usuario
+        usuario.usuario,
+        autorizadorId,
+        autorizador.usuario,
+        cedulaAutorizador,
+        respuestaAutorizacion
       ]
     );
 
@@ -143,9 +303,33 @@ export async function crearViaje(formData: FormData) {
       [
         usuario.usuario,
         'INSERT',
-        `Registró viaje ID ${viaje?.id || 'N/A'} con vehículo ${vehiculoId} (omite consecutivo: ${omiteConsecutivo ? 'sí' : 'no'})`
+        `Registró viaje ID ${viaje?.id || 'N/A'} con lateral ${lateral?.codigo_vehiculo || vehiculoId} (omite consecutivo: ${omiteConsecutivo ? 'sí' : 'no'})`
       ]
     );
+
+    const fecha = new Date().toLocaleString('es-CO', {
+      timeZone: 'America/Bogota',
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: true
+    });
+
+    await notificarNuevoViaje({
+      operador: usuario.usuario,
+      lateral: lateral?.codigo_vehiculo || String(vehiculoId),
+      conductor,
+      convenio: convenio?.nombre || String(convenioId),
+      origen,
+      destino,
+      medioContacto,
+      autorizador: autorizador.usuario,
+      fecha,
+      omiteConsecutivo,
+      motivoOmision: omiteConsecutivo ? motivoOmision : null
+    });
 
     revalidatePath('/viajes');
     return { success: true, data: viaje };
