@@ -55,6 +55,10 @@ function formatearMedioContacto(medio: string) {
   return medio;
 }
 
+function normalizarBusqueda(texto: string) {
+  return texto.toLowerCase().replace(/[^a-z0-9]/g, '');
+}
+
 export default function ViajesClient({
   rol,
   vehiculos,
@@ -82,6 +86,7 @@ export default function ViajesClient({
   const [validacionError, setValidacionError] = useState('');
   const [omiteConsecutivo, setOmiteConsecutivo] = useState(false);
   const [vehiculoId, setVehiculoId] = useState('');
+  const [lateralBusqueda, setLateralBusqueda] = useState('');
   const [nuevoConvenio, setNuevoConvenio] = useState('');
   const [autorizadorIdConfig, setAutorizadorIdConfig] = useState('');
   const [cedulaConfig, setCedulaConfig] = useState('');
@@ -92,6 +97,12 @@ export default function ViajesClient({
     if (!ultimoViaje || omiteConsecutivo) return null;
     return ultimoViaje.vehiculo_id;
   }, [ultimoViaje, omiteConsecutivo]);
+
+  const lateralesFiltrados = useMemo(() => {
+    const busqueda = normalizarBusqueda(lateralBusqueda.trim());
+    if (!busqueda) return vehiculos;
+    return vehiculos.filter((v) => normalizarBusqueda(v.codigo_vehiculo).includes(busqueda));
+  }, [vehiculos, lateralBusqueda]);
 
   async function handleCrearViaje(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -254,6 +265,13 @@ export default function ViajesClient({
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-1">Lateral *</label>
+                  <input
+                    type="text"
+                    value={lateralBusqueda}
+                    onChange={(e) => setLateralBusqueda(e.target.value)}
+                    className="mb-2 w-full rounded-lg border border-slate-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="Buscar lateral por coincidencia..."
+                  />
                   <select
                     name="vehiculo_id"
                     value={vehiculoId}
@@ -262,7 +280,7 @@ export default function ViajesClient({
                     className="w-full rounded-lg border border-slate-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
                   >
                     <option value="">Seleccione un lateral</option>
-                    {vehiculos.map((v) => (
+                    {lateralesFiltrados.map((v) => (
                       <option
                         key={v.id}
                         value={v.id}
