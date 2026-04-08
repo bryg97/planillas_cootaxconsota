@@ -139,6 +139,54 @@ export async function guardarValidacionAutorizador(formData: FormData) {
   }
 }
 
+export async function eliminarValidacionAutorizador(operadorId: number) {
+  try {
+    const session = await getSession();
+    if (!session?.user?.email) {
+      return { error: 'Usuario no autenticado' };
+    }
+
+    const usuario = await queryOne<UsuarioRol>(
+      'SELECT id, usuario, rol FROM usuarios WHERE usuario = $1',
+      [session.user.email]
+    );
+
+    if (!usuario || usuario.rol !== 'administrador') {
+      return { error: 'Solo el administrador puede eliminar validaciones' };
+    }
+
+    const validacion = await queryOne<{ operador_nombre: string }>(
+      'SELECT operador_nombre FROM viajes_autorizadores_validacion WHERE operador_id = $1 AND activo = true',
+      [operadorId]
+    );
+
+    if (!validacion) {
+      return { error: 'Validación no encontrada' };
+    }
+
+    await execute(
+      'UPDATE viajes_autorizadores_validacion SET activo = false, updated_at = CURRENT_TIMESTAMP WHERE operador_id = $1',
+      [operadorId]
+    );
+
+    await execute(
+      `INSERT INTO auditoria (usuario, accion, detalles)
+       VALUES ($1, $2, $3)`,
+      [
+        usuario.usuario,
+        'UPDATE',
+        `Eliminó validación de autorización para operador ${validacion.operador_nombre}`
+      ]
+    );
+
+    revalidatePath('/viajes');
+    return { success: true };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Error al eliminar validación';
+    return { error: message };
+  }
+}
+
 export async function crearConvenio(formData: FormData) {
   try {
     const session = await getSession();

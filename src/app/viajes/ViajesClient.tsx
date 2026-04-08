@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { crearConvenio, crearViaje, eliminarConvenio, guardarValidacionAutorizador } from './actions';
+import { crearConvenio, crearViaje, eliminarConvenio, guardarValidacionAutorizador, eliminarValidacionAutorizador } from './actions';
 
 type Vehiculo = {
   id: number;
@@ -76,6 +76,7 @@ export default function ViajesClient({
   const [loadingConvenio, setLoadingConvenio] = useState(false);
   const [loadingEliminarConvenio, setLoadingEliminarConvenio] = useState<number | null>(null);
   const [loadingValidacion, setLoadingValidacion] = useState(false);
+  const [loadingEliminarValidacion, setLoadingEliminarValidacion] = useState<number | null>(null);
   const [error, setError] = useState('');
   const [convenioError, setConvenioError] = useState('');
   const [validacionError, setValidacionError] = useState('');
@@ -85,6 +86,7 @@ export default function ViajesClient({
   const [autorizadorIdConfig, setAutorizadorIdConfig] = useState('');
   const [cedulaConfig, setCedulaConfig] = useState('');
   const [respuestaConfig, setRespuestaConfig] = useState('');
+  const [editandoValidacionOperadorId, setEditandoValidacionOperadorId] = useState<number | null>(null);
 
   const vehiculoBloqueado = useMemo(() => {
     if (!ultimoViaje || omiteConsecutivo) return null;
@@ -157,6 +159,36 @@ export default function ViajesClient({
     if (result.error) {
       setValidacionError(result.error);
       setLoadingValidacion(false);
+      return;
+    }
+
+    window.location.reload();
+  }
+
+  function handleEditarValidacion(validacion: ValidacionAutorizador) {
+    setEditandoValidacionOperadorId(validacion.operador_id);
+    setAutorizadorIdConfig(String(validacion.operador_id));
+    setCedulaConfig(validacion.cedula);
+    setRespuestaConfig(validacion.respuesta);
+    setValidacionError('');
+  }
+
+  function handleCancelarEdicionValidacion() {
+    setEditandoValidacionOperadorId(null);
+    setAutorizadorIdConfig('');
+    setCedulaConfig('');
+    setRespuestaConfig('');
+    setValidacionError('');
+  }
+
+  async function handleEliminarValidacion(operadorId: number) {
+    setLoadingEliminarValidacion(operadorId);
+    setValidacionError('');
+
+    const result = await eliminarValidacionAutorizador(operadorId);
+    if (result.error) {
+      setValidacionError(result.error);
+      setLoadingEliminarValidacion(null);
       return;
     }
 
@@ -479,8 +511,21 @@ export default function ViajesClient({
                     className="w-full rounded-lg bg-slate-900 text-white px-3 py-2 text-sm font-medium hover:bg-slate-800 disabled:opacity-50"
                     disabled={loadingValidacion}
                   >
-                    {loadingValidacion ? 'Guardando...' : 'Guardar validación'}
+                    {loadingValidacion
+                      ? 'Guardando...'
+                      : editandoValidacionOperadorId
+                        ? 'Guardar cambios'
+                        : 'Guardar validación'}
                   </button>
+                  {editandoValidacionOperadorId && (
+                    <button
+                      type="button"
+                      onClick={handleCancelarEdicionValidacion}
+                      className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+                    >
+                      Cancelar edición
+                    </button>
+                  )}
                 </form>
 
                 <div className="mt-4 max-h-40 overflow-y-auto space-y-2">
@@ -490,6 +535,23 @@ export default function ViajesClient({
                         <p><span className="font-semibold">Operador:</span> {v.operador_nombre}</p>
                         <p><span className="font-semibold">Cédula:</span> {v.cedula}</p>
                         <p><span className="font-semibold">Respuesta:</span> {v.respuesta}</p>
+                        <div className="mt-2">
+                          <button
+                            type="button"
+                            onClick={() => handleEditarValidacion(v)}
+                            className="mr-2 rounded bg-blue-600 px-2 py-1 text-white hover:bg-blue-700"
+                          >
+                            Editar respuesta
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleEliminarValidacion(v.operador_id)}
+                            className="rounded bg-red-600 px-2 py-1 text-white hover:bg-red-700 disabled:opacity-50"
+                            disabled={loadingEliminarValidacion === v.operador_id}
+                          >
+                            {loadingEliminarValidacion === v.operador_id ? 'Eliminando...' : 'Eliminar respuesta'}
+                          </button>
+                        </div>
                       </div>
                     ))
                   ) : (
