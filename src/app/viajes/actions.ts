@@ -22,6 +22,11 @@ type UsuarioSimple = {
   usuario: string;
 };
 
+type OperadorRegistrado = {
+  id: number;
+  nombre: string;
+};
+
 export async function eliminarConvenio(convenioId: number) {
   try {
     const session = await getSession();
@@ -82,46 +87,48 @@ export async function guardarValidacionAutorizador(formData: FormData) {
       return { error: 'Solo el administrador puede configurar validaciones' };
     }
 
-    const autorizadorId = parseInt(formData.get('autorizador_id') as string, 10);
+    const operadorId = parseInt(formData.get('operador_id') as string, 10);
     const cedula = ((formData.get('cedula') as string) || '').trim();
     const respuesta = ((formData.get('respuesta') as string) || '').trim();
 
-    if (!autorizadorId || !cedula || !respuesta) {
-      return { error: 'Usuario, cédula y respuesta son obligatorios' };
+    if (!operadorId || !cedula || !respuesta) {
+      return { error: 'Operador, cédula y respuesta son obligatorios' };
     }
 
-    const autorizador = await queryOne<UsuarioSimple>(
-      'SELECT id, usuario FROM usuarios WHERE id = $1',
-      [autorizadorId]
+    const operador = await queryOne<OperadorRegistrado>(
+      'SELECT id, nombre FROM modulos WHERE descripcion = $1 AND id = $2',
+      ['Operador', operadorId]
     );
 
-    if (!autorizador) {
-      return { error: 'Usuario autorizador no encontrado' };
+    if (!operador) {
+      return { error: 'Operador no encontrado' };
     }
 
     await execute(
       `INSERT INTO viajes_autorizadores_validacion (
-        autorizador_id,
+        operador_id,
+        operador_nombre,
         cedula,
         respuesta,
         activo,
         actualizado_por_id,
         updated_at
-      ) VALUES ($1, $2, $3, true, $4, CURRENT_TIMESTAMP)
-      ON CONFLICT (autorizador_id)
+      ) VALUES ($1, $2, $3, $4, true, $5, CURRENT_TIMESTAMP)
+      ON CONFLICT (operador_id)
       DO UPDATE SET
+        operador_nombre = EXCLUDED.operador_nombre,
         cedula = EXCLUDED.cedula,
         respuesta = EXCLUDED.respuesta,
         activo = true,
         actualizado_por_id = EXCLUDED.actualizado_por_id,
         updated_at = CURRENT_TIMESTAMP`,
-      [autorizadorId, cedula, respuesta, usuario.id]
+      [operadorId, operador.nombre, cedula, respuesta, usuario.id]
     );
 
     await execute(
       `INSERT INTO auditoria (usuario, accion, detalles)
        VALUES ($1, $2, $3)`,
-      [usuario.usuario, 'UPDATE', `Configuró validación de autorización para ${autorizador.usuario}`]
+      [usuario.usuario, 'UPDATE', `Configuró validación de autorización para operador ${operador.nombre}`]
     );
 
     revalidatePath('/viajes');
@@ -196,13 +203,13 @@ export async function crearViaje(formData: FormData) {
     const origen = ((formData.get('origen') as string) || '').trim();
     const destino = ((formData.get('destino') as string) || '').trim();
     const medioContacto = ((formData.get('medio_contacto') as string) || '').trim();
-    const autorizadorId = parseInt(formData.get('autorizador_id') as string, 10);
+    const autorizadorOperadorId = parseInt(formData.get('autorizador_operador_id') as string, 10);
     const cedulaAutorizador = ((formData.get('cedula_autorizador') as string) || '').trim();
     const respuestaAutorizacion = ((formData.get('respuesta_autorizacion') as string) || '').trim();
     const omiteConsecutivo = formData.get('omite_consecutivo') === '1';
     const motivoOmision = ((formData.get('motivo_omision') as string) || '').trim();
 
-    if (!vehiculoId || !conductor || !convenioId || !origen || !destino || !medioContacto || !autorizadorId || !cedulaAutorizador || !respuestaAutorizacion) {
+    if (!vehiculoId || !conductor || !convenioId || !origen || !destino || !medioContacto || !autorizadorOperadorId || !cedulaAutorizador || !respuestaAutorizacion) {
       return { error: 'Todos los campos del viaje son obligatorios' };
     }
 
@@ -214,27 +221,27 @@ export async function crearViaje(formData: FormData) {
       return { error: 'Debe dejar una justificación clara (mínimo 10 caracteres) para omitir el consecutivo' };
     }
 
-    const autorizador = await queryOne<UsuarioSimple>(
-      'SELECT id, usuario FROM usuarios WHERE id = $1',
-      [autorizadorId]
+    const autorizador = await queryOne<OperadorRegistrado>(
+      'SELECT id, nombre FROM modulos WHERE descripcion = $1 AND id = $2',
+      ['Operador', autorizadorOperadorId]
     );
 
     if (!autorizador) {
-      return { error: 'El usuario que autoriza no existe' };
+      return { error: 'El operador que autoriza no existe' };
     }
 
     const validacion = await queryOne<{ id: number }>(
       `SELECT id
        FROM viajes_autorizadores_validacion
-       WHERE autorizador_id = $1
+       WHERE operador_id = $1
          AND cedula = $2
          AND LOWER(respuesta) = LOWER($3)
          AND activo = true`,
-      [autorizadorId, cedulaAutorizador, respuestaAutorizacion]
+      [autorizadorOperadorId, cedulaAutorizador, respuestaAutorizacion]
     );
 
     if (!validacion) {
-      return { error: 'La validación de autorización no coincide. Verifique usuario, cédula y respuesta.' };
+      return { error: 'La validación de autorización no coincide. Verifique operador, cédula y respuesta.' };
     }
 
     const ultimoViaje = await queryOne<UltimoViaje>(
@@ -273,8 +280,8 @@ export async function crearViaje(formData: FormData) {
         motivo_omision,
         creado_por_id,
         creado_por_usuario,
-        autorizador_id,
-        autorizador_usuario,
+        autorizador_operador_id,
+        autorizador_operador_nombre,
         cedula_autorizador,
         respuesta_autorizacion
       ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
@@ -290,8 +297,8 @@ export async function crearViaje(formData: FormData) {
         omiteConsecutivo ? motivoOmision : null,
         usuario.id,
         usuario.usuario,
-        autorizadorId,
-        autorizador.usuario,
+        autorizadorOperadorId,
+        autorizador.nombre,
         cedulaAutorizador,
         respuestaAutorizacion
       ]
@@ -325,7 +332,7 @@ export async function crearViaje(formData: FormData) {
       origen,
       destino,
       medioContacto,
-      autorizador: autorizador.usuario,
+      autorizador: autorizador.nombre,
       fecha,
       omiteConsecutivo,
       motivoOmision: omiteConsecutivo ? motivoOmision : null

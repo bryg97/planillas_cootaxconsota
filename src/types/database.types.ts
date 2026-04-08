@@ -136,8 +136,8 @@ export interface Database {
           motivo_omision: string | null
           creado_por_id: number | null
           creado_por_usuario: string | null
-          autorizador_id: number | null
-          autorizador_usuario: string | null
+          autorizador_operador_id: number | null
+          autorizador_operador_nombre: string | null
           cedula_autorizador: string | null
           respuesta_autorizacion: string | null
           created_at: string
@@ -153,8 +153,8 @@ export interface Database {
           motivo_omision?: string | null
           creado_por_id?: number | null
           creado_por_usuario?: string | null
-          autorizador_id?: number | null
-          autorizador_usuario?: string | null
+          autorizador_operador_id?: number | null
+          autorizador_operador_nombre?: string | null
           cedula_autorizador?: string | null
           respuesta_autorizacion?: string | null
           created_at?: string
@@ -170,8 +170,8 @@ export interface Database {
           motivo_omision?: string | null
           creado_por_id?: number | null
           creado_por_usuario?: string | null
-          autorizador_id?: number | null
-          autorizador_usuario?: string | null
+          autorizador_operador_id?: number | null
+          autorizador_operador_nombre?: string | null
           cedula_autorizador?: string | null
           respuesta_autorizacion?: string | null
           created_at?: string
@@ -180,7 +180,8 @@ export interface Database {
       viajes_autorizadores_validacion: {
         Row: {
           id: number
-          autorizador_id: number
+          operador_id: number
+          operador_nombre: string
           cedula: string
           respuesta: string
           activo: boolean
@@ -188,7 +189,8 @@ export interface Database {
           updated_at: string
         }
         Insert: {
-          autorizador_id: number
+          operador_id: number
+          operador_nombre: string
           cedula: string
           respuesta: string
           activo?: boolean
@@ -196,7 +198,8 @@ export interface Database {
           updated_at?: string
         }
         Update: {
-          autorizador_id?: number
+          operador_id?: number
+          operador_nombre?: string
           cedula?: string
           respuesta?: string
           activo?: boolean

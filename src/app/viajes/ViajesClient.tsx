@@ -13,14 +13,14 @@ type Convenio = {
   nombre: string;
 };
 
-type UsuarioSimple = {
+type OperadorRegistrado = {
   id: number;
-  usuario: string;
+  nombre: string;
 };
 
 type ValidacionAutorizador = {
-  autorizador_id: number;
-  autorizador_usuario: string;
+  operador_id: number;
+  operador_nombre: string;
   cedula: string;
   respuesta: string;
 };
@@ -44,7 +44,7 @@ type ViajeListado = {
   codigo_vehiculo: string;
   convenio_nombre: string;
   creado_por_usuario: string;
-  autorizador_usuario: string | null;
+  autorizador_operador_nombre: string | null;
   cedula_autorizador: string | null;
 };
 
@@ -67,7 +67,7 @@ export default function ViajesClient({
   rol: string;
   vehiculos: Vehiculo[];
   convenios: Convenio[];
-  autorizadores: UsuarioSimple[];
+  autorizadores: OperadorRegistrado[];
   validacionesAutorizador: ValidacionAutorizador[];
   ultimoViaje: UltimoViaje;
   viajes: ViajeListado[];
@@ -149,7 +149,7 @@ export default function ViajesClient({
     setValidacionError('');
 
     const formData = new FormData();
-    formData.set('autorizador_id', autorizadorIdConfig);
+    formData.set('operador_id', autorizadorIdConfig);
     formData.set('cedula', cedulaConfig);
     formData.set('respuesta', respuestaConfig);
 
@@ -304,15 +304,15 @@ export default function ViajesClient({
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Autoriza (usuario) *</label>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">Autoriza (operador) *</label>
                   <select
-                    name="autorizador_id"
+                    name="autorizador_operador_id"
                     required
                     className="w-full rounded-lg border border-slate-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
                   >
-                    <option value="">Seleccione usuario</option>
+                    <option value="">Seleccione operador</option>
                     {autorizadores.map((u) => (
-                      <option key={u.id} value={u.id}>{u.usuario}</option>
+                      <option key={u.id} value={u.id}>{u.nombre}</option>
                     ))}
                   </select>
                 </div>
@@ -435,9 +435,9 @@ export default function ViajesClient({
 
             {rol === 'administrador' && (
               <div className="mt-6 pt-5 border-t border-slate-200">
-                <h4 className="text-sm font-semibold text-slate-900 mb-2">Vincular validación por usuario</h4>
+                <h4 className="text-sm font-semibold text-slate-900 mb-2">Vincular validación por operador</h4>
                 <p className="text-xs text-slate-600 mb-3">
-                  Configure la cédula y respuesta que se validarán al autorizar viajes.
+                  Configure por operador la cédula y respuesta que se validarán al autorizar viajes.
                 </p>
 
                 {validacionError && (
@@ -453,9 +453,9 @@ export default function ViajesClient({
                     className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                     required
                   >
-                    <option value="">Seleccione usuario</option>
+                    <option value="">Seleccione operador</option>
                     {autorizadores.map((u) => (
-                      <option key={u.id} value={u.id}>{u.usuario}</option>
+                      <option key={u.id} value={u.id}>{u.nombre}</option>
                     ))}
                   </select>
                   <input
@@ -486,8 +486,8 @@ export default function ViajesClient({
                 <div className="mt-4 max-h-40 overflow-y-auto space-y-2">
                   {validacionesAutorizador.length > 0 ? (
                     validacionesAutorizador.map((v) => (
-                      <div key={v.autorizador_id} className="rounded border border-slate-200 p-2 text-xs text-slate-700">
-                        <p><span className="font-semibold">Usuario:</span> {v.autorizador_usuario}</p>
+                      <div key={v.operador_id} className="rounded border border-slate-200 p-2 text-xs text-slate-700">
+                        <p><span className="font-semibold">Operador:</span> {v.operador_nombre}</p>
                         <p><span className="font-semibold">Cédula:</span> {v.cedula}</p>
                         <p><span className="font-semibold">Respuesta:</span> {v.respuesta}</p>
                       </div>
@@ -537,7 +537,7 @@ export default function ViajesClient({
                         )}
                       </td>
                       <td className="px-3 py-2 text-sm text-slate-700">
-                        <span className="font-medium">{v.autorizador_usuario || 'N/A'}</span>
+                        <span className="font-medium">{v.autorizador_operador_nombre || 'N/A'}</span>
                         <span className="block text-xs text-slate-500">CC: {v.cedula_autorizador || 'N/A'}</span>
                       </td>
                       <td className="px-3 py-2 text-sm text-slate-700">{v.creado_por_usuario}</td>

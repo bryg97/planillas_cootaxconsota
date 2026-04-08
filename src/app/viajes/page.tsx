@@ -15,14 +15,14 @@ type Convenio = {
   nombre: string;
 };
 
-type UsuarioSimple = {
+type OperadorRegistrado = {
   id: number;
-  usuario: string;
+  nombre: string;
 };
 
 type ValidacionAutorizador = {
-  autorizador_id: number;
-  autorizador_usuario: string;
+  operador_id: number;
+  operador_nombre: string;
   cedula: string;
   respuesta: string;
 };
@@ -39,7 +39,7 @@ type ViajeListado = {
   codigo_vehiculo: string;
   convenio_nombre: string;
   creado_por_usuario: string;
-  autorizador_usuario: string | null;
+  autorizador_operador_nombre: string | null;
   cedula_autorizador: string | null;
 };
 
@@ -74,20 +74,20 @@ export default async function ViajesPage() {
     'SELECT id, nombre FROM convenios_empresariales WHERE activo = true ORDER BY nombre ASC'
   );
 
-  const autorizadores = await query<UsuarioSimple>(
-    'SELECT id, usuario FROM usuarios ORDER BY usuario ASC'
+  const autorizadores = await query<OperadorRegistrado>(
+    'SELECT id, nombre FROM modulos WHERE descripcion = $1 ORDER BY nombre ASC',
+    ['Operador']
   );
 
   const validacionesAutorizador = await query<ValidacionAutorizador>(
     `SELECT
-      v.autorizador_id,
-      u.usuario AS autorizador_usuario,
+      v.operador_id,
+      v.operador_nombre,
       v.cedula,
       v.respuesta
     FROM viajes_autorizadores_validacion v
-    INNER JOIN usuarios u ON u.id = v.autorizador_id
     WHERE v.activo = true
-    ORDER BY u.usuario ASC`
+    ORDER BY v.operador_nombre ASC`
   );
 
   const ultimoViaje = await queryOne<UltimoViaje>(
@@ -111,7 +111,7 @@ export default async function ViajesPage() {
       v.codigo_vehiculo,
       ce.nombre AS convenio_nombre,
       vi.creado_por_usuario,
-      vi.autorizador_usuario,
+      vi.autorizador_operador_nombre,
       vi.cedula_autorizador
     FROM viajes vi
     INNER JOIN vehiculos v ON v.id = vi.vehiculo_id
