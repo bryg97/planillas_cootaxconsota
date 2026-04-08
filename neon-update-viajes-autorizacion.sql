@@ -23,6 +23,20 @@ ALTER TABLE viajes_autorizadores_validacion
   ADD COLUMN IF NOT EXISTS operador_id INTEGER,
   ADD COLUMN IF NOT EXISTS operador_nombre VARCHAR(255);
 
+-- Compatibilidad: si existe esquema antiguo con autorizador_id NOT NULL,
+-- dejarlo opcional para permitir inserciones con el nuevo modelo por operador.
+DO $$
+BEGIN
+  IF EXISTS (
+    SELECT 1
+    FROM information_schema.columns
+    WHERE table_name = 'viajes_autorizadores_validacion'
+      AND column_name = 'autorizador_id'
+  ) THEN
+    EXECUTE 'ALTER TABLE viajes_autorizadores_validacion ALTER COLUMN autorizador_id DROP NOT NULL';
+  END IF;
+END $$;
+
 DO $$
 BEGIN
   IF EXISTS (
