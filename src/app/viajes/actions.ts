@@ -92,7 +92,7 @@ export async function guardarValidacionAutorizador(formData: FormData) {
     const respuesta = ((formData.get('respuesta') as string) || '').trim();
 
     if (!operadorId || !cedula || !respuesta) {
-      return { error: 'Operador, cédula y respuesta son obligatorios' };
+      return { error: 'Operador, cédula y código de seguridad son obligatorios' };
     }
 
     const operador = await queryOne<OperadorRegistrado>(
@@ -337,7 +337,7 @@ export async function crearViaje(formData: FormData) {
     );
 
     if (!validacion) {
-      return { error: 'La validación de autorización no coincide. Verifique operador, cédula y respuesta.' };
+      return { error: 'La validación de autorización no coincide. Verifique operador, cédula y código de seguridad.' };
     }
 
     const ultimoViaje = await queryOne<UltimoViaje>(

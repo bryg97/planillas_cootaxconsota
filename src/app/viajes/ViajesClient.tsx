@@ -409,13 +409,13 @@ export default function ViajesClient({
                 </div>
 
                 <div className="md:col-span-2">
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Respuesta de validación *</label>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">Código de seguridad *</label>
                   <input
                     type="text"
                     name="respuesta_autorizacion"
                     required
                     className="w-full rounded-lg border border-slate-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder="Respuesta previamente configurada por administrador"
+                    placeholder="Código de seguridad previamente configurado por administrador"
                   />
                 </div>
               </div>
@@ -517,7 +517,7 @@ export default function ViajesClient({
               <div className="mt-6 pt-5 border-t border-slate-200">
                 <h4 className="text-sm font-semibold text-slate-900 mb-2">Vincular validación por operador</h4>
                 <p className="text-xs text-slate-600 mb-3">
-                  Configure por operador la cédula y respuesta que se validarán al autorizar viajes.
+                  Configure por operador la cédula y código de seguridad que se validarán al autorizar viajes.
                 </p>
 
                 {validacionError && (
@@ -551,7 +551,7 @@ export default function ViajesClient({
                     value={respuestaConfig}
                     onChange={(e) => setRespuestaConfig(e.target.value)}
                     className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder="Respuesta de validación"
+                    placeholder="Código de seguridad"
                     required
                   />
                   <button
@@ -582,14 +582,14 @@ export default function ViajesClient({
                       <div key={v.operador_id} className="rounded border border-slate-200 p-2 text-xs text-slate-700">
                         <p><span className="font-semibold">Operador:</span> {v.operador_nombre}</p>
                         <p><span className="font-semibold">Cédula:</span> {v.cedula}</p>
-                        <p><span className="font-semibold">Respuesta:</span> {v.respuesta}</p>
+                        <p><span className="font-semibold">Código de seguridad:</span> {v.respuesta}</p>
                         <div className="mt-2">
                           <button
                             type="button"
                             onClick={() => handleEditarValidacion(v)}
                             className="mr-2 rounded bg-blue-600 px-2 py-1 text-white hover:bg-blue-700"
                           >
-                            Editar respuesta
+                            Editar código de seguridad
                           </button>
                           <button
                             type="button"
@@ -597,7 +597,7 @@ export default function ViajesClient({
                             className="rounded bg-red-600 px-2 py-1 text-white hover:bg-red-700 disabled:opacity-50"
                             disabled={loadingEliminarValidacion === v.operador_id}
                           >
-                            {loadingEliminarValidacion === v.operador_id ? 'Eliminando...' : 'Eliminar respuesta'}
+                            {loadingEliminarValidacion === v.operador_id ? 'Eliminando...' : 'Eliminar código de seguridad'}
                           </button>
                         </div>
                       </div>
