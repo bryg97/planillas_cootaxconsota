@@ -101,7 +101,7 @@ export default function LiquidacionesClient({
           setMessage("");
         } else {
           setError("");
-          setMessage("Liquidación creada correctamente. Esperando aprobación de tesorera.");
+          setMessage("Liquidación creada y aprobada correctamente.");
           setPlanillasSeleccionadas([]);
           setTimeout(() => window.location.reload(), 2000);
         }
@@ -110,6 +110,45 @@ export default function LiquidacionesClient({
         setMessage("");
       }
       setLoading(false);
+    }
+
+    function handleImprimir() {
+      const contenido = document.getElementById('liquidaciones-print-area')?.innerHTML;
+      if (!contenido) return;
+
+      const ventana = window.open('', '', 'height=700,width=1000');
+      if (!ventana) return;
+
+      ventana.document.write(`
+        <html>
+          <head>
+            <title>Liquidaciones</title>
+            <style>
+              body { font-family: Arial, sans-serif; margin: 24px; color: #111827; }
+              h1, h2, h3 { margin: 0 0 12px; }
+              .section { margin-bottom: 24px; }
+              .card { border: 1px solid #d1d5db; border-radius: 10px; padding: 16px; margin-bottom: 12px; }
+              .row { display: flex; justify-content: space-between; gap: 16px; }
+              .muted { color: #6b7280; font-size: 12px; }
+              .badge { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 11px; background: #e5e7eb; }
+              table { width: 100%; border-collapse: collapse; }
+              th, td { border: 1px solid #d1d5db; padding: 6px 8px; text-align: left; font-size: 12px; }
+              th { background: #f3f4f6; }
+              @media print { button { display: none; } }
+            </style>
+          </head>
+          <body>
+            <h1>Liquidaciones</h1>
+            ${contenido}
+          </body>
+        </html>
+      `);
+      ventana.document.close();
+      ventana.focus();
+      setTimeout(() => {
+        ventana.print();
+        ventana.close();
+      }, 300);
     }
 
     async function handleAprobarLiquidacion(liquidacionId: number) {
@@ -164,11 +203,20 @@ export default function LiquidacionesClient({
     return (
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div id="liquidaciones-print-area">
         {/* Botón regresar al dashboard estilo Operaciones */}
         <div className="flex justify-end mb-4">
           <a href="/dashboard" className="text-blue-600 hover:text-blue-800">
             ← Volver al Dashboard
           </a>
+        </div>
+        <div className="flex justify-end gap-2 mb-4">
+          <button onClick={handleImprimir} className="px-4 py-2 bg-slate-700 text-white rounded hover:bg-slate-800 text-sm font-medium">
+            Imprimir
+          </button>
+          <button onClick={exportarPlanillas} className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 text-sm font-medium">
+            Exportar Excel
+          </button>
         </div>
         {/* Mensajes de error y éxito */}
         {(error || message) && (
@@ -462,6 +510,36 @@ export default function LiquidacionesClient({
             )}
           </>
         )}
+
+        {/* Resumen de liquidaciones pendientes o aprobadas */}
+        <div className="bg-white rounded-lg shadow p-6 mt-8">
+          <h2 className="text-xl font-semibold mb-4">Resumen de Liquidaciones</h2>
+          {liquidacionesPendientes.length === 0 ? (
+            <p className="text-gray-500">No hay liquidaciones para mostrar</p>
+          ) : (
+            <div className="space-y-4">
+              {liquidacionesPendientes.map((liquidacion) => {
+                const totalCalculado = (liquidacion.detalles || []).reduce((sum: number, d: any) => sum + (parseFloat(String(d.monto)) || 0), 0);
+                return (
+                  <div key={liquidacion.id} className="border rounded-lg p-4">
+                    <div className="flex justify-between items-start mb-3">
+                      <div>
+                        <h3 className="text-lg font-semibold">Operador: {liquidacion.operador_nombre || liquidacion.usuario}</h3>
+                        <p className="text-sm text-gray-600">Fecha: {formatFechaColombia(liquidacion.fecha)}</p>
+                        <p className="text-sm text-gray-600">Estado: {liquidacion.estado}</p>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-2xl font-bold text-green-600">${totalCalculado.toLocaleString('es-CO')}</p>
+                        <p className="text-sm text-gray-500">Total</p>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
       </main>
+        </div>
     );
 }

@@ -129,6 +129,7 @@ export async function crearLiquidacion(planillaIds: number[]) {
     }
 
     const operadorId = userData[0].id;
+    const nombreOperador = userData[0].usuario;
 
     // Obtener planillas
     const planillas = await query<PlanillaRow>(
@@ -144,10 +145,10 @@ export async function crearLiquidacion(planillaIds: number[]) {
 
     // Crear registro de liquidación
     const liquidacionResult = await query<{ id: number }>(
-      `INSERT INTO liquidaciones (operador_id, total, estado, fecha)
-       VALUES ($1, $2, $3, NOW())
+      `INSERT INTO liquidaciones (operador_id, total, estado, fecha, fecha_aprobacion)
+       VALUES ($1, $2, $3, NOW(), NOW())
        RETURNING id`,
-      [operadorId, total, 'pendiente']
+      [operadorId, total, 'aprobada']
     );
 
     if (!liquidacionResult || liquidacionResult.length === 0) {
@@ -174,6 +175,17 @@ export async function crearLiquidacion(planillaIds: number[]) {
       'UPDATE planillas SET estado = $1 WHERE id = ANY($2::int[])',
       ['liquidada', planillaIds]
     );
+
+    const planillasTelegram = planillas.map((planilla) => ({
+      numero: planilla.numero_planilla,
+      monto: parseFloat(String(planilla.valor)) || 0
+    }));
+
+    await notificarDineroEntregado({
+      operador: nombreOperador,
+      recibe: 'Sistema',
+      planillas: planillasTelegram
+    });
 
     revalidatePath('/liquidaciones');
     return { success: true, liquidacionId };
@@ -288,7 +300,7 @@ export async function aprobarLiquidacion(liquidacionId: number) {
       WHERE ld.liquidacion_id = $1
     `, [liquidacionId]);
 
-    // Actualizar estado de la liquidación (sin aprobada_por para evitar conflictos de tipo)
+    // Si ya fue auto-aprobada al crearla, mantenerla aprobada y solo notificar.
     await execute(
       `UPDATE liquidaciones 
        SET estado = $1, fecha_aprobacion = NOW()
