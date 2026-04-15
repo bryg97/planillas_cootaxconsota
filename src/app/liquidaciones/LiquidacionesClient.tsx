@@ -139,8 +139,10 @@ export default function LiquidacionesClient({
 
       const planillasVisibles = planillasFiltradas;
       const planillasSeleccionadasData = planillasFiltradas.filter((p) => planillasSeleccionadas.includes(p.id));
+      const planillasImprimir = planillasSeleccionadasData.length > 0 ? planillasSeleccionadasData : planillasVisibles;
       const totalVisibles = planillasVisibles.reduce((sum, p) => sum + (parseFloat(String(p.valor)) || 0), 0);
       const totalSeleccionadas = planillasSeleccionadasData.reduce((sum, p) => sum + (parseFloat(String(p.valor)) || 0), 0);
+      const totalImprimir = planillasImprimir.reduce((sum, p) => sum + (parseFloat(String(p.valor)) || 0), 0);
 
       const renderTablaPlanillas = (rows: any[]) => {
         if (rows.length === 0) {
@@ -225,7 +227,7 @@ export default function LiquidacionesClient({
           <head>
             <title>Reporte de Liquidaciones</title>
             <style>
-              @page { size: A4 portrait; margin: 14mm; }
+              @page { size: A4 landscape; margin: 12mm; }
               * { box-sizing: border-box; }
               body { font-family: Arial, Helvetica, sans-serif; margin: 0; color: #111827; font-size: 12px; }
               .report { padding: 0; }
@@ -274,14 +276,14 @@ export default function LiquidacionesClient({
                   <div class="value">${planillasSeleccionadasData.length}</div>
                 </div>
                 <div class="box">
-                  <div class="label">Total visible</div>
-                  <div class="value">$${totalVisibles.toLocaleString('es-CO')}</div>
+                  <div class="label">Total a imprimir</div>
+                  <div class="value">$${totalImprimir.toLocaleString('es-CO')}</div>
                 </div>
               </div>
 
               <div class="section">
-                <div class="section-title">Planillas filtradas</div>
-                ${renderTablaPlanillas(planillasVisibles)}
+                <div class="section-title">${planillasSeleccionadasData.length > 0 ? 'Planillas seleccionadas' : 'Planillas visibles'}</div>
+                ${renderTablaPlanillas(planillasImprimir)}
               </div>
 
               <div class="section">
@@ -289,16 +291,7 @@ export default function LiquidacionesClient({
                 ${renderLiquidaciones()}
               </div>
 
-              ${planillasSeleccionadasData.length > 0 ? `
-                <div class="section">
-                  <div class="section-title">Planillas seleccionadas</div>
-                  <div class="box" style="margin-bottom:10px;">
-                    <div class="label">Total seleccionado</div>
-                    <div class="value">$${totalSeleccionadas.toLocaleString('es-CO')}</div>
-                  </div>
-                  ${renderTablaPlanillas(planillasSeleccionadasData)}
-                </div>
-              ` : ''}
+              
             </div>
           </body>
         </html>
@@ -375,11 +368,8 @@ export default function LiquidacionesClient({
                   Liquidaciones
                 </div>
                 <h1 className="mt-4 text-3xl font-bold tracking-tight sm:text-4xl">
-                  Control de liquidaciones con una vista más clara
+                  Liquidaciones
                 </h1>
-                <p className="mt-3 max-w-xl text-sm leading-6 text-slate-200 sm:text-base">
-                  Filtra, selecciona, liquida e imprime desde un panel más limpio y organizado.
-                </p>
               </div>
 
               <div className="flex flex-wrap gap-3">
