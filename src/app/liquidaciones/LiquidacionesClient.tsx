@@ -40,6 +40,7 @@ export default function LiquidacionesClient({
   const [fechaHasta, setFechaHasta] = useState<string>("");
   const [busqueda, setBusqueda] = useState<string>("");
   const [planillaDetalle, setPlanillaDetalle] = useState<any>(null);
+  const [liquidacionHistoricoDetalle, setLiquidacionHistoricoDetalle] = useState<any>(null);
   const [error, setError] = useState<string>("");
   const [message, setMessage] = useState<string>("");
   const [autoPrintPending, setAutoPrintPending] = useState(false);
@@ -696,6 +697,7 @@ export default function LiquidacionesClient({
                             <th className="px-4 py-3 text-left font-semibold text-slate-600">Operador</th>
                             <th className="px-4 py-3 text-left font-semibold text-slate-600">Planillas</th>
                             <th className="px-4 py-3 text-right font-semibold text-slate-600">Total</th>
+                            <th className="px-4 py-3 text-right font-semibold text-slate-600">Acciones</th>
                           </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-100 bg-white">
@@ -720,6 +722,14 @@ export default function LiquidacionesClient({
                                 </td>
                                 <td className="px-4 py-3 text-right font-semibold text-slate-900">
                                   ${totalCalculado.toLocaleString('es-CO')}
+                                </td>
+                                <td className="px-4 py-3 text-right">
+                                  <button
+                                    onClick={() => setLiquidacionHistoricoDetalle(liquidacion)}
+                                    className="rounded-lg bg-slate-100 px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:bg-slate-200"
+                                  >
+                                    Ver detalle
+                                  </button>
                                 </td>
                               </tr>
                             );
@@ -778,6 +788,76 @@ export default function LiquidacionesClient({
 
                 <div className="mt-6 flex justify-end">
                   <button onClick={() => setPlanillaDetalle(null)} className="rounded-2xl bg-slate-900 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800">
+                    Cerrar
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {liquidacionHistoricoDetalle && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 px-4 backdrop-blur-sm">
+              <div className="max-h-[90vh] w-full max-w-3xl overflow-y-auto rounded-3xl bg-white p-6 shadow-2xl">
+                <div className="mb-6 flex items-start justify-between gap-4">
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Histórico</p>
+                    <h2 className="mt-2 text-2xl font-bold text-slate-900">Liquidación #{liquidacionHistoricoDetalle.id}</h2>
+                    <p className="mt-1 text-sm text-slate-500">Operador: {liquidacionHistoricoDetalle.operador_nombre || liquidacionHistoricoDetalle.usuario || 'Desconocido'}</p>
+                    <p className="text-sm text-slate-500">Fecha: {formatFechaColombia(liquidacionHistoricoDetalle.fecha)}</p>
+                  </div>
+                  <button
+                    onClick={() => setLiquidacionHistoricoDetalle(null)}
+                    className="rounded-full bg-slate-100 p-2 text-slate-500 transition hover:bg-slate-200 hover:text-slate-700"
+                  >
+                    <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                </div>
+
+                <div className="mb-5 rounded-2xl bg-emerald-50 p-4 text-emerald-800">
+                  <span className="text-sm font-medium">Total liquidación: </span>
+                  <span className="text-xl font-bold">
+                    ${((liquidacionHistoricoDetalle.detalles || []).reduce((sum: number, d: any) => sum + (parseFloat(String(d.monto)) || 0), 0)).toLocaleString('es-CO')}
+                  </span>
+                </div>
+
+                <div className="overflow-hidden rounded-2xl border border-slate-200">
+                  <table className="min-w-full divide-y divide-slate-200 text-sm">
+                    <thead className="bg-slate-50">
+                      <tr>
+                        <th className="px-4 py-3 text-left font-semibold text-slate-600">N° Planilla</th>
+                        <th className="px-4 py-3 text-left font-semibold text-slate-600">Vehículo</th>
+                        <th className="px-4 py-3 text-right font-semibold text-slate-600">Monto</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100 bg-white">
+                      {(liquidacionHistoricoDetalle.detalles || []).length === 0 ? (
+                        <tr>
+                          <td colSpan={3} className="px-4 py-6 text-center text-slate-500">
+                            No hay planillas registradas para esta liquidación.
+                          </td>
+                        </tr>
+                      ) : (
+                        (liquidacionHistoricoDetalle.detalles || []).map((detalle: any, idx: number) => (
+                          <tr key={`${liquidacionHistoricoDetalle.id}-${idx}`}>
+                            <td className="px-4 py-3 text-slate-700">{detalle.numero_planilla || 'Sin número'}</td>
+                            <td className="px-4 py-3 text-slate-600">{detalle.codigo_vehiculo || 'Sin vehículo'}</td>
+                            <td className="px-4 py-3 text-right font-semibold text-slate-900">
+                              ${(parseFloat(String(detalle.monto)) || 0).toLocaleString('es-CO')}
+                            </td>
+                          </tr>
+                        ))
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+
+                <div className="mt-6 flex justify-end">
+                  <button
+                    onClick={() => setLiquidacionHistoricoDetalle(null)}
+                    className="rounded-2xl bg-slate-900 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800"
+                  >
                     Cerrar
                   </button>
                 </div>
