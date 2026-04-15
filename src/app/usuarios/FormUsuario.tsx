@@ -108,6 +108,28 @@ export default function FormUsuario({ onClose, usuarioData = null, modo = 'crear
             </select>
           </div>
 
+          {modo !== 'ver' && (
+            <div className="mb-6">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                PIN de acceso {modo === 'crear' ? '(opcional)' : '(opcional, solo si desea cambiarlo)'}
+              </label>
+              <input
+                type="password"
+                name="pin_acceso"
+                inputMode="numeric"
+                pattern="[0-9]*"
+                minLength={4}
+                maxLength={8}
+                className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="4 a 8 digitos numericos"
+                autoComplete="new-password"
+              />
+              <p className="mt-1 text-xs text-gray-500">
+                Este PIN se pedira al ingresar al dashboard para mayor seguridad.
+              </p>
+            </div>
+          )}
+
           <div className="flex gap-3">
             <button
               type="button"

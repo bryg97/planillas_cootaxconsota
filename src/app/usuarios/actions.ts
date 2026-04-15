@@ -17,11 +17,25 @@ async function hasActivoColumn() {
   return Boolean(result?.[0]?.exists);
 }
 
+async function hasPinAccesoColumn() {
+  const result = await query<{ exists: boolean }>(
+    `SELECT EXISTS (
+      SELECT 1
+      FROM information_schema.columns
+      WHERE table_name = 'usuarios'
+        AND column_name = 'pin_acceso_hash'
+    ) AS exists`
+  );
+
+  return Boolean(result?.[0]?.exists);
+}
+
 export async function editarUsuario(id: number | undefined, formData: FormData) {
   try {
     if (!id) return { error: 'ID de usuario requerido', success: false };
     const usuario = formData.get('usuario') as string;
     const clave = formData.get('clave') as string;
+    const pinAcceso = (formData.get('pin_acceso') as string | null)?.trim() || '';
     const rol = formData.get('rol') as string;
 
     if (!usuario || !rol) {
@@ -56,12 +70,32 @@ export async function editarUsuario(id: number | undefined, formData: FormData) 
       [rol, id]
     );
 
-    // Si hay contraseña nueva, actualizar también
+    // Si hay contrasena nueva, actualizar tambien
     if (clave && clave.length >= 6) {
       const hashedPassword = await bcrypt.hash(clave, 10);
       await execute(
         'UPDATE usuarios SET clave = $1 WHERE id = $2',
         [hashedPassword, id]
+      );
+    }
+
+    if (pinAcceso) {
+      if (!/^\d{4,8}$/.test(pinAcceso)) {
+        return { error: 'El PIN debe tener entre 4 y 8 digitos numericos', success: false };
+      }
+
+      const hasPinColumn = await hasPinAccesoColumn();
+      if (!hasPinColumn) {
+        return {
+          error: 'Falta la columna usuarios.pin_acceso_hash. Ejecuta la migracion neon-add-usuarios-pin.sql',
+          success: false
+        };
+      }
+
+      const hashedPin = await bcrypt.hash(pinAcceso, 10);
+      await execute(
+        'UPDATE usuarios SET pin_acceso_hash = $1 WHERE id = $2',
+        [hashedPin, id]
       );
     }
 
@@ -84,6 +118,7 @@ export async function createUsuario(formData: FormData) {
   try {
     const usuario = formData.get('usuario') as string;
     const clave = formData.get('clave') as string;
+    const pinAcceso = (formData.get('pin_acceso') as string | null)?.trim() || '';
     const rol = formData.get('rol') as string;
 
     if (!usuario || !clave || !rol) {
@@ -93,12 +128,35 @@ export async function createUsuario(formData: FormData) {
     // Hash de la contraseña
     const hashedPassword = await bcrypt.hash(clave, 10);
 
+    if (pinAcceso && !/^\d{4,8}$/.test(pinAcceso)) {
+      return { error: 'El PIN debe tener entre 4 y 8 digitos numericos', success: false };
+    }
+
+    const hashedPin = pinAcceso ? await bcrypt.hash(pinAcceso, 10) : null;
+
+    if (hashedPin) {
+      const hasPinColumn = await hasPinAccesoColumn();
+      if (!hasPinColumn) {
+        return {
+          error: 'Falta la columna usuarios.pin_acceso_hash. Ejecuta la migracion neon-add-usuarios-pin.sql',
+          success: false
+        };
+      }
+    }
+
     const result = await query<{ id: number }>(
       `INSERT INTO usuarios (usuario, clave, rol) 
        VALUES ($1, $2, $3) 
        RETURNING id`,
       [usuario, hashedPassword, rol]
     );
+
+    if (hashedPin && result?.[0]?.id) {
+      await execute(
+        'UPDATE usuarios SET pin_acceso_hash = $1 WHERE id = $2',
+        [hashedPin, result[0].id]
+      );
+    }
 
     if (!result || result.length === 0) {
       return { error: 'Error al crear usuario', success: false };

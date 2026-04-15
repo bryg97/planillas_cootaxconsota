@@ -14,6 +14,7 @@ export interface Database {
           id: number
           usuario: string
           clave: string
+          pin_acceso_hash: string | null
           rol: string
           activo: boolean
           created_at: string
@@ -21,6 +22,7 @@ export interface Database {
         Insert: {
           usuario: string
           clave: string
+          pin_acceso_hash?: string | null
           rol?: string
           activo?: boolean
           created_at?: string
@@ -28,6 +30,7 @@ export interface Database {
         Update: {
           usuario?: string
           clave?: string
+          pin_acceso_hash?: string | null
           rol?: string
           activo?: boolean
           created_at?: string

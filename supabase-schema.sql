@@ -6,6 +6,7 @@ CREATE TABLE IF NOT EXISTS usuarios (
     id SERIAL PRIMARY KEY,
     usuario VARCHAR(100) UNIQUE NOT NULL,
     clave VARCHAR(255) NOT NULL,
+    pin_acceso_hash VARCHAR(255),
     rol VARCHAR(50) DEFAULT 'operador',
     activo BOOLEAN NOT NULL DEFAULT true,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP

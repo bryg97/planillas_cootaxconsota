@@ -10,6 +10,12 @@ export default function LogoutButton() {
     // Limpiar operador seleccionado al cerrar sesión
     if (typeof window !== 'undefined') {
       localStorage.removeItem('operadorSeleccionado');
+      for (let i = sessionStorage.length - 1; i >= 0; i--) {
+        const key = sessionStorage.key(i);
+        if (key && key.startsWith('pinValidado:')) {
+          sessionStorage.removeItem(key);
+        }
+      }
     }
     await signOut({ redirect: false })
     router.push('/login')

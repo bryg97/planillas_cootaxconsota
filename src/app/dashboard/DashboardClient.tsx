@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import SeleccionarOperadorModal from "../components/SeleccionarOperadorModal";
+import ValidarPinModal from "../components/ValidarPinModal";
 import { useOperadorSeleccionado } from "../hooks/useOperadorSeleccionado";
 import LogoutButton from "./LogoutButton";
 
@@ -8,22 +9,46 @@ export default function DashboardClient({ user, rol, modulos, metricas }: { user
   const [operador, setOperador] = useOperadorSeleccionado(user.email);
   const [operadores, setOperadores] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [pinValidado, setPinValidado] = useState(false);
 
   useEffect(() => {
+    const pinSesion = sessionStorage.getItem(`pinValidado:${user.email}`);
+    if (pinSesion) {
+      setPinValidado(true);
+    }
+
     async function fetchOperadores() {
       // Buscar operadores vinculados a este correo
       const res = await fetch(`/api/operadores?correo=${encodeURIComponent(user.email)}`);
       const data = await res.json();
       setOperadores(data);
+
+      if (!operador && Array.isArray(data) && data.length === 1) {
+        localStorage.setItem("operadorSeleccionado", JSON.stringify(data[0]));
+        setOperador(data[0]);
+      }
+
       setLoading(false);
     }
     if (!operador) fetchOperadores();
     else setLoading(false);
-  }, [user.email, operador]);
+  }, [user.email, operador, setOperador]);
 
   if (loading) return <div className="p-8 text-center">Cargando...</div>;
 
-  if (!operador && operadores.length > 0) {
+  if (!pinValidado) {
+    return (
+      <ValidarPinModal
+        email={user.email}
+        onValidated={() => {
+          sessionStorage.setItem(`pinValidado:${user.email}`, '1');
+          setPinValidado(true);
+        }}
+      />
+    );
+  }
+
+  if (!operador && operadores.length > 1) {
     return (
       <SeleccionarOperadorModal
         operadores={operadores}
