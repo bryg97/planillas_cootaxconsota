@@ -4,6 +4,19 @@ import { revalidatePath } from 'next/cache';
 import { query, execute } from '@/lib/db';
 import bcrypt from 'bcryptjs';
 
+async function hasActivoColumn() {
+  const result = await query<{ exists: boolean }>(
+    `SELECT EXISTS (
+      SELECT 1
+      FROM information_schema.columns
+      WHERE table_name = 'usuarios'
+        AND column_name = 'activo'
+    ) AS exists`
+  );
+
+  return Boolean(result?.[0]?.exists);
+}
+
 export async function editarUsuario(id: number | undefined, formData: FormData) {
   try {
     if (!id) return { error: 'ID de usuario requerido', success: false };
@@ -110,28 +123,94 @@ export async function createUsuario(formData: FormData) {
 
 export async function deleteUsuario(id: number) {
   try {
-    // Obtener usuario antes de eliminar para auditoría
-    const usuarioRow = await query<{ usuario: string }>(
-      'SELECT usuario FROM usuarios WHERE id = $1',
+    const activoColumnExists = await hasActivoColumn();
+    if (!activoColumnExists) {
+      return {
+        error: 'Falta la columna usuarios.activo. Ejecuta la migracion neon-add-usuarios-activo.sql',
+        success: false
+      };
+    }
+
+    // Obtener usuario antes de actualizar para auditoria
+    const usuarioRow = await query<{ usuario: string; activo: boolean }>(
+      'SELECT usuario, activo FROM usuarios WHERE id = $1',
       [id]
     );
+
+    if (!usuarioRow || usuarioRow.length === 0) {
+      return { error: 'Usuario no encontrado', success: false };
+    }
+
+    if (!usuarioRow[0].activo) {
+      return { success: true };
+    }
 
     await execute(
-      'DELETE FROM usuarios WHERE id = $1',
+      'UPDATE usuarios SET activo = false WHERE id = $1',
       [id]
     );
 
-    // Auditoría: registrar DELETE
+    // Auditoria: registrar inhabilitacion
     await execute(
       `INSERT INTO auditoria (usuario, accion, detalles) 
        VALUES ($1, $2, $3)`,
-      [usuarioRow?.[0]?.usuario || 'desconocido', 'DELETE', `Eliminó usuario ${usuarioRow?.[0]?.usuario || ''} (ID: ${id}) en tabla usuarios`]
+      [
+        usuarioRow[0].usuario || 'desconocido',
+        'DISABLE',
+        `Inhabilito usuario ${usuarioRow[0].usuario || ''} (ID: ${id}) en tabla usuarios`
+      ]
     );
 
     revalidatePath('/usuarios');
     return { success: true };
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Error al eliminar usuario';
+    return { error: message, success: false };
+  }
+}
+
+export async function toggleUsuarioActivo(id: number, activo: boolean) {
+  try {
+    const activoColumnExists = await hasActivoColumn();
+    if (!activoColumnExists) {
+      return {
+        error: 'Falta la columna usuarios.activo. Ejecuta la migracion neon-add-usuarios-activo.sql',
+        success: false
+      };
+    }
+
+    const usuarioRow = await query<{ usuario: string; activo: boolean }>(
+      'SELECT usuario, activo FROM usuarios WHERE id = $1',
+      [id]
+    );
+
+    if (!usuarioRow || usuarioRow.length === 0) {
+      return { error: 'Usuario no encontrado', success: false };
+    }
+
+    if (usuarioRow[0].activo === activo) {
+      return { success: true };
+    }
+
+    await execute(
+      'UPDATE usuarios SET activo = $1 WHERE id = $2',
+      [activo, id]
+    );
+
+    await execute(
+      `INSERT INTO auditoria (usuario, accion, detalles)
+       VALUES ($1, $2, $3)`,
+      [
+        usuarioRow[0].usuario || 'desconocido',
+        activo ? 'ENABLE' : 'DISABLE',
+        `${activo ? 'Rehabilito' : 'Inhabilito'} usuario ${usuarioRow[0].usuario || ''} (ID: ${id}) en tabla usuarios`
+      ]
+    );
+
+    revalidatePath('/usuarios');
+    return { success: true };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Error al actualizar estado de usuario';
     return { error: message, success: false };
   }
 }

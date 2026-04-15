@@ -3,25 +3,27 @@
 
 import { useState } from 'react';
 import FormUsuario from './FormUsuario';
-import { deleteUsuario } from './actions';
+import { toggleUsuarioActivo } from './actions';
 
 export default function UsuariosClient({ usuarios }: { usuarios: any[] }) {
   const [showForm, setShowForm] = useState(false);
-  const [deleting, setDeleting] = useState<number | null>(null);
+  const [updatingEstado, setUpdatingEstado] = useState<number | null>(null);
   const [usuarioSeleccionado, setUsuarioSeleccionado] = useState<any>(null);
   const [modoForm, setModoForm] = useState<'crear' | 'ver' | 'editar'>('crear');
 
-  async function handleDelete(id: number, usuario: string) {
-    if (!confirm(`¿Está seguro de eliminar el usuario ${usuario}?`)) {
+  async function handleToggleActivo(id: number, usuario: string, activoActual: boolean) {
+    const accion = activoActual ? 'inhabilitar' : 'rehabilitar';
+
+    if (!confirm(`¿Está seguro de ${accion} el usuario ${usuario}?`)) {
       return;
     }
 
-    setDeleting(id);
-    const result = await deleteUsuario(id);
+    setUpdatingEstado(id);
+    const result = await toggleUsuarioActivo(id, !activoActual);
     
     if (result.error) {
       alert('Error: ' + result.error);
-      setDeleting(null);
+      setUpdatingEstado(null);
     } else {
       window.location.reload();
     }
@@ -60,6 +62,7 @@ export default function UsuariosClient({ usuarios }: { usuarios: any[] }) {
                 <tr>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Usuario</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Rol</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Estado</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Fecha Registro</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Acciones</th>
                 </tr>
@@ -67,7 +70,7 @@ export default function UsuariosClient({ usuarios }: { usuarios: any[] }) {
               <tbody className="bg-white divide-y divide-gray-200">
                 {usuarios && usuarios.length > 0 ? (
                   usuarios.map((usuario: any) => (
-                    <tr key={usuario.id}>
+                    <tr key={usuario.id} className={!usuario.activo ? 'opacity-60' : ''}>
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                         {usuario.usuario}
                       </td>
@@ -78,6 +81,15 @@ export default function UsuariosClient({ usuarios }: { usuarios: any[] }) {
                             : 'bg-blue-100 text-blue-800'
                         }`}>
                           {usuario.rol}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm">
+                        <span className={`px-2 py-1 rounded-full text-xs ${
+                          usuario.activo
+                            ? 'bg-emerald-100 text-emerald-800'
+                            : 'bg-gray-200 text-gray-700'
+                        }`}>
+                          {usuario.activo ? 'Activo' : 'Inhabilitado'}
                         </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
@@ -101,18 +113,22 @@ export default function UsuariosClient({ usuarios }: { usuarios: any[] }) {
                           }}
                         >Editar</button>
                         <button
-                          onClick={() => handleDelete(usuario.id, usuario.usuario)}
-                          disabled={deleting === usuario.id}
-                          className="text-red-600 hover:text-red-900 disabled:opacity-50"
+                          onClick={() => handleToggleActivo(usuario.id, usuario.usuario, Boolean(usuario.activo))}
+                          disabled={updatingEstado === usuario.id}
+                          className={`disabled:opacity-50 ${usuario.activo ? 'text-red-600 hover:text-red-900' : 'text-emerald-600 hover:text-emerald-900'}`}
                         >
-                          {deleting === usuario.id ? 'Eliminando...' : 'Eliminar'}
+                          {updatingEstado === usuario.id
+                            ? 'Actualizando...'
+                            : usuario.activo
+                              ? 'Inhabilitar'
+                              : 'Rehabilitar'}
                         </button>
                       </td>
                     </tr>
                   ))
                 ) : (
                   <tr>
-                    <td colSpan={4} className="px-6 py-4 text-center text-gray-500">
+                    <td colSpan={5} className="px-6 py-4 text-center text-gray-500">
                       No hay usuarios registrados
                     </td>
                   </tr>

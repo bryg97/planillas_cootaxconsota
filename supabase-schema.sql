@@ -7,6 +7,7 @@ CREATE TABLE IF NOT EXISTS usuarios (
     usuario VARCHAR(100) UNIQUE NOT NULL,
     clave VARCHAR(255) NOT NULL,
     rol VARCHAR(50) DEFAULT 'operador',
+    activo BOOLEAN NOT NULL DEFAULT true,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 

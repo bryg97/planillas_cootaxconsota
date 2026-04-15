@@ -15,18 +15,21 @@ export interface Database {
           usuario: string
           clave: string
           rol: string
+          activo: boolean
           created_at: string
         }
         Insert: {
           usuario: string
           clave: string
           rol?: string
+          activo?: boolean
           created_at?: string
         }
         Update: {
           usuario?: string
           clave?: string
           rol?: string
+          activo?: boolean
           created_at?: string
         }
       }

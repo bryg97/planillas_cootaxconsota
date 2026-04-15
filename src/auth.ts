@@ -8,6 +8,7 @@ type DbUser = {
   usuario: string;
   clave: string;
   rol: string;
+  activo: boolean;
 };
 
 export const authOptions: NextAuthOptions = {
@@ -27,16 +28,34 @@ export const authOptions: NextAuthOptions = {
         }
 
         try {
-          const users = await query<DbUser>(
-            'SELECT id, usuario, clave, rol FROM usuarios WHERE usuario = $1',
-            [email]
+          const hasActivoColumn = await query<{ exists: boolean }>(
+            `SELECT EXISTS (
+              SELECT 1
+              FROM information_schema.columns
+              WHERE table_name = 'usuarios'
+                AND column_name = 'activo'
+            ) AS exists`
           );
+
+          const users = hasActivoColumn?.[0]?.exists
+            ? await query<DbUser>(
+                'SELECT id, usuario, clave, rol, activo FROM usuarios WHERE usuario = $1',
+                [email]
+              )
+            : await query<DbUser>(
+                'SELECT id, usuario, clave, rol, true AS activo FROM usuarios WHERE usuario = $1',
+                [email]
+              );
 
           if (users.length === 0) {
             return null;
           }
 
           const user = users[0];
+
+          if (!user.activo) {
+            return null;
+          }
 
           const isPasswordValid = await bcrypt.compare(password, user.clave);
 
