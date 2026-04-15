@@ -539,7 +539,7 @@ export default function LiquidacionesClient({
             </div>
           )}
         </div>
-      </main>
         </div>
+      </main>
     );
 }
