@@ -2,7 +2,7 @@ import { redirect } from 'next/navigation';
 import { getCurrentUser } from '@/lib/auth-helper';
 import { query } from '@/lib/db';
 import LiquidacionesClient from './LiquidacionesClient';
-import { getPlanillasParaLiquidar, getLiquidacionesPendientes } from './actions';
+import { getPlanillasParaLiquidar, getLiquidacionesPendientes, getLiquidacionesHistorico } from './actions';
 
 type UsuarioRolRow = { rol: string; id: number };
 
@@ -41,11 +41,18 @@ export default async function LiquidacionesPage() {
     console.log('Liquidaciones Page - Liquidaciones pendientes:', liquidacionesPendientes.length);
   }
 
+  let liquidacionesHistorico: any[] = [];
+  if (rol === 'tesorera' || rol === 'administrador' || rol === 'operador') {
+    liquidacionesHistorico = await getLiquidacionesHistorico();
+    console.log('Liquidaciones Page - Histórico de liquidaciones:', liquidacionesHistorico.length);
+  }
+
   return (
     <LiquidacionesClient
       rol={rol}
       planillas={planillas}
       liquidacionesPendientes={liquidacionesPendientes}
+      liquidacionesHistorico={liquidacionesHistorico}
     />
   );
 }

@@ -245,6 +245,55 @@ export async function getLiquidacionesPendientes() {
   }
 }
 
+export async function getLiquidacionesHistorico() {
+  try {
+    const liquidaciones = await query<LiquidacionRow>(`
+      SELECT
+        l.id,
+        l.total,
+        COALESCE(l.fecha_aprobacion, l.fecha) as fecha,
+        l.estado,
+        l.operador_id,
+        u.usuario
+      FROM liquidaciones l
+      LEFT JOIN usuarios u ON l.operador_id = u.id
+      WHERE l.estado = 'aprobada'
+      ORDER BY COALESCE(l.fecha_aprobacion, l.fecha) DESC
+      LIMIT 120
+    `);
+
+    const result = await Promise.all(
+      (liquidaciones || []).map(async (liq) => {
+        const detalles = await query<DetalleRow & { operador?: string }>(`
+          SELECT
+            ld.planilla_id,
+            ld.monto,
+            p.numero_planilla,
+            p.operador,
+            v.codigo_vehiculo
+          FROM liquidaciones_detalle ld
+          LEFT JOIN planillas p ON ld.planilla_id = p.id
+          LEFT JOIN vehiculos v ON p.vehiculo_id = v.id
+          WHERE ld.liquidacion_id = $1
+        `, [liq.id]);
+
+        const operadorNombre = detalles?.[0]?.operador || liq.usuario;
+
+        return {
+          ...liq,
+          operador_nombre: operadorNombre,
+          detalles: detalles || []
+        };
+      })
+    );
+
+    return result;
+  } catch (error) {
+    console.error('Error al obtener historico de liquidaciones:', error);
+    return [];
+  }
+}
+
 export async function aprobarLiquidacion(liquidacionId: number) {
   try {
     const user = await getCurrentUser();

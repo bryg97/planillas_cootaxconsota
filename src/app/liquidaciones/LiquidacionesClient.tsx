@@ -26,11 +26,13 @@ function getFechaISO(fecha: any): string {
 export default function LiquidacionesClient({ 
   rol,
   planillas,
-  liquidacionesPendientes
+  liquidacionesPendientes,
+  liquidacionesHistorico
 }: { 
   rol: string;
   planillas: any[];
   liquidacionesPendientes: any[];
+  liquidacionesHistorico: any[];
 }) {
   const [loading, setLoading] = useState(false);
   const [planillasSeleccionadas, setPlanillasSeleccionadas] = useState<any[]>([]);
@@ -46,6 +48,7 @@ export default function LiquidacionesClient({
   console.log('LiquidacionesClient - Rol:', rol);
   console.log('LiquidacionesClient - Planillas recibidas:', planillas?.length || 0);
   console.log('LiquidacionesClient - Liquidaciones pendientes:', liquidacionesPendientes?.length || 0);
+  console.log('LiquidacionesClient - Liquidaciones historico:', liquidacionesHistorico?.length || 0);
 
   useEffect(() => {
     const shouldAutoPrint = sessionStorage.getItem('liquidaciones:autoPrint');
@@ -367,21 +370,18 @@ export default function LiquidacionesClient({
                 <div className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-xs font-medium uppercase tracking-[0.2em] text-white/80">
                   Liquidaciones
                 </div>
-                <h1 className="mt-4 text-3xl font-bold tracking-tight sm:text-4xl">
-                  Liquidaciones
-                </h1>
               </div>
 
               <div className="flex flex-wrap gap-3">
-                <a href="/dashboard" className="rounded-full border border-white/20 bg-white/5 px-4 py-2 text-sm font-medium text-white transition hover:bg-white/10">
-                  ← Volver al Dashboard
-                </a>
                 <button onClick={handleImprimir} className="rounded-full bg-white px-4 py-2 text-sm font-semibold text-slate-900 transition hover:bg-slate-100">
                   Imprimir reporte
                 </button>
                 <button onClick={exportarPlanillas} className="rounded-full bg-emerald-500 px-4 py-2 text-sm font-semibold text-white transition hover:bg-emerald-400">
                   Exportar Excel
                 </button>
+                <a href="/dashboard" className="rounded-full border border-white/20 bg-white/5 px-4 py-2 text-sm font-medium text-white transition hover:bg-white/10">
+                  Volver
+                </a>
               </div>
             </div>
           </section>
@@ -666,6 +666,67 @@ export default function LiquidacionesClient({
                         </div>
                       );
                     })}
+                  </div>
+                )}
+              </section>
+
+              <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+                <div className="mb-4 flex items-center justify-between">
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Histórico</p>
+                    <h2 className="mt-2 text-2xl font-bold text-slate-900">Histórico de liquidaciones</h2>
+                  </div>
+                  <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-slate-600">
+                    {liquidacionesHistorico.length} registros
+                  </span>
+                </div>
+
+                {liquidacionesHistorico.length === 0 ? (
+                  <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-6 py-10 text-center text-slate-500">
+                    No hay liquidaciones aprobadas en el histórico.
+                  </div>
+                ) : (
+                  <div className="overflow-hidden rounded-2xl border border-slate-200">
+                    <div className="max-h-[26rem] overflow-auto">
+                      <table className="min-w-full divide-y divide-slate-200 text-sm">
+                        <thead className="sticky top-0 bg-slate-50">
+                          <tr>
+                            <th className="px-4 py-3 text-left font-semibold text-slate-600">ID</th>
+                            <th className="px-4 py-3 text-left font-semibold text-slate-600">Fecha</th>
+                            <th className="px-4 py-3 text-left font-semibold text-slate-600">Operador</th>
+                            <th className="px-4 py-3 text-left font-semibold text-slate-600">Planillas</th>
+                            <th className="px-4 py-3 text-right font-semibold text-slate-600">Total</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-100 bg-white">
+                          {liquidacionesHistorico.map((liquidacion: any) => {
+                            const totalCalculado = (liquidacion.detalles || []).reduce((sum: number, d: any) => sum + (parseFloat(String(d.monto)) || 0), 0);
+                            const planillasTexto = (liquidacion.detalles || [])
+                              .map((d: any) => d.numero_planilla)
+                              .filter(Boolean)
+                              .slice(0, 3)
+                              .join(', ');
+
+                            const extras = (liquidacion.detalles?.length || 0) - 3;
+
+                            return (
+                              <tr key={`hist-${liquidacion.id}`} className="hover:bg-slate-50">
+                                <td className="px-4 py-3 font-semibold text-slate-800">#{liquidacion.id}</td>
+                                <td className="px-4 py-3 text-slate-600">{formatFechaColombia(liquidacion.fecha)}</td>
+                                <td className="px-4 py-3 text-slate-700">{liquidacion.operador_nombre || liquidacion.usuario || 'Desconocido'}</td>
+                                <td className="px-4 py-3 text-slate-600">
+                                  {planillasTexto || 'Sin detalle'}
+                                  {extras > 0 ? ` +${extras} más` : ''}
+                                </td>
+                                <td className="px-4 py-3 text-right font-semibold text-slate-900">
+                                  ${totalCalculado.toLocaleString('es-CO')}
+                                </td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
                   </div>
                 )}
               </section>
