@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 
 interface CalculadoraClientProps {
@@ -13,8 +13,6 @@ export default function CalculadoraClient({ nombreUsuario, valorHora, valorMinut
   const [horaInicio, setHoraInicio] = useState('');
   const [horaFin, setHoraFin] = useState('');
   const [resultado, setResultado] = useState<{ horas: number; minutos: number; valor: number } | null>(null);
-  const [mensajeAgente, setMensajeAgente] = useState('¡Hola!');
-  const [saludoInicial, setSaludoInicial] = useState(false);
   const [nombreOperador, setNombreOperador] = useState(nombreUsuario);
 
   // Obtener nombre del operador seleccionado desde localStorage
@@ -32,63 +30,8 @@ export default function CalculadoraClient({ nombreUsuario, valorHora, valorMinut
     }
   }, []);
 
-  // Función para hablar texto (Text-to-Speech)
-  const hablarTexto = useCallback((texto: string) => {
-    setMensajeAgente(texto);
-    
-    if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
-      const synth = window.speechSynthesis;
-      synth.cancel();
-
-      const utter = new SpeechSynthesisUtterance(texto);
-      utter.lang = 'es-CO';
-      utter.rate = 1.15;
-      utter.pitch = 1.0;
-      utter.volume = 1;
-
-      const seleccionarVoz = () => {
-        const voces = synth.getVoices();
-        const preferidas = [
-          'Google español de Latinoamérica',
-          'Google español',
-          'Microsoft Raul Online (Natural)',
-          'Microsoft Jorge Online (Natural)',
-          'Microsoft Pablo Online (Natural)'
-        ];
-        const vozElegida = voces.find(v => preferidas.includes(v.name)) || voces.find(v => v.lang.startsWith('es'));
-        if (vozElegida) utter.voice = vozElegida;
-        synth.speak(utter);
-      };
-
-      if (speechSynthesis.getVoices().length === 0) {
-        speechSynthesis.onvoiceschanged = seleccionarVoz;
-      } else {
-        seleccionarVoz();
-      }
-    }
-  }, []);
-
-  // Saludo inicial según hora del día
-  useEffect(() => {
-    if (saludoInicial) return;
-    
-    const hora = new Date().getHours();
-    let saludo = `¡Hola ${nombreOperador}!`;
-
-    if (hora < 12) saludo = `¡Buenos días, ${nombreOperador}!`;
-    else if (hora < 18) saludo = `¡Buenas tardes, ${nombreOperador}!`;
-    else saludo = `¡Buenas noches, ${nombreOperador}!`;
-
-    const timer = setTimeout(() => {
-      hablarTexto(saludo);
-      setSaludoInicial(true);
-    }, 1000);
-
-    return () => clearTimeout(timer);
-  }, [nombreOperador, hablarTexto, saludoInicial]);
-
   // Calcular horas y valor del servicio
-  const calcularHoras = useCallback(() => {
+  const calcularHoras = () => {
     if (!horaInicio || !horaFin) {
       setResultado(null);
       return;
@@ -128,138 +71,121 @@ export default function CalculadoraClient({ nombreUsuario, valorHora, valorMinut
     }
 
     setResultado({ horas, minutos, valor: valorServicio });
-
-    // Hablar el resultado
-    const valorPesos = valorServicio.toLocaleString('es-CO');
-    const mensaje = `${nombreOperador}, el tiempo total es ${horas} ${horas === 1 ? 'hora' : 'horas'} y ${minutos} ${minutos === 1 ? 'minuto' : 'minutos'}. El valor total del servicio es ${valorPesos} pesos.`;
-    hablarTexto(mensaje);
-  }, [horaInicio, horaFin, nombreOperador, hablarTexto, valorHora, valorMinuto]);
+  };
 
   // Calcular automáticamente cuando cambian las horas
   useEffect(() => {
     if (horaInicio && horaFin) {
       calcularHoras();
     }
-  }, [horaInicio, horaFin, calcularHoras]);
+  }, [horaInicio, horaFin]);
 
   return (
-    <div className="min-h-screen bg-gray-100">
-      {/* Header */}
-      <header className="bg-white shadow">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
-          <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-            <span className="text-3xl">🧮</span> Calculadora de Servicios
-          </h1>
-          <Link 
-            href="/dashboard" 
-            className="inline-flex items-center gap-2 bg-gradient-to-r from-blue-600 to-blue-700 text-white px-5 py-2.5 rounded-full font-medium shadow-lg hover:from-blue-700 hover:to-blue-800 transition-all hover:-translate-y-0.5"
-          >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-            </svg>
-            Volver al Dashboard
-          </Link>
-        </div>
-      </header>
-
-      {/* Contenido Principal */}
-      <main className="max-w-xl mx-auto px-4 py-8">
-        <div className="bg-white rounded-2xl shadow-xl p-8">
-          <h2 className="text-xl font-semibold text-gray-800 mb-6 flex items-center gap-2">
-            <span className="text-2xl">⏱️</span> Calculadora de Horas
-          </h2>
-
-          <div className="space-y-6">
-            {/* Hora de Inicio */}
+    <div className="min-h-screen bg-slate-100">
+      <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+        <section className="overflow-hidden rounded-3xl bg-gradient-to-r from-slate-900 via-slate-800 to-blue-900 px-6 py-6 text-white shadow-2xl sm:px-8">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
             <div>
-              <label htmlFor="horaInicio" className="block text-sm font-medium text-gray-700 mb-2">
-                Hora de inicio
-              </label>
-              <input
-                type="time"
-                id="horaInicio"
-                value={horaInicio}
-                onChange={(e) => setHoraInicio(e.target.value)}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-lg"
-              />
+              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-white/70">Módulo calculadora</p>
+              <h1 className="mt-2 text-3xl font-bold tracking-tight">Calculadora de servicios</h1>
+              <p className="mt-2 text-sm text-white/75">Operador activo: <span className="font-semibold text-white">{nombreOperador}</span></p>
             </div>
+            <Link
+              href="/dashboard"
+              className="inline-flex items-center gap-2 self-start rounded-2xl bg-white/15 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-white/25"
+            >
+              <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+              </svg>
+              Volver
+            </Link>
+          </div>
+        </section>
 
-            {/* Hora de Fin */}
-            <div>
-              <label htmlFor="horaFin" className="block text-sm font-medium text-gray-700 mb-2">
-                Hora de fin
-              </label>
-              <input
-                type="time"
-                id="horaFin"
-                value={horaFin}
-                onChange={(e) => setHoraFin(e.target.value)}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-lg"
-              />
-            </div>
+        <section className="mt-6 grid gap-4 md:grid-cols-3">
+          <article className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Tarifa hora</p>
+            <p className="mt-2 text-2xl font-bold text-slate-900">${valorHora.toLocaleString('es-CO')}</p>
+          </article>
+          <article className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Tarifa minuto (1-40)</p>
+            <p className="mt-2 text-2xl font-bold text-slate-900">${valorMinuto.toLocaleString('es-CO')}</p>
+          </article>
+          <article className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Regla adicional</p>
+            <p className="mt-2 text-base font-semibold text-slate-900">Minutos 41-59 suman hora completa</p>
+          </article>
+        </section>
 
-            {/* Resultado */}
-            {resultado && (
-              <div className="bg-blue-50 border border-blue-200 rounded-xl p-6 text-center animate-fadeIn">
-                <div className="text-gray-700 mb-2">
-                  <span className="font-semibold">Duración:</span>{' '}
-                  <span className="text-xl font-bold text-blue-700">
-                    {resultado.horas}h {resultado.minutos}min
-                  </span>
-                </div>
-                <div className="text-gray-700">
-                  <span className="font-semibold">Valor total:</span>{' '}
-                  <span className="text-3xl font-bold text-green-600">
-                    ${resultado.valor.toLocaleString('es-CO')}
-                  </span>
-                </div>
+        <section className="mt-6 grid gap-6 lg:grid-cols-3">
+          <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm lg:col-span-2">
+            <h2 className="text-sm font-semibold uppercase tracking-[0.18em] text-slate-500">Datos del servicio</h2>
+
+            <div className="mt-4 grid gap-4 sm:grid-cols-2">
+              <div>
+                <label htmlFor="horaInicio" className="mb-2 block text-sm font-medium text-slate-700">
+                  Hora de inicio
+                </label>
+                <input
+                  type="time"
+                  id="horaInicio"
+                  value={horaInicio}
+                  onChange={(e) => setHoraInicio(e.target.value)}
+                  className="w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-3 text-base text-slate-900 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                />
               </div>
-            )}
 
-            {/* Tabla de tarifas */}
-            <div className="bg-gray-50 rounded-lg p-4 mt-6">
-              <h3 className="text-sm font-semibold text-gray-600 mb-3">📋 Tarifas</h3>
-              <ul className="text-sm text-gray-600 space-y-1">
-                <li>• Menos de 1 hora (0-60 min): <strong>${valorHora.toLocaleString('es-CO')}</strong></li>
-                <li>• Después de 1 hora:</li>
-                <li className="ml-4">- Minutos 1-40: <strong>${valorMinuto.toLocaleString('es-CO')}/min</strong></li>
-                <li className="ml-4">- Minutos 41-59: <strong>+1 hora completa</strong></li>
+              <div>
+                <label htmlFor="horaFin" className="mb-2 block text-sm font-medium text-slate-700">
+                  Hora de fin
+                </label>
+                <input
+                  type="time"
+                  id="horaFin"
+                  value={horaFin}
+                  onChange={(e) => setHoraFin(e.target.value)}
+                  className="w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-3 text-base text-slate-900 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                />
+              </div>
+            </div>
+
+            <div className="mt-5 rounded-2xl bg-slate-50 p-4 ring-1 ring-inset ring-slate-200">
+              <h3 className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Reglas de cálculo</h3>
+              <ul className="mt-3 space-y-2 text-sm text-slate-600">
+                <li>Menos de 1 hora (0-60 min): cobra hora completa.</li>
+                <li>Desde 1 hora: cobra horas completas más minutos 1-40.</li>
+                <li>Minutos 41-59: cobra hora adicional completa.</li>
+                <li>Si la hora fin es menor, se asume cruce de medianoche.</li>
               </ul>
             </div>
           </div>
-        </div>
+
+          <aside className="space-y-4 lg:sticky lg:top-6 lg:self-start">
+            <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Resultado</p>
+
+              {!resultado && (
+                <div className="mt-4 rounded-xl bg-slate-50 px-4 py-5 text-sm text-slate-500 ring-1 ring-inset ring-slate-200">
+                  Ingresa hora de inicio y fin para calcular el servicio.
+                </div>
+              )}
+
+              {resultado && (
+                <div className="mt-4 space-y-3">
+                  <div className="rounded-xl bg-slate-50 px-4 py-3 ring-1 ring-inset ring-slate-200">
+                    <p className="text-xs uppercase tracking-wide text-slate-500">Duración</p>
+                    <p className="mt-1 text-xl font-bold text-slate-900">{resultado.horas}h {resultado.minutos}min</p>
+                  </div>
+                  <div className="rounded-xl bg-emerald-50 px-4 py-3 ring-1 ring-inset ring-emerald-200">
+                    <p className="text-xs uppercase tracking-wide text-emerald-700">Valor total</p>
+                    <p className="mt-1 text-2xl font-bold text-emerald-700">${resultado.valor.toLocaleString('es-CO')}</p>
+                  </div>
+                </div>
+              )}
+            </div>
+          </aside>
+        </section>
       </main>
-
-      {/* Agente Virtual */}
-      <div className="fixed bottom-5 right-5 text-center z-50">
-        <div 
-          className="w-20 h-20 rounded-full border-4 border-blue-500 shadow-xl overflow-hidden cursor-pointer hover:scale-110 transition-transform animate-slideIn bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center"
-          onClick={() => hablarTexto(mensajeAgente)}
-        >
-          <span className="text-4xl">🤖</span>
-        </div>
-        <div className="mt-2 bg-blue-600 text-white px-4 py-2 rounded-full text-sm shadow-lg max-w-[200px] animate-fadeIn">
-          {mensajeAgente}
-        </div>
-      </div>
-
-      {/* Estilos de animación */}
-      <style jsx>{`
-        @keyframes slideIn {
-          0% { transform: translateY(100px); opacity: 0; }
-          100% { transform: translateY(0); opacity: 1; }
-        }
-        @keyframes fadeIn {
-          from { opacity: 0; transform: scale(0.9); }
-          to { opacity: 1; transform: scale(1); }
-        }
-        .animate-slideIn {
-          animation: slideIn 1s ease-out;
-        }
-        .animate-fadeIn {
-          animation: fadeIn 0.5s ease-out;
-        }
-      `}</style>
     </div>
   );
 }
