@@ -27,187 +27,155 @@ export default function VerPlanilla({
   onClose: () => void;
 }) {
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg p-8 max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
-        <div className="flex justify-between items-center mb-6">
-          <h2 className="text-2xl font-bold">Detalles de Planilla</h2>
-          <button
-            onClick={onClose}
-            className="text-gray-500 hover:text-gray-700"
-          >
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 px-4 py-6 backdrop-blur-sm">
+      <div className="w-full max-w-4xl overflow-hidden rounded-3xl bg-white shadow-2xl ring-1 ring-slate-200">
+        <div className="bg-gradient-to-r from-slate-900 via-slate-800 to-blue-900 px-6 py-5 text-white sm:px-8">
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-white/70">Consulta de planilla</p>
+              <h2 className="mt-2 text-3xl font-bold tracking-tight">Detalles de Planilla</h2>
+              <p className="mt-2 text-sm text-white/70">Vista consolidada con la información principal y trazabilidad del registro.</p>
+            </div>
+            <button
+              onClick={onClose}
+              className="rounded-full bg-white/10 p-2 text-white transition hover:bg-white/20"
+              aria-label="Cerrar"
+            >
+              <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-6">
-          <div>
-            <label className="block text-sm font-medium text-gray-500 mb-1">
-              Número de Planilla
-            </label>
-            <p className="text-lg font-semibold text-gray-900">
-              {planilla.numero_planilla}
-            </p>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-500 mb-1">
-              Fecha
-            </label>
-            <p className="text-lg font-semibold text-gray-900">
-              {formatFechaColombia(planilla.fecha)}
-            </p>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-500 mb-1">
-              Vehículo
-            </label>
-            <p className="text-lg font-semibold text-gray-900">
-              {planilla.vehiculos?.codigo_vehiculo || ''}
-            </p>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-500 mb-1">
-              Conductor
-            </label>
-            <p className="text-lg font-semibold text-gray-900">
-              {planilla.conductor || ''}
-            </p>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-500 mb-1">
-              Operador
-            </label>
-            <p className="text-lg font-semibold text-gray-900">
-              {planilla.operador || '-'}
-            </p>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-500 mb-1">
-              Valor
-            </label>
-            <p className="text-2xl font-bold text-green-600">
-              ${(parseFloat(planilla.valor) || 0).toLocaleString('es-CO')}
-            </p>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-500 mb-1">
-              Tipo de Pago
-            </label>
-            <span className={`inline-block px-3 py-1 rounded-full text-sm font-medium ${
-              planilla.tipo_pago === 'contado' 
-                ? 'bg-green-100 text-green-800' 
-                : 'bg-yellow-100 text-yellow-800'
-            }`}>
-              {planilla.tipo_pago || ''}
-            </span>
-          </div>
-
-          {planilla.origen && (
-            <div>
-              <label className="block text-sm font-medium text-gray-500 mb-1">
-                Origen
-              </label>
-              <p className="text-lg font-semibold text-gray-900">
-                {planilla.origen}
-              </p>
+        <div className="max-h-[78vh] overflow-y-auto p-6 sm:p-8">
+          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+            <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Número</p>
+              <p className="mt-2 text-xl font-bold text-slate-900">{planilla.numero_planilla}</p>
             </div>
-          )}
 
-          {planilla.destino && (
-            <div>
-              <label className="block text-sm font-medium text-gray-500 mb-1">
-                Destino
-              </label>
-              <p className="text-lg font-semibold text-gray-900">
-                {planilla.destino}
-              </p>
+            <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Fecha</p>
+              <p className="mt-2 text-xl font-bold text-slate-900">{formatFechaColombia(planilla.fecha)}</p>
             </div>
-          )}
 
-          <div>
-            <label className="block text-sm font-medium text-gray-500 mb-1">
-              Estado
-            </label>
-            <span className={`inline-block px-3 py-1 rounded-full text-sm font-medium ${
-              planilla.estado === 'recaudada' ? 'bg-blue-100 text-blue-800' :
-              planilla.estado === 'pagada' ? 'bg-green-100 text-green-800' :
-              planilla.estado === 'liquidada' ? 'bg-purple-100 text-purple-800' :
-              'bg-yellow-100 text-yellow-800'
-            }`}>
-              {planilla.estado}
-            </span>
+            <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Valor</p>
+              <p className="mt-2 text-xl font-bold text-emerald-600">${(parseFloat(planilla.valor) || 0).toLocaleString('es-CO')}</p>
+            </div>
+
+            <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Estado</p>
+              <span className={`mt-2 inline-flex rounded-full px-3 py-1 text-sm font-semibold ${
+                planilla.estado === 'recaudada' ? 'bg-blue-100 text-blue-800' :
+                planilla.estado === 'pagada' ? 'bg-emerald-100 text-emerald-800' :
+                planilla.estado === 'liquidada' ? 'bg-violet-100 text-violet-800' :
+                'bg-amber-100 text-amber-800'
+              }`}>
+                {planilla.estado}
+              </span>
+            </div>
           </div>
 
-          {planilla.usuarios?.usuario && (
-            <div className="col-span-2">
-              <label className="block text-sm font-medium text-gray-500 mb-1">
-                Creado por
-              </label>
-              <p className="text-sm text-gray-700">
-                {planilla.usuarios.usuario}
-              </p>
-            </div>
-          )}
+          <div className="mt-6 grid gap-6 lg:grid-cols-3">
+            <section className="space-y-4 rounded-2xl border border-slate-200 bg-white p-5 lg:col-span-2 shadow-sm">
+              <h3 className="text-sm font-semibold uppercase tracking-[0.18em] text-slate-500">Información general</h3>
 
-          {planilla.created_at && (
-            <div>
-              <label className="block text-sm font-medium text-gray-500 mb-1">
-                Fecha de Creación
-              </label>
-              <p className="text-sm text-gray-700">
-                {new Date(planilla.created_at).toLocaleString('es-CO')}
-              </p>
-            </div>
-          )}
+              <div className="grid gap-4 md:grid-cols-2">
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Vehículo</p>
+                  <p className="mt-1 text-base font-semibold text-slate-900">{planilla.vehiculos?.codigo_vehiculo || ''}</p>
+                </div>
 
-          {planilla.recaudada_por && (
-            <div>
-              <label className="block text-sm font-medium text-gray-500 mb-1">
-                Recaudada por
-              </label>
-              <p className="text-sm text-gray-700">
-                {planilla.recaudada_por}
-              </p>
-            </div>
-          )}
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Conductor</p>
+                  <p className="mt-1 text-base font-semibold text-slate-900">{planilla.conductor || ''}</p>
+                </div>
 
-          {planilla.fecha_recaudacion && (
-            <div>
-              <label className="block text-sm font-medium text-gray-500 mb-1">
-                Fecha de Recaudación
-              </label>
-              <p className="text-sm text-gray-700">
-                {new Date(planilla.fecha_recaudacion).toLocaleString('es-CO')}
-              </p>
-            </div>
-          )}
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Operador</p>
+                  <p className="mt-1 text-base font-semibold text-slate-900">{planilla.operador || '-'}</p>
+                </div>
 
-          {planilla.observaciones && (
-            <div className="col-span-2">
-              <label className="block text-sm font-medium text-gray-500 mb-1">
-                Observaciones
-              </label>
-              <p className="text-sm text-gray-700">
-                {planilla.observaciones}
-              </p>
-            </div>
-          )}
-        </div>
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Tipo de pago</p>
+                  <span className={`mt-1 inline-flex rounded-full px-3 py-1 text-sm font-semibold ${
+                    planilla.tipo_pago === 'contado'
+                      ? 'bg-emerald-100 text-emerald-800'
+                      : 'bg-amber-100 text-amber-800'
+                  }`}>
+                    {planilla.tipo_pago || ''}
+                  </span>
+                </div>
 
-        <div className="mt-8 flex justify-end">
-          <button
-            onClick={onClose}
-            className="px-6 py-2 bg-gray-600 text-white rounded hover:bg-gray-700"
-          >
-            Cerrar
-          </button>
+                {planilla.origen && (
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Origen</p>
+                    <p className="mt-1 text-base font-semibold text-slate-900">{planilla.origen}</p>
+                  </div>
+                )}
+
+                {planilla.destino && (
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Destino</p>
+                    <p className="mt-1 text-base font-semibold text-slate-900">{planilla.destino}</p>
+                  </div>
+                )}
+              </div>
+            </section>
+
+            <aside className="space-y-4">
+              <div className="rounded-2xl border border-slate-200 bg-slate-50 p-5">
+                <h3 className="text-sm font-semibold uppercase tracking-[0.18em] text-slate-500">Trazabilidad</h3>
+                <div className="mt-4 space-y-3 text-sm">
+                  {planilla.usuarios?.usuario && (
+                    <div className="rounded-xl bg-white px-4 py-3 ring-1 ring-inset ring-slate-200">
+                      <p className="text-xs uppercase tracking-wide text-slate-500">Creado por</p>
+                      <p className="mt-1 font-semibold text-slate-900">{planilla.usuarios.usuario}</p>
+                    </div>
+                  )}
+
+                  {planilla.recaudada_por && (
+                    <div className="rounded-xl bg-white px-4 py-3 ring-1 ring-inset ring-slate-200">
+                      <p className="text-xs uppercase tracking-wide text-slate-500">Recaudada por</p>
+                      <p className="mt-1 font-semibold text-slate-900">{planilla.recaudada_por}</p>
+                    </div>
+                  )}
+
+                  {planilla.created_at && (
+                    <div className="rounded-xl bg-white px-4 py-3 ring-1 ring-inset ring-slate-200">
+                      <p className="text-xs uppercase tracking-wide text-slate-500">Fecha de creación</p>
+                      <p className="mt-1 font-semibold text-slate-900">{new Date(planilla.created_at).toLocaleString('es-CO')}</p>
+                    </div>
+                  )}
+
+                  {planilla.fecha_recaudacion && (
+                    <div className="rounded-xl bg-white px-4 py-3 ring-1 ring-inset ring-slate-200">
+                      <p className="text-xs uppercase tracking-wide text-slate-500">Fecha de recaudación</p>
+                      <p className="mt-1 font-semibold text-slate-900">{new Date(planilla.fecha_recaudacion).toLocaleString('es-CO')}</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {planilla.observaciones && (
+                <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+                  <h3 className="text-sm font-semibold uppercase tracking-[0.18em] text-slate-500">Observaciones</h3>
+                  <p className="mt-3 text-sm leading-6 text-slate-700">{planilla.observaciones}</p>
+                </div>
+              )}
+            </aside>
+          </div>
+
+          <div className="mt-6 flex justify-end">
+            <button
+              onClick={onClose}
+              className="rounded-2xl bg-slate-900 px-5 py-3 text-sm font-semibold text-white transition hover:bg-slate-800"
+            >
+              Cerrar
+            </button>
+          </div>
         </div>
       </div>
     </div>
