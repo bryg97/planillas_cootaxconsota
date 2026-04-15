@@ -360,348 +360,379 @@ export default function LiquidacionesClient({
     }
 
     // --- Aquí va el JSX ---
+    const totalPlanillasFiltradas = planillasFiltradas.reduce((sum, p) => sum + (parseFloat(String(p.valor)) || 0), 0);
+    const totalSeleccionadas = planillasFiltradas
+      .filter((p) => planillasSeleccionadas.includes(p.id))
+      .reduce((sum, p) => sum + (parseFloat(String(p.valor)) || 0), 0);
+
     return (
-
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div id="liquidaciones-print-area">
-        {/* Botón regresar al dashboard estilo Operaciones */}
-        <div className="flex justify-end mb-4">
-          <a href="/dashboard" className="text-blue-600 hover:text-blue-800">
-            ← Volver al Dashboard
-          </a>
-        </div>
-        <div className="flex justify-end gap-2 mb-4">
-          <button onClick={handleImprimir} className="px-4 py-2 bg-slate-700 text-white rounded hover:bg-slate-800 text-sm font-medium">
-            Imprimir
-          </button>
-          <button onClick={exportarPlanillas} className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 text-sm font-medium">
-            Exportar Excel
-          </button>
-        </div>
-        {/* Mensajes de error y éxito */}
-        {(error || message) && (
-          <div className={`mb-4 p-3 rounded text-sm ${error ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}`}>
-            {error || message}
-          </div>
-        )}
-
-        <div id="liquidaciones-print-content">
-
-        {/* Sección de planillas para liquidar (Operador y Administrador) */}
-        {(rol === 'operador' || rol === 'administrador') && (
-          <>
-            {/* Encabezado */}
-        <div className="flex justify-between items-center mb-4">
-          <div>
-            <h2 className="text-xl font-semibold">{rol === 'administrador' ? 'Todas las Planillas para Liquidar' : 'Mis Planillas para Liquidar'}</h2>
-            <p className="text-sm text-gray-600 mt-1">
-              Seleccione las planillas que desea liquidar (de contado o crédito ya recaudado)
-            </p>
-          </div>
-        </div>
-
-        {/* Filtros de Fecha y Búsqueda */}
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
-          <h3 className="font-medium text-blue-900 mb-4">Filtros</h3>
-          
-          {/* Buscador */}
-          <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700 mb-1">Buscar</label>
-            <input
-              type="text"
-              placeholder="🔍 Buscar por N° planilla, conductor o vehículo..."
-              value={busqueda}
-              onChange={(e) => setBusqueda(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
-
-          {/* Filtros de Fecha */}
-          <h4 className="text-sm font-medium text-gray-700 mb-3">Por Fecha</h4>
-          <div className="grid grid-cols-1 md:grid-cols-5 gap-3 mb-3">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Desde</label>
-              <input
-                type="date"
-                value={fechaDesde}
-                onChange={(e) => setFechaDesde(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Hasta</label>
-              <input
-                type="date"
-                value={fechaHasta}
-                onChange={(e) => setFechaHasta(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
-              />
-            </div>
-            <div className="flex items-end">
-              <button onClick={() => { setFechaDesde(''); setFechaHasta(''); }} className="w-full px-3 py-2 bg-gray-500 text-white rounded hover:bg-gray-600 text-xs font-medium">Limpiar</button>
-            </div>
-            <div className="flex items-end gap-2">
-              <button onClick={seleccionarTodas} className="w-full px-3 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 text-xs font-medium">Seleccionar</button>
-            </div>
-            <div className="flex items-end">
-              <button onClick={deseleccionarTodas} className="w-full px-3 py-2 bg-gray-300 text-gray-700 rounded hover:bg-gray-400 text-xs font-medium">Deseleccionar</button>
-            </div>
-            <div className="flex items-end">
-              <button onClick={exportarPlanillas} className="w-full px-3 py-2 bg-green-600 text-white rounded hover:bg-green-700 text-xs font-medium">📥 Exportar</button>
-            </div>
-          </div>
-        </div>
-
-        {/* Listado y selección de planillas */}
-        {planillasFiltradas.length === 0 ? (
-          <div className="text-center py-8 text-gray-500">
-            <svg className="mx-auto h-12 w-12 text-gray-400 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-            </svg>
-            <p>No tienes planillas para liquidar en este rango de fechas</p>
-          </div>
-        ) : (
-          <>
-            <div className="mb-3 text-sm text-gray-600">
-              Mostrando {planillasFiltradas.length} planilla(s) • {planillasSeleccionadas.length} seleccionada(s)
-            </div>
-            <div className="space-y-2 mb-4 max-h-96 overflow-y-auto">
-              {planillasFiltradas.map((planilla) => (
-                <label key={planilla.id} className={`flex items-center p-3 rounded border cursor-pointer transition-colors ${planillasSeleccionadas.includes(planilla.id) ? 'bg-blue-50 border-blue-300' : 'bg-gray-50 hover:bg-gray-100 border-gray-200'}`}>
-                  <input type="checkbox" checked={planillasSeleccionadas.includes(planilla.id)} onChange={() => {
-                    if (planillasSeleccionadas.includes(planilla.id)) {
-                      setPlanillasSeleccionadas(planillasSeleccionadas.filter(id => id !== planilla.id));
-                    } else {
-                      setPlanillasSeleccionadas([...planillasSeleccionadas, planilla.id]);
-                    }
-                  }} className="mr-3 h-5 w-5" />
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
-                      <p className="font-medium">N° {planilla.numero_planilla}</p>
-                      <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${planilla.tipo_pago === 'credito' ? 'bg-yellow-100 text-yellow-800' : 'bg-green-100 text-green-800'}`}>{planilla.tipo_pago === 'credito' ? 'Crédito Recaudado' : 'Contado'}</span>
-                      <span className={`px-2 py-0.5 rounded-full text-xs ${planilla.estado === 'recaudada' ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-800'}`}>{planilla.estado}</span>
-                    </div>
-                    <p className="text-sm text-gray-600 mt-1">
-                      <span className="font-medium">{planilla.codigo_vehiculo || ''}</span> • {planilla.conductor || ''} • {formatFechaColombia(planilla.fecha)}
-                    </p>
-                  </div>
-                  <p className="font-bold text-lg text-gray-900 ml-3">${(parseFloat(String(planilla.valor)) || 0).toLocaleString('es-CO')}</p>
-                  <button
-                    onClick={(e) => {
-                      e.preventDefault();
-                      setPlanillaDetalle(planilla);
-                    }}
-                    className="ml-3 text-blue-600 hover:text-blue-900 text-sm font-medium"
-                  >
-                    Ver detalles
-                  </button>
-                </label>
-              ))}
-            </div>
-          </>
-        )}
-
-        {/* Resumen y botón de liquidación */}
-        {planillasSeleccionadas.length > 0 && (
-          <div className="bg-gradient-to-r from-blue-50 to-blue-100 border-2 border-blue-300 rounded-lg p-4">
-            <div className="flex justify-between items-center">
-              <div>
-                <p className="text-sm text-gray-600">Total a liquidar:</p>
-                <p className="text-2xl font-bold text-blue-900">
-                  ${planillas.filter(p => planillasSeleccionadas.includes(p.id)).reduce((sum, p) => sum + (parseFloat(String(p.valor)) || 0), 0).toLocaleString('es-CO')}
+      <main className="min-h-screen bg-slate-100 py-8">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
+          <section className="overflow-hidden rounded-3xl bg-gradient-to-r from-slate-900 via-slate-800 to-blue-900 text-white shadow-2xl">
+            <div className="flex flex-col gap-6 px-6 py-8 sm:px-8 lg:flex-row lg:items-end lg:justify-between">
+              <div className="max-w-2xl">
+                <div className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-xs font-medium uppercase tracking-[0.2em] text-white/80">
+                  Liquidaciones
+                </div>
+                <h1 className="mt-4 text-3xl font-bold tracking-tight sm:text-4xl">
+                  Control de liquidaciones con una vista más clara
+                </h1>
+                <p className="mt-3 max-w-xl text-sm leading-6 text-slate-200 sm:text-base">
+                  Filtra, selecciona, liquida e imprime desde un panel más limpio y organizado.
                 </p>
-                <p className="text-xs text-gray-600 mt-1">{planillasSeleccionadas.length} planilla(s) seleccionada(s)</p>
               </div>
-              <button onClick={handleCrearLiquidacion} disabled={loading} className="bg-blue-600 text-white px-8 py-3 rounded-lg hover:bg-blue-700 disabled:opacity-50 font-semibold shadow-lg">{loading ? 'Procesando...' : 'Crear Liquidación →'}</button>
-            </div>
-          </div>
-        )}
-          </>
-        )}
 
-        {/* Sección para aprobar liquidaciones (operador, tesorera y administrador) */}
-        {(rol === 'operador' || rol === 'tesorera') && (
-          <div className="bg-white rounded-lg shadow p-6 mt-8">
-            <h2 className="text-xl font-semibold mb-4">Liquidaciones Pendientes de Aprobar</h2>
-            {liquidacionesPendientes.length === 0 ? (
-              <p className="text-gray-500">No hay liquidaciones pendientes</p>
-            ) : (
-              <div className="space-y-4">
-                {liquidacionesPendientes.map((liquidacion) => {
-                  const totalCalculado = (liquidacion.detalles || []).reduce((sum: number, d: any) => sum + (parseFloat(String(d.monto)) || 0), 0);
-                  return (
-                  <div key={liquidacion.id} className="border rounded-lg p-4">
-                    <div className="flex justify-between items-start mb-3">
-                      <div>
-                        <h3 className="text-lg font-semibold">Operador: {liquidacion.operador_nombre || liquidacion.usuario}</h3>
-                        <p className="text-sm text-gray-600">Fecha: {formatFechaColombia(liquidacion.fecha)}</p>
-                      </div>
-                      <div className="text-right">
-                        <p className="text-2xl font-bold text-green-600">${totalCalculado.toLocaleString('es-CO')}</p>
-                        <p className="text-sm text-gray-500">Total a recibir</p>
-                      </div>
-                    </div>
-                    <div className="mb-3">
-                      <p className="text-sm font-medium text-gray-700 mb-2">Planillas incluidas:</p>
-                      <div className="space-y-1">
-                        {(liquidacion.detalles || []).map((detalle: any, idx: number) => (
-                          <div key={idx} className="text-sm flex justify-between bg-gray-50 p-2 rounded">
-                            <span>N° {detalle.numero_planilla} - {detalle.codigo_vehiculo}</span>
-                            <span className="font-medium">${(parseFloat(String(detalle.monto)) || 0).toLocaleString('es-CO')}</span>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                    <button onClick={() => handleAprobarLiquidacion(liquidacion.id)} disabled={loading} className="w-full bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 disabled:opacity-50">{loading ? 'Procesando...' : 'Confirmar Recepción de Dinero'}</button>
-                  </div>
-                  );
-                })}
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* Modal de detalles de planilla */}
-        {planillaDetalle && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white rounded-lg p-8 max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
-              <div className="flex justify-between items-center mb-6">
-                <h2 className="text-2xl font-bold">Detalles de Planilla</h2>
-                <button
-                  onClick={() => setPlanillaDetalle(null)}
-                  className="text-gray-500 hover:text-gray-700"
-                >
-                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  </svg>
+              <div className="flex flex-wrap gap-3">
+                <a href="/dashboard" className="rounded-full border border-white/20 bg-white/5 px-4 py-2 text-sm font-medium text-white transition hover:bg-white/10">
+                  ← Volver al Dashboard
+                </a>
+                <button onClick={handleImprimir} className="rounded-full bg-white px-4 py-2 text-sm font-semibold text-slate-900 transition hover:bg-slate-100">
+                  Imprimir reporte
                 </button>
-              </div>
-
-              <div className="grid grid-cols-2 gap-6 mb-6">
-                <div>
-                  <label className="block text-sm font-medium text-gray-500 mb-1">N° Planilla</label>
-                  <p className="text-lg font-semibold">{planillaDetalle.numero_planilla}</p>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-500 mb-1">Vehículo</label>
-                  <p className="text-lg font-semibold">{planillaDetalle.codigo_vehiculo}</p>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-500 mb-1">Conductor</label>
-                  <p className="text-lg font-semibold">{planillaDetalle.conductor}</p>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-500 mb-1">Valor</label>
-                  <p className="text-2xl font-bold text-green-600">${parseFloat(planillaDetalle.valor).toLocaleString('es-CO')}</p>
-                </div>
-              </div>
-
-              {/* Trazabilidad */}
-              <div className="border-t pt-6">
-                <h3 className="text-lg font-semibold mb-4">Trazabilidad</h3>
-                <div className="space-y-4">
-                  <div className="bg-blue-50 p-4 rounded-lg">
-                    <label className="block text-sm font-medium text-blue-900 mb-2">Creado</label>
-                    <p className="text-sm text-blue-800">
-                      Fecha: {planillaDetalle.created_at ? new Date(planillaDetalle.created_at).toLocaleString('es-CO') : 'N/A'}
-                    </p>
-                    <p className="text-sm text-blue-800">
-                      Por: {planillaDetalle.usuario || planillaDetalle.operador || 'Desconocido'}
-                    </p>
-                  </div>
-
-                  <div className={`p-4 rounded-lg ${planillaDetalle.estado === 'recaudada' ? 'bg-green-50' : 'bg-gray-50'}`}>
-                    <label className="block text-sm font-medium text-gray-900 mb-2">Estado</label>
-                    <p className="text-sm text-gray-800">
-                      {planillaDetalle.estado === 'recaudada' ? '✓ Recaudada' : planillaDetalle.estado}
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              <div className="mt-8 flex justify-end">
-                <button
-                  onClick={() => setPlanillaDetalle(null)}
-                  className="px-6 py-2 bg-gray-600 text-white rounded hover:bg-gray-700"
-                >
-                  Cerrar
+                <button onClick={exportarPlanillas} className="rounded-full bg-emerald-500 px-4 py-2 text-sm font-semibold text-white transition hover:bg-emerald-400">
+                  Exportar Excel
                 </button>
               </div>
             </div>
-          </div>
-        )}
+          </section>
 
-        {/* Sección administrador */}
-        {rol === 'administrador' && (
-          <>
-            <h3 className="text-lg font-semibold mb-4 mt-8">Liquidaciones Pendientes de Aprobar</h3>
-            {liquidacionesPendientes.length === 0 ? (
-              <p className="text-gray-500 mb-8">No hay liquidaciones pendientes</p>
-            ) : (
-              <div className="space-y-4 mb-8">
-                {liquidacionesPendientes.map((liquidacion) => {
-                  const totalCalculado = (liquidacion.detalles || []).reduce((sum: number, d: any) => sum + (parseFloat(String(d.monto)) || 0), 0);
-                  return (
-                  <div key={liquidacion.id} className="border rounded-lg p-4">
-                    <div className="flex justify-between items-start mb-3">
-                      <div>
-                        <h3 className="text-lg font-semibold">Operador: {liquidacion.operador_nombre || liquidacion.usuario}</h3>
-                        <p className="text-sm text-gray-600">Fecha: {formatFechaColombia(liquidacion.fecha)}</p>
-                      </div>
-                      <div className="text-right">
-                        <p className="text-2xl font-bold text-green-600">${totalCalculado.toLocaleString('es-CO')}</p>
-                        <p className="text-sm text-gray-500">Total a recibir</p>
-                      </div>
-                    </div>
-                    <div className="mb-3">
-                      <p className="text-sm font-medium text-gray-700 mb-2">Planillas incluidas:</p>
-                      <div className="space-y-1">
-                        {(liquidacion.detalles || []).map((detalle: any, idx: number) => (
-                          <div key={idx} className="text-sm flex justify-between bg-gray-50 p-2 rounded">
-                            <span>N° {detalle.numero_planilla} - {detalle.codigo_vehiculo}</span>
-                            <span className="font-medium">${(parseFloat(String(detalle.monto)) || 0).toLocaleString('es-CO')}</span>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                    <button onClick={() => handleAprobarLiquidacion(liquidacion.id)} disabled={loading} className="w-full bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 disabled:opacity-50">{loading ? 'Procesando...' : 'Confirmar Recepción de Dinero'}</button>
-                  </div>
-                  );
-                })}
-              </div>
-            )}
-          </>
-        )}
-
-        {/* Resumen de liquidaciones pendientes o aprobadas */}
-        <div className="bg-white rounded-lg shadow p-6 mt-8">
-          <h2 className="text-xl font-semibold mb-4">Resumen de Liquidaciones</h2>
-          {liquidacionesPendientes.length === 0 ? (
-            <p className="text-gray-500">No hay liquidaciones para mostrar</p>
-          ) : (
-            <div className="space-y-4">
-              {liquidacionesPendientes.map((liquidacion) => {
-                const totalCalculado = (liquidacion.detalles || []).reduce((sum: number, d: any) => sum + (parseFloat(String(d.monto)) || 0), 0);
-                return (
-                  <div key={liquidacion.id} className="border rounded-lg p-4">
-                    <div className="flex justify-between items-start mb-3">
-                      <div>
-                        <h3 className="text-lg font-semibold">Operador: {liquidacion.operador_nombre || liquidacion.usuario}</h3>
-                        <p className="text-sm text-gray-600">Fecha: {formatFechaColombia(liquidacion.fecha)}</p>
-                        <p className="text-sm text-gray-600">Estado: {liquidacion.estado}</p>
-                      </div>
-                      <div className="text-right">
-                        <p className="text-2xl font-bold text-green-600">${totalCalculado.toLocaleString('es-CO')}</p>
-                        <p className="text-sm text-gray-500">Total</p>
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
+          {(error || message) && (
+            <div className={`rounded-2xl border px-4 py-3 text-sm shadow-sm ${error ? 'border-red-200 bg-red-50 text-red-700' : 'border-emerald-200 bg-emerald-50 text-emerald-700'}`}>
+              {error || message}
             </div>
           )}
-        </div>
-        </div>
+
+          <div id="liquidaciones-print-area" className="space-y-6">
+            <div id="liquidaciones-print-content" className="space-y-6">
+              {(rol === 'operador' || rol === 'administrador') && (
+                <section className="grid gap-6 lg:grid-cols-3">
+                  <div className="lg:col-span-2 rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+                    <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                      <div>
+                        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Planillas para liquidar</p>
+                        <h2 className="mt-2 text-2xl font-bold text-slate-900">
+                          {rol === 'administrador' ? 'Todas las planillas' : 'Mis planillas'}
+                        </h2>
+                        <p className="mt-2 text-sm text-slate-600">
+                          Seleccione las planillas de contado o crédito ya recaudado.
+                        </p>
+                      </div>
+                      <div className="grid grid-cols-2 gap-3 text-center sm:min-w-72">
+                        <div className="rounded-2xl bg-slate-50 px-4 py-3">
+                          <div className="text-xs uppercase tracking-wide text-slate-500">Visibles</div>
+                          <div className="mt-1 text-2xl font-bold text-slate-900">{planillasFiltradas.length}</div>
+                        </div>
+                        <div className="rounded-2xl bg-slate-50 px-4 py-3">
+                          <div className="text-xs uppercase tracking-wide text-slate-500">Seleccionadas</div>
+                          <div className="mt-1 text-2xl font-bold text-slate-900">{planillasSeleccionadas.length}</div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="mt-6 rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                      <div className="mb-4">
+                        <label className="mb-2 block text-sm font-medium text-slate-700">Buscar planilla, conductor o vehículo</label>
+                        <input
+                          type="text"
+                          placeholder="Buscar por número, conductor o vehículo..."
+                          value={busqueda}
+                          onChange={(e) => setBusqueda(e.target.value)}
+                          className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                        />
+                      </div>
+
+                      <div>
+                        <div className="mb-3 flex items-center justify-between">
+                          <h3 className="text-sm font-semibold uppercase tracking-[0.18em] text-slate-500">Rango de fechas</h3>
+                        </div>
+                        <div className="grid grid-cols-1 gap-3 md:grid-cols-5">
+                          <div className="md:col-span-1">
+                            <label className="mb-1 block text-sm font-medium text-slate-700">Desde</label>
+                            <input
+                              type="date"
+                              value={fechaDesde}
+                              onChange={(e) => setFechaDesde(e.target.value)}
+                              className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                            />
+                          </div>
+                          <div className="md:col-span-1">
+                            <label className="mb-1 block text-sm font-medium text-slate-700">Hasta</label>
+                            <input
+                              type="date"
+                              value={fechaHasta}
+                              onChange={(e) => setFechaHasta(e.target.value)}
+                              className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                            />
+                          </div>
+                          <div className="flex items-end">
+                            <button onClick={() => { setFechaDesde(''); setFechaHasta(''); }} className="w-full rounded-xl bg-slate-200 px-3 py-2.5 text-xs font-semibold text-slate-700 transition hover:bg-slate-300">
+                              Limpiar
+                            </button>
+                          </div>
+                          <div className="flex items-end">
+                            <button onClick={seleccionarTodas} className="w-full rounded-xl bg-blue-600 px-3 py-2.5 text-xs font-semibold text-white transition hover:bg-blue-500">
+                              Seleccionar todo
+                            </button>
+                          </div>
+                          <div className="flex items-end">
+                            <button onClick={deseleccionarTodas} className="w-full rounded-xl bg-white px-3 py-2.5 text-xs font-semibold text-slate-700 ring-1 ring-inset ring-slate-300 transition hover:bg-slate-50">
+                              Deseleccionar
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="mt-6">
+                      {planillasFiltradas.length === 0 ? (
+                        <div className="rounded-3xl border border-dashed border-slate-300 bg-white px-6 py-12 text-center">
+                          <svg className="mx-auto mb-4 h-12 w-12 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                          </svg>
+                          <p className="text-sm font-medium text-slate-700">No hay planillas para liquidar en este rango</p>
+                          <p className="mt-1 text-sm text-slate-500">Ajuste los filtros o limpie la búsqueda.</p>
+                        </div>
+                      ) : (
+                        <div className="space-y-3">
+                          <div className="text-sm text-slate-500">Mostrando {planillasFiltradas.length} planilla(s).</div>
+                          <div className="max-h-[32rem] space-y-3 overflow-y-auto pr-1">
+                            {planillasFiltradas.map((planilla) => {
+                              const selected = planillasSeleccionadas.includes(planilla.id);
+
+                              return (
+                                <label key={planilla.id} className={`flex cursor-pointer items-start gap-4 rounded-2xl border p-4 transition ${selected ? 'border-blue-300 bg-blue-50 shadow-sm' : 'border-slate-200 bg-white hover:border-slate-300 hover:shadow-sm'}`}>
+                                  <input
+                                    type="checkbox"
+                                    checked={selected}
+                                    onChange={() => {
+                                      if (selected) {
+                                        setPlanillasSeleccionadas(planillasSeleccionadas.filter(id => id !== planilla.id));
+                                      } else {
+                                        setPlanillasSeleccionadas([...planillasSeleccionadas, planilla.id]);
+                                      }
+                                    }}
+                                    className="mt-1 h-5 w-5 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+                                  />
+                                  <div className="min-w-0 flex-1">
+                                    <div className="flex flex-wrap items-center gap-2">
+                                      <p className="font-semibold text-slate-900">N° {planilla.numero_planilla}</p>
+                                      <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${planilla.tipo_pago === 'credito' ? 'bg-amber-100 text-amber-800' : 'bg-emerald-100 text-emerald-800'}`}>
+                                        {planilla.tipo_pago === 'credito' ? 'Crédito recaudado' : 'Contado'}
+                                      </span>
+                                      <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${planilla.estado === 'recaudada' ? 'bg-blue-100 text-blue-800' : 'bg-slate-100 text-slate-700'}`}>
+                                        {planilla.estado}
+                                      </span>
+                                    </div>
+                                    <p className="mt-2 text-sm text-slate-600">
+                                      <span className="font-medium text-slate-900">{planilla.codigo_vehiculo || ''}</span> • {planilla.conductor || ''} • {formatFechaColombia(planilla.fecha)}
+                                    </p>
+                                  </div>
+                                  <div className="flex flex-col items-end gap-2">
+                                    <p className="text-lg font-bold text-slate-900">${(parseFloat(String(planilla.valor)) || 0).toLocaleString('es-CO')}</p>
+                                    <button
+                                      onClick={(e) => {
+                                        e.preventDefault();
+                                        setPlanillaDetalle(planilla);
+                                      }}
+                                      className="text-sm font-semibold text-blue-600 transition hover:text-blue-800"
+                                    >
+                                      Ver detalles
+                                    </button>
+                                  </div>
+                                </label>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  <aside className="space-y-4 lg:sticky lg:top-6 lg:self-start">
+                    <div className="rounded-3xl bg-slate-900 p-6 text-white shadow-lg">
+                      <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">Resumen rápido</p>
+                      <div className="mt-5 space-y-4">
+                        <div>
+                          <div className="text-sm text-slate-400">Total visible</div>
+                          <div className="text-3xl font-bold">${totalPlanillasFiltradas.toLocaleString('es-CO')}</div>
+                        </div>
+                        <div className="grid grid-cols-2 gap-3">
+                          <div className="rounded-2xl bg-white/10 px-4 py-3">
+                            <div className="text-xs uppercase tracking-wide text-slate-400">Seleccionadas</div>
+                            <div className="mt-1 text-2xl font-bold">{planillasSeleccionadas.length}</div>
+                          </div>
+                          <div className="rounded-2xl bg-white/10 px-4 py-3">
+                            <div className="text-xs uppercase tracking-wide text-slate-400">A liquidar</div>
+                            <div className="mt-1 text-2xl font-bold">${totalSeleccionadas.toLocaleString('es-CO')}</div>
+                          </div>
+                        </div>
+                        <div className="rounded-2xl border border-white/10 bg-white/5 p-4 text-sm text-slate-200">
+                          Revise que las planillas estén recaudadas antes de crear la liquidación.
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+                      <h3 className="text-lg font-semibold text-slate-900">Acción principal</h3>
+                      <p className="mt-2 text-sm text-slate-600">Cree la liquidación con las planillas seleccionadas.</p>
+                      <button onClick={handleCrearLiquidacion} disabled={loading || planillasSeleccionadas.length === 0} className="mt-5 w-full rounded-2xl bg-blue-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-blue-500 disabled:cursor-not-allowed disabled:opacity-50">
+                        {loading ? 'Procesando...' : 'Crear liquidación'}
+                      </button>
+                    </div>
+                  </aside>
+                </section>
+              )}
+
+              {(rol === 'operador' || rol === 'tesorera' || rol === 'administrador') && (
+                <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+                  <div className="mb-5 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+                    <div>
+                      <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Liquidaciones</p>
+                      <h2 className="mt-2 text-2xl font-bold text-slate-900">Pendientes de aprobación</h2>
+                    </div>
+                    <p className="text-sm text-slate-500">{liquidacionesPendientes.length} registro(s)</p>
+                  </div>
+
+                  {liquidacionesPendientes.length === 0 ? (
+                    <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-6 py-10 text-center text-slate-500">
+                      No hay liquidaciones pendientes.
+                    </div>
+                  ) : (
+                    <div className="grid gap-4 xl:grid-cols-2">
+                      {liquidacionesPendientes.map((liquidacion) => {
+                        const totalCalculado = (liquidacion.detalles || []).reduce((sum: number, d: any) => sum + (parseFloat(String(d.monto)) || 0), 0);
+
+                        return (
+                          <div key={liquidacion.id} className="rounded-2xl border border-slate-200 bg-slate-50 p-5 transition hover:border-slate-300 hover:shadow-sm">
+                            <div className="flex items-start justify-between gap-4">
+                              <div>
+                                <div className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Operador</div>
+                                <h3 className="mt-1 text-lg font-semibold text-slate-900">{liquidacion.operador_nombre || liquidacion.usuario}</h3>
+                                <p className="mt-1 text-sm text-slate-500">Fecha: {formatFechaColombia(liquidacion.fecha)}</p>
+                              </div>
+                              <div className="rounded-2xl bg-emerald-100 px-4 py-3 text-right">
+                                <div className="text-xs uppercase tracking-wide text-emerald-700">Total</div>
+                                <div className="text-xl font-bold text-emerald-800">${totalCalculado.toLocaleString('es-CO')}</div>
+                              </div>
+                            </div>
+
+                            <div className="mt-4 rounded-2xl bg-white p-4">
+                              <p className="mb-3 text-sm font-semibold text-slate-700">Planillas incluidas</p>
+                              <div className="space-y-2">
+                                {(liquidacion.detalles || []).map((detalle: any, idx: number) => (
+                                  <div key={idx} className="flex items-center justify-between rounded-xl bg-slate-50 px-3 py-2 text-sm">
+                                    <span className="text-slate-700">N° {detalle.numero_planilla} - {detalle.codigo_vehiculo}</span>
+                                    <span className="font-semibold text-slate-900">${(parseFloat(String(detalle.monto)) || 0).toLocaleString('es-CO')}</span>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+
+                            <button onClick={() => handleAprobarLiquidacion(liquidacion.id)} disabled={loading} className="mt-4 w-full rounded-2xl bg-emerald-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-emerald-500 disabled:cursor-not-allowed disabled:opacity-50">
+                              {loading ? 'Procesando...' : 'Confirmar recepción'}
+                            </button>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </section>
+              )}
+
+              <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+                <div className="mb-4 flex items-center justify-between">
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Resumen</p>
+                    <h2 className="mt-2 text-2xl font-bold text-slate-900">Liquidaciones registradas</h2>
+                  </div>
+                  <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-slate-600">
+                    {liquidacionesPendientes.length} total
+                  </span>
+                </div>
+
+                {liquidacionesPendientes.length === 0 ? (
+                  <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-6 py-10 text-center text-slate-500">
+                    No hay liquidaciones para mostrar.
+                  </div>
+                ) : (
+                  <div className="grid gap-4 md:grid-cols-2">
+                    {liquidacionesPendientes.map((liquidacion) => {
+                      const totalCalculado = (liquidacion.detalles || []).reduce((sum: number, d: any) => sum + (parseFloat(String(d.monto)) || 0), 0);
+
+                      return (
+                        <div key={liquidacion.id} className="rounded-2xl border border-slate-200 bg-slate-50 p-5">
+                          <div className="flex items-start justify-between gap-4">
+                            <div>
+                              <div className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Operador</div>
+                              <h3 className="mt-1 text-lg font-semibold text-slate-900">{liquidacion.operador_nombre || liquidacion.usuario}</h3>
+                              <p className="mt-1 text-sm text-slate-500">Fecha: {formatFechaColombia(liquidacion.fecha)}</p>
+                              <p className="mt-1 text-sm text-slate-500">Estado: {liquidacion.estado}</p>
+                            </div>
+                            <div className="text-right">
+                              <div className="text-xs uppercase tracking-wide text-slate-500">Total</div>
+                              <div className="text-2xl font-bold text-slate-900">${totalCalculado.toLocaleString('es-CO')}</div>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </section>
+            </div>
+          </div>
+
+          {/* Modal de detalles de planilla */}
+          {planillaDetalle && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 px-4 backdrop-blur-sm">
+              <div className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-3xl bg-white p-6 shadow-2xl">
+                <div className="mb-6 flex items-start justify-between gap-4">
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Detalles</p>
+                    <h2 className="mt-2 text-2xl font-bold text-slate-900">Planilla #{planillaDetalle.numero_planilla}</h2>
+                  </div>
+                  <button onClick={() => setPlanillaDetalle(null)} className="rounded-full bg-slate-100 p-2 text-slate-500 transition hover:bg-slate-200 hover:text-slate-700">
+                    <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                </div>
+
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <div className="rounded-2xl bg-slate-50 p-4">
+                    <label className="block text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Vehículo</label>
+                    <p className="mt-2 text-lg font-semibold text-slate-900">{planillaDetalle.codigo_vehiculo}</p>
+                  </div>
+                  <div className="rounded-2xl bg-slate-50 p-4">
+                    <label className="block text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Conductor</label>
+                    <p className="mt-2 text-lg font-semibold text-slate-900">{planillaDetalle.conductor}</p>
+                  </div>
+                  <div className="rounded-2xl bg-slate-50 p-4">
+                    <label className="block text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Valor</label>
+                    <p className="mt-2 text-2xl font-bold text-emerald-600">${parseFloat(planillaDetalle.valor).toLocaleString('es-CO')}</p>
+                  </div>
+                  <div className="rounded-2xl bg-slate-50 p-4">
+                    <label className="block text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Estado</label>
+                    <p className="mt-2 text-lg font-semibold text-slate-900">{planillaDetalle.estado === 'recaudada' ? '✓ Recaudada' : planillaDetalle.estado}</p>
+                  </div>
+                </div>
+
+                <div className="mt-6 rounded-2xl border border-slate-200 p-4">
+                  <h3 className="text-sm font-semibold uppercase tracking-[0.18em] text-slate-500">Trazabilidad</h3>
+                  <div className="mt-3 space-y-3 text-sm text-slate-600">
+                    <div>Fecha de creación: {planillaDetalle.created_at ? new Date(planillaDetalle.created_at).toLocaleString('es-CO') : 'N/A'}</div>
+                    <div>Creado por: {planillaDetalle.usuario || planillaDetalle.operador || 'Desconocido'}</div>
+                  </div>
+                </div>
+
+                <div className="mt-6 flex justify-end">
+                  <button onClick={() => setPlanillaDetalle(null)} className="rounded-2xl bg-slate-900 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800">
+                    Cerrar
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </main>
     );
