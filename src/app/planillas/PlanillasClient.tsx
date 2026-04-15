@@ -122,8 +122,6 @@ export default function PlanillasClient({ planillas, vehiculos, operadores, valo
               <div className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-xs font-medium uppercase tracking-[0.2em] text-white/80">
                 Planillas
               </div>
-              <h1 className="mt-4 text-3xl font-bold tracking-tight sm:text-4xl">Gestión de planillas</h1>
-              <p className="mt-2 text-sm text-slate-200 sm:text-base">Consulta, crea, importa y exporta planillas desde un panel más ordenado.</p>
             </div>
             <div className="flex flex-wrap gap-3">
               <button
