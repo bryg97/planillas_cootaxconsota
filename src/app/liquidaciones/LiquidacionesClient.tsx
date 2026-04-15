@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { crearLiquidacion, aprobarLiquidacion } from "./actions";
 import * as XLSX from 'xlsx';
 
@@ -40,11 +40,31 @@ export default function LiquidacionesClient({
   const [planillaDetalle, setPlanillaDetalle] = useState<any>(null);
   const [error, setError] = useState<string>("");
   const [message, setMessage] = useState<string>("");
+  const [autoPrintPending, setAutoPrintPending] = useState(false);
 
   // Debug logs
   console.log('LiquidacionesClient - Rol:', rol);
   console.log('LiquidacionesClient - Planillas recibidas:', planillas?.length || 0);
   console.log('LiquidacionesClient - Liquidaciones pendientes:', liquidacionesPendientes?.length || 0);
+
+  useEffect(() => {
+    const shouldAutoPrint = sessionStorage.getItem('liquidaciones:autoPrint');
+    if (shouldAutoPrint === '1') {
+      sessionStorage.removeItem('liquidaciones:autoPrint');
+      setAutoPrintPending(true);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!autoPrintPending) return;
+
+    const timer = window.setTimeout(() => {
+      handleImprimir();
+      setAutoPrintPending(false);
+    }, 250);
+
+    return () => window.clearTimeout(timer);
+  }, [autoPrintPending]);
 
 
 
@@ -103,7 +123,8 @@ export default function LiquidacionesClient({
           setError("");
           setMessage("Liquidación creada y aprobada correctamente.");
           setPlanillasSeleccionadas([]);
-          setTimeout(() => window.location.reload(), 2000);
+          sessionStorage.setItem('liquidaciones:autoPrint', '1');
+          setTimeout(() => window.location.reload(), 1200);
         }
       } catch (e) {
         setError("Ocurrió un error inesperado. Intenta de nuevo.");
@@ -113,33 +134,172 @@ export default function LiquidacionesClient({
     }
 
     function handleImprimir() {
-      const contenido = document.getElementById('liquidaciones-print-area')?.innerHTML;
-      if (!contenido) return;
-
       const ventana = window.open('', '', 'height=700,width=1000');
       if (!ventana) return;
+
+      const planillasVisibles = planillasFiltradas;
+      const planillasSeleccionadasData = planillasFiltradas.filter((p) => planillasSeleccionadas.includes(p.id));
+      const totalVisibles = planillasVisibles.reduce((sum, p) => sum + (parseFloat(String(p.valor)) || 0), 0);
+      const totalSeleccionadas = planillasSeleccionadasData.reduce((sum, p) => sum + (parseFloat(String(p.valor)) || 0), 0);
+
+      const renderTablaPlanillas = (rows: any[]) => {
+        if (rows.length === 0) {
+          return '<p class="empty">No hay registros para mostrar.</p>';
+        }
+
+        return `
+          <table>
+            <thead>
+              <tr>
+                <th>N° Planilla</th>
+                <th>Fecha</th>
+                <th>Vehículo</th>
+                <th>Conductor</th>
+                <th class="right">Valor</th>
+                <th>Tipo Pago</th>
+                <th>Estado</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${rows.map((p) => `
+                <tr>
+                  <td>${p.numero_planilla || ''}</td>
+                  <td>${formatFechaColombia(p.fecha)}</td>
+                  <td>${p.codigo_vehiculo || ''}</td>
+                  <td>${p.conductor || ''}</td>
+                  <td class="right">$${(parseFloat(String(p.valor)) || 0).toLocaleString('es-CO')}</td>
+                  <td>${p.tipo_pago || ''}</td>
+                  <td>${p.estado || ''}</td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        `;
+      };
+
+      const renderLiquidaciones = () => {
+        if (!liquidacionesPendientes || liquidacionesPendientes.length === 0) {
+          return '<p class="empty">No hay liquidaciones registradas.</p>';
+        }
+
+        return liquidacionesPendientes.map((liquidacion) => {
+          const totalCalculado = (liquidacion.detalles || []).reduce((sum: number, d: any) => sum + (parseFloat(String(d.monto)) || 0), 0);
+
+          return `
+            <div class="card page-break">
+              <div class="row">
+                <div>
+                  <h3>Liquidación #${liquidacion.id}</h3>
+                  <div class="muted">Operador: ${liquidacion.operador_nombre || liquidacion.usuario || 'Desconocido'}</div>
+                  <div class="muted">Fecha: ${formatFechaColombia(liquidacion.fecha)}</div>
+                  <div class="muted">Estado: ${liquidacion.estado || ''}</div>
+                </div>
+                <div class="total">$${totalCalculado.toLocaleString('es-CO')}</div>
+              </div>
+              <h4>Planillas incluidas</h4>
+              <table>
+                <thead>
+                  <tr>
+                    <th>N° Planilla</th>
+                    <th>Vehículo</th>
+                    <th class="right">Monto</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${(liquidacion.detalles || []).map((detalle: any) => `
+                    <tr>
+                      <td>${detalle.numero_planilla || ''}</td>
+                      <td>${detalle.codigo_vehiculo || ''}</td>
+                      <td class="right">$${(parseFloat(String(detalle.monto)) || 0).toLocaleString('es-CO')}</td>
+                    </tr>
+                  `).join('')}
+                </tbody>
+              </table>
+            </div>
+          `;
+        }).join('');
+      };
 
       ventana.document.write(`
         <html>
           <head>
-            <title>Liquidaciones</title>
+            <title>Reporte de Liquidaciones</title>
             <style>
-              body { font-family: Arial, sans-serif; margin: 24px; color: #111827; }
-              h1, h2, h3 { margin: 0 0 12px; }
-              .section { margin-bottom: 24px; }
-              .card { border: 1px solid #d1d5db; border-radius: 10px; padding: 16px; margin-bottom: 12px; }
-              .row { display: flex; justify-content: space-between; gap: 16px; }
-              .muted { color: #6b7280; font-size: 12px; }
-              .badge { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 11px; background: #e5e7eb; }
-              table { width: 100%; border-collapse: collapse; }
-              th, td { border: 1px solid #d1d5db; padding: 6px 8px; text-align: left; font-size: 12px; }
+              @page { size: A4 portrait; margin: 14mm; }
+              * { box-sizing: border-box; }
+              body { font-family: Arial, Helvetica, sans-serif; margin: 0; color: #111827; font-size: 12px; }
+              .report { padding: 0; }
+              .header { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 2px solid #111827; padding-bottom: 12px; margin-bottom: 16px; }
+              .title { font-size: 20px; font-weight: 700; margin: 0 0 4px; }
+              .subtitle { color: #6b7280; margin: 0; }
+              .meta { text-align: right; font-size: 11px; color: #374151; }
+              .summary { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 16px; }
+              .box { border: 1px solid #d1d5db; border-radius: 10px; padding: 10px 12px; background: #f9fafb; }
+              .label { font-size: 10px; text-transform: uppercase; letter-spacing: .04em; color: #6b7280; margin-bottom: 4px; }
+              .value { font-size: 18px; font-weight: 700; color: #111827; }
+              .section { margin-bottom: 16px; }
+              .section-title { font-size: 14px; font-weight: 700; margin: 0 0 8px; }
+              .card { border: 1px solid #d1d5db; border-radius: 10px; padding: 12px; margin-bottom: 12px; }
+              .page-break { page-break-inside: avoid; }
+              .row { display: flex; justify-content: space-between; gap: 16px; align-items: flex-start; margin-bottom: 10px; }
+              .muted { color: #6b7280; font-size: 11px; margin-top: 2px; }
+              .total { font-size: 22px; font-weight: 700; color: #047857; white-space: nowrap; }
+              table { width: 100%; border-collapse: collapse; margin-top: 8px; }
+              th, td { border: 1px solid #d1d5db; padding: 6px 8px; text-align: left; font-size: 11px; }
               th { background: #f3f4f6; }
-              @media print { button { display: none; } }
+              .right { text-align: right; }
+              .empty { color: #6b7280; font-style: italic; }
             </style>
           </head>
           <body>
-            <h1>Liquidaciones</h1>
-            ${contenido}
+            <div class="report">
+              <div class="header">
+                <div>
+                  <h1 class="title">Reporte de Liquidaciones</h1>
+                  <p class="subtitle">Sistema de Planillas Cootaxconsota</p>
+                </div>
+                <div class="meta">
+                  <div>Generado: ${new Date().toLocaleString('es-CO')}</div>
+                  <div>Rol: ${rol}</div>
+                </div>
+              </div>
+
+              <div class="summary">
+                <div class="box">
+                  <div class="label">Planillas visibles</div>
+                  <div class="value">${planillasVisibles.length}</div>
+                </div>
+                <div class="box">
+                  <div class="label">Seleccionadas</div>
+                  <div class="value">${planillasSeleccionadasData.length}</div>
+                </div>
+                <div class="box">
+                  <div class="label">Total visible</div>
+                  <div class="value">$${totalVisibles.toLocaleString('es-CO')}</div>
+                </div>
+              </div>
+
+              <div class="section">
+                <div class="section-title">Planillas filtradas</div>
+                ${renderTablaPlanillas(planillasVisibles)}
+              </div>
+
+              <div class="section">
+                <div class="section-title">Liquidaciones registradas</div>
+                ${renderLiquidaciones()}
+              </div>
+
+              ${planillasSeleccionadasData.length > 0 ? `
+                <div class="section">
+                  <div class="section-title">Planillas seleccionadas</div>
+                  <div class="box" style="margin-bottom:10px;">
+                    <div class="label">Total seleccionado</div>
+                    <div class="value">$${totalSeleccionadas.toLocaleString('es-CO')}</div>
+                  </div>
+                  ${renderTablaPlanillas(planillasSeleccionadasData)}
+                </div>
+              ` : ''}
+            </div>
           </body>
         </html>
       `);
@@ -224,6 +384,8 @@ export default function LiquidacionesClient({
             {error || message}
           </div>
         )}
+
+        <div id="liquidaciones-print-content">
 
         {/* Sección de planillas para liquidar (Operador y Administrador) */}
         {(rol === 'operador' || rol === 'administrador') && (
@@ -538,6 +700,7 @@ export default function LiquidacionesClient({
               })}
             </div>
           )}
+        </div>
         </div>
         </div>
       </main>
