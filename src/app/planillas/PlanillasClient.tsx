@@ -54,6 +54,10 @@ export default function PlanillasClient({ planillas, vehiculos, operadores, valo
     );
   });
 
+  const totalValorFiltrado = planillasFiltradas.reduce((sum, p) => sum + (parseFloat(String(p.valor)) || 0), 0);
+  const totalPendientes = planillasFiltradas.filter((p) => p.estado === 'pendiente').length;
+  const totalRecaudadas = planillasFiltradas.filter((p) => p.estado === 'recaudada').length;
+
   function exportarPlanillas() {
     if (planillasFiltradas.length === 0) {
       alert('No hay planillas para exportar');
@@ -110,62 +114,163 @@ export default function PlanillasClient({ planillas, vehiculos, operadores, valo
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <header className="bg-white shadow">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
-          <h1 className="text-2xl font-bold text-gray-900">Planillas</h1>
-          <a href="/dashboard" className="text-blue-600 hover:text-blue-800">
-            ← Volver al Dashboard
-          </a>
-        </div>
-      </header>
-
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="bg-white rounded-lg shadow">
-          <div className="p-6 border-b border-gray-200 flex flex-col md:flex-row md:items-center md:justify-between gap-2">
-            <h2 className="text-xl font-semibold">Gestión de Planillas</h2>
-            <div className="flex gap-2">
+    <div className="min-h-screen bg-slate-100 py-8">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
+        <section className="overflow-hidden rounded-3xl bg-gradient-to-r from-slate-900 via-slate-800 to-blue-900 text-white shadow-2xl">
+          <div className="flex flex-col gap-6 px-6 py-8 sm:px-8 lg:flex-row lg:items-end lg:justify-between">
+            <div className="max-w-2xl">
+              <div className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-xs font-medium uppercase tracking-[0.2em] text-white/80">
+                Planillas
+              </div>
+              <h1 className="mt-4 text-3xl font-bold tracking-tight sm:text-4xl">Gestión de planillas</h1>
+              <p className="mt-2 text-sm text-slate-200 sm:text-base">Consulta, crea, importa y exporta planillas desde un panel más ordenado.</p>
+            </div>
+            <div className="flex flex-wrap gap-3">
               <button
                 onClick={() => setShowForm(true)}
-                className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+                className="rounded-full bg-white px-4 py-2 text-sm font-semibold text-slate-900 transition hover:bg-slate-100"
               >
-                + Nueva Planilla
+                + Nueva planilla
               </button>
               <button
                 onClick={() => setShowImport(true)}
-                className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
+                className="rounded-full bg-emerald-500 px-4 py-2 text-sm font-semibold text-white transition hover:bg-emerald-400"
               >
-                Importar planillas
+                Importar
               </button>
               <button
                 onClick={exportarPlanillas}
-                className="bg-purple-600 text-white px-4 py-2 rounded hover:bg-purple-700 flex items-center gap-2"
+                className="rounded-full bg-indigo-500 px-4 py-2 text-sm font-semibold text-white transition hover:bg-indigo-400"
               >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                </svg>
                 Exportar
               </button>
+              <a href="/dashboard" className="rounded-full border border-white/20 bg-white/5 px-4 py-2 text-sm font-medium text-white transition hover:bg-white/10">
+                Volver
+              </a>
             </div>
           </div>
+        </section>
 
-          {/* Buscador */}
-          <div className="p-4 bg-gray-50 border-b border-gray-200">
+        <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+          <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Planillas visibles</p>
+            <p className="mt-2 text-3xl font-bold text-slate-900">{planillasFiltradas.length}</p>
+          </div>
+          <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Valor total</p>
+            <p className="mt-2 text-3xl font-bold text-slate-900">${totalValorFiltrado.toLocaleString('es-CO')}</p>
+          </div>
+          <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Pendientes</p>
+            <p className="mt-2 text-3xl font-bold text-amber-600">{totalPendientes}</p>
+          </div>
+          <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Recaudadas</p>
+            <p className="mt-2 text-3xl font-bold text-blue-700">{totalRecaudadas}</p>
+          </div>
+        </section>
+
+        <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+          <div className="mb-4">
+            <label className="mb-2 block text-sm font-medium text-slate-700">Buscar planilla</label>
             <input
               type="text"
-              placeholder="🔍 Buscar por N° planilla, conductor, vehículo, tipo o estado..."
+              placeholder="Buscar por N° planilla, conductor, vehículo, tipo o estado..."
               value={busqueda}
               onChange={(e) => setBusqueda(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
             />
             {busqueda && (
-              <p className="mt-2 text-sm text-gray-600">
+              <p className="mt-2 text-sm text-slate-600">
                 Mostrando {planillasFiltradas.length} de {planillas.length} planillas
               </p>
             )}
           </div>
+
+          <div className="overflow-hidden rounded-2xl border border-slate-200">
+            <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-slate-200">
+                <thead className="bg-slate-50">
+                  <tr>
+                    <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-[0.12em] text-slate-600">N°</th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-[0.12em] text-slate-600">Fecha</th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-[0.12em] text-slate-600">Vehículo</th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-[0.12em] text-slate-600">Conductor</th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-[0.12em] text-slate-600">Operador</th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-[0.12em] text-slate-600">Tipo</th>
+                    <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-[0.12em] text-slate-600">Valor</th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-[0.12em] text-slate-600">Estado</th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-[0.12em] text-slate-600">Acciones</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100 bg-white">
+                  {planillasFiltradas && planillasFiltradas.length > 0 ? (
+                    planillasFiltradas.map((planilla: any) => (
+                      <tr key={planilla.id} className="hover:bg-slate-50">
+                        <td className="px-4 py-3 text-sm font-semibold text-slate-900">{planilla.numero_planilla}</td>
+                        <td className="px-4 py-3 text-sm text-slate-600">{formatFechaColombia(planilla.fecha)}</td>
+                        <td className="px-4 py-3 text-sm text-slate-900">{planilla.vehiculos?.codigo_vehiculo || ''}</td>
+                        <td className="px-4 py-3 text-sm text-slate-900">{planilla.conductor || ''}</td>
+                        <td className="px-4 py-3 text-sm text-slate-700">{planilla.operador || ''}</td>
+                        <td className="px-4 py-3 text-sm">
+                          <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${
+                            planilla.tipo_pago === 'contado' ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'
+                          }`}>
+                            {planilla.tipo_pago || ''}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3 text-right text-sm font-semibold text-slate-900">
+                          ${(parseFloat(planilla.valor) || 0).toLocaleString('es-CO')}
+                        </td>
+                        <td className="px-4 py-3 text-sm">
+                          <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${
+                            planilla.estado === 'recaudada' ? 'bg-blue-100 text-blue-800' :
+                            planilla.estado === 'pagada' ? 'bg-emerald-100 text-emerald-800' :
+                            'bg-amber-100 text-amber-800'
+                          }`}>
+                            {planilla.estado}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3 text-sm">
+                          <button
+                            onClick={() => setPlanillaVer(planilla)}
+                            className="mr-3 font-semibold text-blue-600 transition hover:text-blue-800"
+                          >
+                            Ver
+                          </button>
+                          <button
+                            onClick={() => setPlanillaEditar(planilla)}
+                            className="mr-3 font-semibold text-emerald-600 transition hover:text-emerald-800"
+                          >
+                            Editar
+                          </button>
+                          {rol === 'administrador' && (
+                            <button
+                              onClick={() => handleEliminar(planilla.id, planilla.numero_planilla)}
+                              className="font-semibold text-red-600 transition hover:text-red-800"
+                            >
+                              Eliminar
+                            </button>
+                          )}
+                        </td>
+                      </tr>
+                    ))
+                  ) : (
+                    <tr>
+                      <td colSpan={9} className="px-6 py-10 text-center text-slate-500">
+                        No hay planillas registradas
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+      </main>
+
       {showImport && (
-        <ImportarPlanillasModal 
+        <ImportarPlanillasModal
           onClose={() => setShowImport(false)}
           onImport={async (data) => {
             try {
@@ -188,96 +293,6 @@ export default function PlanillasClient({ planillas, vehiculos, operadores, valo
           }}
         />
       )}
-
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">N° Planilla</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Fecha</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Vehículo</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Conductor</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Operador</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Tipo</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Valor</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Estado</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Acciones</th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {planillasFiltradas && planillasFiltradas.length > 0 ? (
-                  planillasFiltradas.map((planilla: any) => (
-                    <tr key={planilla.id}>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                        {planilla.numero_planilla}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {formatFechaColombia(planilla.fecha)}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {planilla.vehiculos?.codigo_vehiculo || ''}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {planilla.conductor || ''}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {planilla.operador || ''}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        <span className={`px-2 py-1 rounded-full text-xs ${
-                          planilla.tipo_pago === 'contado' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
-                        }`}>
-                          {planilla.tipo_pago || ''}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        ${(parseFloat(planilla.valor) || 0).toLocaleString('es-CO')}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm">
-                        <span className={`px-2 py-1 rounded-full text-xs ${
-                          planilla.estado === 'recaudada' ? 'bg-blue-100 text-blue-800' :
-                          planilla.estado === 'pagada' ? 'bg-green-100 text-green-800' :
-                          'bg-yellow-100 text-yellow-800'
-                        }`}>
-                          {planilla.estado}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        <button 
-                          onClick={() => setPlanillaVer(planilla)}
-                          className="text-blue-600 hover:text-blue-900 mr-3"
-                        >
-                          Ver
-                        </button>
-                        <button 
-                          onClick={() => setPlanillaEditar(planilla)}
-                          className="text-green-600 hover:text-green-900 mr-3"
-                        >
-                          Editar
-                        </button>
-                        {rol === 'administrador' && (
-                          <button 
-                            onClick={() => handleEliminar(planilla.id, planilla.numero_planilla)}
-                            className="text-red-600 hover:text-red-900"
-                          >
-                            Eliminar
-                          </button>
-                        )}
-                      </td>
-                    </tr>
-                  ))
-                ) : (
-                  <tr>
-                    <td colSpan={9} className="px-6 py-4 text-center text-gray-500">
-                      No hay planillas registradas
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </main>
 
       {showForm && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
