@@ -10,8 +10,13 @@ export default function DashboardClient({ user, rol, modulos, metricas }: { user
   const [operadores, setOperadores] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [pinValidado, setPinValidado] = useState(false);
+  const requierePin = rol !== 'administrador';
 
   useEffect(() => {
+    if (!requierePin) {
+      setPinValidado(true);
+    }
+
     const pinSesion = sessionStorage.getItem(`pinValidado:${user.email}`);
     if (pinSesion) {
       setPinValidado(true);
@@ -32,11 +37,11 @@ export default function DashboardClient({ user, rol, modulos, metricas }: { user
     }
     if (!operador) fetchOperadores();
     else setLoading(false);
-  }, [user.email, operador, setOperador]);
+  }, [user.email, operador, setOperador, requierePin]);
 
   if (loading) return <div className="p-8 text-center">Cargando...</div>;
 
-  if (!pinValidado) {
+  if (requierePin && !pinValidado) {
     return (
       <ValidarPinModal
         email={user.email}
