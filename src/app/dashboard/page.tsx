@@ -91,6 +91,29 @@ async function obtenerMetricasDashboard() {
     `);
     const totalVehiculos = parseInt(vehiculos?.[0]?.count || '0', 10);
 
+    // Distribución de planillas registradas por usuario (mes actual)
+    const planillasPorUsuario = await query<{ usuario: string; total: string }>(`
+      SELECT
+        COALESCE(NULLIF(TRIM(usuario), ''), 'Sin usuario') AS usuario,
+        COUNT(*)::text AS total
+      FROM planillas
+      WHERE fecha >= DATE_TRUNC('month', CURRENT_DATE)
+      GROUP BY 1
+      ORDER BY COUNT(*) DESC
+      LIMIT 6
+    `);
+
+    const totalPlanillasMes = planillasPorUsuario.reduce((acc, row) => acc + parseInt(row.total || '0', 10), 0);
+    const participacionPlanillas = planillasPorUsuario.map((row) => {
+      const total = parseInt(row.total || '0', 10);
+      const porcentaje = totalPlanillasMes > 0 ? Math.round((total / totalPlanillasMes) * 100) : 0;
+      return {
+        usuario: row.usuario,
+        total,
+        porcentaje,
+      };
+    });
+
     return {
       dineroSinLiquidar,
       totalCartera,
@@ -99,6 +122,7 @@ async function obtenerMetricasDashboard() {
       totalRecaudadoMes,
       numPlanillasHoy,
       totalVehiculos,
+      participacionPlanillas,
     };
   } catch (error) {
     console.error('Error obteniendo métricas del dashboard:', error);
@@ -110,6 +134,7 @@ async function obtenerMetricasDashboard() {
       totalRecaudadoMes: 0,
       numPlanillasHoy: 0,
       totalVehiculos: 0,
+      participacionPlanillas: [],
     };
   }
 }

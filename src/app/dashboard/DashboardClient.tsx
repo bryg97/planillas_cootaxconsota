@@ -133,41 +133,21 @@ export default function DashboardClient({ user, rol, modulos, metricas }: { user
     return 'Buenas noches';
   };
 
-  const porcentajeMetaMes = Math.min(
-    100,
-    Math.round((Number(metricas.totalRecaudadoMes || 0) / 25000000) * 100)
-  );
+  const participacionPlanillas = Array.isArray(metricas.participacionPlanillas)
+    ? metricas.participacionPlanillas
+    : [];
+
+  function nombreCortoUsuario(usuario: string) {
+    if (!usuario) return 'Sin usuario';
+    const limpio = usuario.trim();
+    if (limpio.includes('@')) {
+      return limpio.split('@')[0];
+    }
+    return limpio;
+  }
 
   return (
     <div className="min-h-screen bg-slate-100">
-      <nav className="bg-white/90 border-b border-slate-200 shadow-sm backdrop-blur">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <div className="flex items-center gap-3">
-              <div className="text-2xl">🚖</div>
-              <div>
-                <h1 className="text-lg font-semibold text-slate-900 tracking-tight">
-                  Cootaxconsota
-                </h1>
-                <p className="text-xs text-slate-500">
-                  Sistema de Planillas
-                </p>
-              </div>
-            </div>
-            <div className="flex items-center gap-4">
-              <div className="text-right">
-                <p className="text-sm font-medium text-slate-700">
-                  {operador ? operador.nombre : user.user_metadata?.full_name || user.email}
-                </p>
-                <p className="text-xs text-slate-500 capitalize">
-                  {rol}
-                </p>
-              </div>
-              <LogoutButton />
-            </div>
-          </div>
-        </div>
-      </nav>
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <section className="mb-8 overflow-hidden rounded-3xl bg-gradient-to-r from-slate-900 via-slate-800 to-blue-900 text-white shadow-2xl">
           <div className="grid gap-6 px-6 py-7 sm:px-8 lg:grid-cols-[1.2fr_0.8fr] lg:items-end">
@@ -181,14 +161,32 @@ export default function DashboardClient({ user, rol, modulos, metricas }: { user
               </p>
             </div>
 
-            <div className="rounded-2xl border border-white/15 bg-white/10 p-4">
-              <p className="text-xs uppercase tracking-[0.18em] text-white/70">Meta mensual de recaudo</p>
-              <div className="mt-2 flex items-end justify-between">
-                <p className="text-2xl font-bold">{porcentajeMetaMes}%</p>
-                <p className="text-xs text-white/70">objetivo: $25.000.000</p>
+            <div>
+              <div className="mb-3 flex justify-end">
+                <LogoutButton />
               </div>
-              <div className="mt-3 h-2 rounded-full bg-white/20">
-                <div className="h-2 rounded-full bg-emerald-300 transition-all" style={{ width: `${porcentajeMetaMes}%` }} />
+              <div className="rounded-2xl border border-white/15 bg-white/10 p-4">
+              <p className="text-xs uppercase tracking-[0.18em] text-white/70">Planillas por usuario (mes actual)</p>
+
+              {participacionPlanillas.length === 0 ? (
+                <div className="mt-3 rounded-xl bg-white/10 px-3 py-3 text-xs text-white/80">
+                  Aún no hay planillas registradas este mes.
+                </div>
+              ) : (
+                <div className="mt-3 space-y-3">
+                  {participacionPlanillas.map((item: any) => (
+                    <div key={item.usuario}>
+                      <div className="mb-1 flex items-center justify-between text-xs">
+                        <span className="font-semibold text-white/90">{nombreCortoUsuario(item.usuario)}</span>
+                        <span className="text-white/80">{item.porcentaje}% · {item.total}</span>
+                      </div>
+                      <div className="h-2 rounded-full bg-white/20">
+                        <div className="h-2 rounded-full bg-emerald-300 transition-all" style={{ width: `${Math.min(100, Number(item.porcentaje) || 0)}%` }} />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
               </div>
             </div>
           </div>
