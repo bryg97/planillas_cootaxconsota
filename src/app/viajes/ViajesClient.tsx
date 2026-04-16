@@ -2,6 +2,7 @@
 
 import { useMemo, useRef, useState } from 'react';
 import { crearConvenio, crearViaje, eliminarConvenio, guardarValidacionAutorizador, eliminarValidacionAutorizador, eliminarViajesPorLateral } from './actions';
+import FormPlanilla from '../planillas/FormPlanilla';
 
 type Vehiculo = {
   id: number;
@@ -59,6 +60,15 @@ type PlanillaDisponible = {
   conductor: string | null;
 };
 
+type PlanillaCreada = {
+  id: number;
+  numero_planilla: string;
+  vehiculo_id: number;
+  fecha: string;
+  estado: string;
+  conductor: string;
+};
+
 function formatearMedioContacto(medio: string) {
   if (medio === 'llamada_telefonica') return 'Llamada telefónica';
   if (medio === 'whatsapp') return 'WhatsApp';
@@ -78,7 +88,8 @@ export default function ViajesClient({
   validacionesAutorizador,
   ultimoViaje,
   viajes,
-  planillasDisponibles
+  planillasDisponibles,
+  valorPlanillaDefecto
 }: {
   rol: string;
   vehiculos: Vehiculo[];
@@ -88,6 +99,7 @@ export default function ViajesClient({
   ultimoViaje: UltimoViaje;
   viajes: ViajeListado[];
   planillasDisponibles: PlanillaDisponible[];
+  valorPlanillaDefecto?: number;
 }) {
   const formViajeRef = useRef<HTMLFormElement>(null);
   const [loadingViaje, setLoadingViaje] = useState(false);
@@ -110,8 +122,10 @@ export default function ViajesClient({
   const [lateralEliminarId, setLateralEliminarId] = useState('');
   const [errorEliminarViajes, setErrorEliminarViajes] = useState('');
   const [mostrarModalPlanilla, setMostrarModalPlanilla] = useState(false);
+  const [mostrarFormularioPlanilla, setMostrarFormularioPlanilla] = useState(false);
   const [planillaSeleccionadaId, setPlanillaSeleccionadaId] = useState('');
   const [errorPlanilla, setErrorPlanilla] = useState('');
+  const [planillasDisponiblesState, setPlanillasDisponiblesState] = useState(planillasDisponibles);
 
   const vehiculoBloqueado = useMemo(() => {
     if (!ultimoViaje || omiteConsecutivo) return null;
@@ -128,13 +142,36 @@ export default function ViajesClient({
     const lateralId = parseInt(vehiculoId, 10);
     if (!lateralId) return [];
 
-    return planillasDisponibles.filter((p) => p.vehiculo_id === lateralId);
-  }, [planillasDisponibles, vehiculoId]);
+    return planillasDisponiblesState.filter((p) => p.vehiculo_id === lateralId);
+  }, [planillasDisponiblesState, vehiculoId]);
 
   const planillaSeleccionada = useMemo(
-    () => planillasDisponibles.find((p) => String(p.id) === planillaSeleccionadaId),
-    [planillasDisponibles, planillaSeleccionadaId]
+    () => planillasDisponiblesState.find((p) => String(p.id) === planillaSeleccionadaId),
+    [planillasDisponiblesState, planillaSeleccionadaId]
   );
+
+  function handlePlanillaCreada(planilla: PlanillaCreada) {
+    const vehiculoCreado = vehiculos.find((v) => v.id === planilla.vehiculo_id);
+
+    const nuevaPlanilla: PlanillaDisponible = {
+      id: planilla.id,
+      numero_planilla: planilla.numero_planilla,
+      vehiculo_id: planilla.vehiculo_id,
+      codigo_vehiculo: vehiculoCreado?.codigo_vehiculo || null,
+      fecha: planilla.fecha,
+      estado: planilla.estado,
+      conductor: planilla.conductor || null
+    };
+
+    setPlanillasDisponiblesState((prev) => {
+      const sinDuplicado = prev.filter((p) => p.id !== nuevaPlanilla.id);
+      return [nuevaPlanilla, ...sinDuplicado];
+    });
+    setPlanillaSeleccionadaId(String(planilla.id));
+    setErrorPlanilla('');
+    setMostrarFormularioPlanilla(false);
+    setMostrarModalPlanilla(true);
+  }
 
   async function handleCrearViaje(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -967,12 +1004,16 @@ export default function ViajesClient({
                   <p className="text-sm text-slate-700">
                     No hay planillas registradas para este lateral. Debe crear una planilla antes de continuar.
                   </p>
-                  <a
-                    href="/planillas"
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setMostrarModalPlanilla(false);
+                      setMostrarFormularioPlanilla(true);
+                    }}
                     className="inline-flex items-center rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-blue-500"
                   >
-                    Ir a crear planilla
-                  </a>
+                    Crear planilla aquí
+                  </button>
                 </div>
               )}
 
@@ -1007,6 +1048,16 @@ export default function ViajesClient({
             <div className="flex flex-wrap justify-end gap-2 border-t border-slate-200 bg-slate-50 px-6 py-4">
               <button
                 type="button"
+                onClick={() => {
+                  setMostrarModalPlanilla(false);
+                  setMostrarFormularioPlanilla(true);
+                }}
+                className="rounded-xl border border-blue-300 bg-blue-50 px-4 py-2 text-sm font-semibold text-blue-700 transition hover:bg-blue-100"
+              >
+                Crear nueva planilla
+              </button>
+              <button
+                type="button"
                 onClick={() => setMostrarModalPlanilla(false)}
                 className="rounded-xl border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-100"
               >
@@ -1021,6 +1072,23 @@ export default function ViajesClient({
               </button>
             </div>
           </div>
+        </div>
+      )}
+
+      {mostrarFormularioPlanilla && (
+        <div className="fixed inset-0 z-[60] bg-black/50">
+          <FormPlanilla
+            vehiculos={vehiculos}
+            operadores={autorizadores}
+            valorDefecto={valorPlanillaDefecto}
+            recargarAlGuardar={false}
+            vehiculoInicialId={vehiculoId ? parseInt(vehiculoId, 10) : undefined}
+            onPlanillaCreada={handlePlanillaCreada}
+            onClose={() => {
+              setMostrarFormularioPlanilla(false);
+              setMostrarModalPlanilla(true);
+            }}
+          />
         </div>
       )}
     </div>

@@ -248,12 +248,19 @@ export async function createPlanilla(formData: FormData) {
     }
 
     // Insertar planilla
-    const result = await queryOne<{ id: number }>(
+    const result = await queryOne<{
+      id: number;
+      numero_planilla: string;
+      vehiculo_id: number;
+      fecha: string;
+      estado: string;
+      conductor: string;
+    }>(
       `INSERT INTO planillas (
         vehiculo_id, conductor, operador, valor, numero_planilla, fecha,
         operador_id, pagada, tipo_pago, estado, origen, destino
       ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
-      RETURNING id`,
+      RETURNING id, numero_planilla, vehiculo_id, fecha, estado, conductor`,
       [
         vehiculoId,
         conductor,

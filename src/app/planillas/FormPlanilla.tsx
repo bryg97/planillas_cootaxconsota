@@ -19,16 +19,31 @@ import { useOperadorSeleccionado } from '../hooks/useOperadorSeleccionado';
 import { createPlanilla, verificarDeudaVehiculo, recaudarPlanillas, verificarNumeroPlanillaExiste } from './actions';
 import { useSession } from 'next-auth/react';
 
+type PlanillaCreada = {
+  id: number;
+  numero_planilla: string;
+  vehiculo_id: number;
+  fecha: string;
+  estado: string;
+  conductor: string;
+};
+
 export default function FormPlanilla({ 
   vehiculos,
   operadores = [],
   valorDefecto,
-  onClose 
+  onClose,
+  recargarAlGuardar = true,
+  onPlanillaCreada,
+  vehiculoInicialId
 }: { 
   vehiculos: any[];
   operadores?: any[];
   valorDefecto?: number;
   onClose: () => void;
+  recargarAlGuardar?: boolean;
+  onPlanillaCreada?: (planilla: PlanillaCreada) => void;
+  vehiculoInicialId?: number;
 }) {
   // Obtener email del usuario autenticado desde sesión NextAuth
   const { data: session } = useSession();
@@ -56,6 +71,14 @@ export default function FormPlanilla({
   const [saldoFavor, setSaldoFavor] = useState(0);
   const [usarSaldoFavor, setUsarSaldoFavor] = useState(false);
   const vehiculoActual = vehiculos.find((v) => v.id === parseInt(vehiculoSeleccionado || '0'));
+
+  useEffect(() => {
+    if (vehiculoInicialId && Number.isInteger(vehiculoInicialId)) {
+      handleVehiculoChange(String(vehiculoInicialId));
+    }
+    // Solo debe correr al abrir el formulario con un vehículo inicial.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [vehiculoInicialId]);
 
   // Sin autollenado: el usuario debe ingresar manualmente el número de planilla
 
@@ -180,9 +203,14 @@ export default function FormPlanilla({
         setError(result.error);
         setLoading(false);
       } else {
+        if (result.data && onPlanillaCreada) {
+          onPlanillaCreada(result.data as PlanillaCreada);
+        }
         alert('✅ Planilla registrada exitosamente');
         onClose();
-        window.location.reload();
+        if (recargarAlGuardar) {
+          window.location.reload();
+        }
       }
     } catch (err) {
       setError('Error al guardar la planilla: ' + String(err));

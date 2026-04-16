@@ -54,6 +54,10 @@ type PlanillaDisponible = {
   conductor: string | null;
 };
 
+type ConfiguracionValorDefecto = {
+  valor_planilla_defecto: number;
+};
+
 type UltimoViaje = {
   id: number;
   vehiculo_id: number;
@@ -151,6 +155,10 @@ export default async function ViajesPage() {
     LIMIT 500`
   );
 
+  const configuracion = await query<ConfiguracionValorDefecto>(
+    'SELECT valor_planilla_defecto FROM configuracion LIMIT 1'
+  );
+
   return (
     <ViajesClient
       rol={rol}
@@ -161,6 +169,7 @@ export default async function ViajesPage() {
       ultimoViaje={ultimoViaje}
       viajes={viajes}
       planillasDisponibles={planillasDisponibles}
+      valorPlanillaDefecto={configuracion[0]?.valor_planilla_defecto || 0}
     />
   );
 }
