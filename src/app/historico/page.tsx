@@ -22,7 +22,6 @@ export default async function HistoricoPage() {
     LEFT JOIN usuarios u ON p.operador_id = u.id
     WHERE p.estado IN ('liquidada', 'pagada', 'aprobada')
     ORDER BY p.created_at DESC NULLS LAST, p.fecha DESC
-    LIMIT 100
   `);
 
   return <HistoricoClient planillas={planillas || []} />;

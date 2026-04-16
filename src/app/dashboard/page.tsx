@@ -68,19 +68,21 @@ async function obtenerMetricasDashboard() {
     const numLiquidacionesPendientes = parseInt(liquidacionesPendientes?.[0]?.count || '0', 10);
     const montoLiquidacionesPendientes = parseFloat(liquidacionesPendientes?.[0]?.total || '0');
 
-    // Total recaudado este mes (por fecha de registro)
+    // Total recaudado este mes (mismo criterio del histórico)
     const recaudadoMes = await query<{ total: string }>(`
       SELECT COALESCE(SUM(valor), 0) as total 
       FROM planillas 
       WHERE COALESCE(created_at::date, fecha) >= DATE_TRUNC('month', CURRENT_DATE)::date
+      AND estado IN ('liquidada', 'pagada', 'aprobada')
     `);
     const totalRecaudadoMes = parseFloat(recaudadoMes?.[0]?.total || '0');
 
-    // Planillas creadas hoy (por fecha de registro)
+    // Planillas creadas hoy (mismo criterio del histórico)
     const planillasHoy = await query<{ count: string }>(`
       SELECT COUNT(*) as count 
       FROM planillas 
       WHERE COALESCE(created_at::date, fecha) = CURRENT_DATE
+      AND estado IN ('liquidada', 'pagada', 'aprobada')
     `);
     const numPlanillasHoy = parseInt(planillasHoy?.[0]?.count || '0', 10);
 
