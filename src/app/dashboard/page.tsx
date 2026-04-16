@@ -68,19 +68,19 @@ async function obtenerMetricasDashboard() {
     const numLiquidacionesPendientes = parseInt(liquidacionesPendientes?.[0]?.count || '0', 10);
     const montoLiquidacionesPendientes = parseFloat(liquidacionesPendientes?.[0]?.total || '0');
 
-    // Total recaudado este mes
+    // Total recaudado este mes (por fecha de registro)
     const recaudadoMes = await query<{ total: string }>(`
       SELECT COALESCE(SUM(valor), 0) as total 
       FROM planillas 
-      WHERE fecha >= DATE_TRUNC('month', CURRENT_DATE)
+      WHERE COALESCE(created_at::date, fecha) >= DATE_TRUNC('month', CURRENT_DATE)::date
     `);
     const totalRecaudadoMes = parseFloat(recaudadoMes?.[0]?.total || '0');
 
-    // Planillas creadas hoy
+    // Planillas creadas hoy (por fecha de registro)
     const planillasHoy = await query<{ count: string }>(`
       SELECT COUNT(*) as count 
       FROM planillas 
-      WHERE DATE(fecha) = CURRENT_DATE
+      WHERE COALESCE(created_at::date, fecha) = CURRENT_DATE
     `);
     const numPlanillasHoy = parseInt(planillasHoy?.[0]?.count || '0', 10);
 
@@ -91,24 +91,25 @@ async function obtenerMetricasDashboard() {
     `);
     const totalVehiculos = parseInt(vehiculos?.[0]?.count || '0', 10);
 
-    // Distribución de planillas registradas por usuario (mes actual)
-    const planillasPorUsuario = await query<{ usuario: string; total: string }>(`
+    // Distribución de planillas registradas por operador (mes actual, por fecha de registro)
+    const planillasPorOperador = await query<{ operador: string; total: string }>(`
       SELECT
-        COALESCE(NULLIF(TRIM(usuario), ''), 'Sin usuario') AS usuario,
+        COALESCE(NULLIF(TRIM(u.usuario), ''), 'Sin operador') AS operador,
         COUNT(*)::text AS total
-      FROM planillas
-      WHERE fecha >= DATE_TRUNC('month', CURRENT_DATE)
+      FROM planillas p
+      LEFT JOIN usuarios u ON u.id = p.operador_id
+      WHERE COALESCE(p.created_at::date, p.fecha) >= DATE_TRUNC('month', CURRENT_DATE)::date
       GROUP BY 1
       ORDER BY COUNT(*) DESC
       LIMIT 6
     `);
 
-    const totalPlanillasMes = planillasPorUsuario.reduce((acc, row) => acc + parseInt(row.total || '0', 10), 0);
-    const participacionPlanillas = planillasPorUsuario.map((row) => {
+    const totalPlanillasMes = planillasPorOperador.reduce((acc, row) => acc + parseInt(row.total || '0', 10), 0);
+    const participacionPlanillas = planillasPorOperador.map((row) => {
       const total = parseInt(row.total || '0', 10);
       const porcentaje = totalPlanillasMes > 0 ? Math.round((total / totalPlanillasMes) * 100) : 0;
       return {
-        usuario: row.usuario,
+        operador: row.operador,
         total,
         porcentaje,
       };

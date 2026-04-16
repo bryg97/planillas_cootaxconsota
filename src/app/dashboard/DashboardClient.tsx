@@ -137,9 +137,9 @@ export default function DashboardClient({ user, rol, modulos, metricas }: { user
     ? metricas.participacionPlanillas
     : [];
 
-  function nombreCortoUsuario(usuario: string) {
-    if (!usuario) return 'Sin usuario';
-    const limpio = usuario.trim();
+  function nombreCortoOperador(operador: string) {
+    if (!operador) return 'Sin operador';
+    const limpio = operador.trim();
     if (limpio.includes('@')) {
       return limpio.split('@')[0];
     }
@@ -166,7 +166,7 @@ export default function DashboardClient({ user, rol, modulos, metricas }: { user
                 <LogoutButton />
               </div>
               <div className="rounded-2xl border border-white/15 bg-white/10 p-4">
-              <p className="text-xs uppercase tracking-[0.18em] text-white/70">Planillas por usuario (mes actual)</p>
+              <p className="text-xs uppercase tracking-[0.18em] text-white/70">Planillas por operador (mes actual)</p>
 
               {participacionPlanillas.length === 0 ? (
                 <div className="mt-3 rounded-xl bg-white/10 px-3 py-3 text-xs text-white/80">
@@ -175,9 +175,9 @@ export default function DashboardClient({ user, rol, modulos, metricas }: { user
               ) : (
                 <div className="mt-3 space-y-3">
                   {participacionPlanillas.map((item: any) => (
-                    <div key={item.usuario}>
+                    <div key={item.operador}>
                       <div className="mb-1 flex items-center justify-between text-xs">
-                        <span className="font-semibold text-white/90">{nombreCortoUsuario(item.usuario)}</span>
+                        <span className="font-semibold text-white/90">{nombreCortoOperador(item.operador)}</span>
                         <span className="text-white/80">{item.porcentaje}% · {item.total}</span>
                       </div>
                       <div className="h-2 rounded-full bg-white/20">
