@@ -23,6 +23,7 @@ export default function CarteraClient({ vehiculos }: { vehiculos: any[] }) {
   const [searchTerm, setSearchTerm] = useState('');
   const [nombreOperador, setNombreOperador] = useState('');
   const [filtroAntiguedad, setFiltroAntiguedad] = useState<'todos' | 'ultimos15' | 'mas15' | 'meses'>('todos');
+  const [mesSeleccionado, setMesSeleccionado] = useState('todos');
 
   // Obtener nombre del operador desde localStorage
   useEffect(() => {
@@ -42,6 +43,9 @@ export default function CarteraClient({ vehiculos }: { vehiculos: any[] }) {
   useEffect(() => {
     setVehiculoExpandido(null);
     setPlanillasSeleccionadas([]);
+    if (filtroAntiguedad !== 'meses') {
+      setMesSeleccionado('todos');
+    }
   }, [filtroAntiguedad]);
 
   function getDiasAntiguedad(fecha: any) {
@@ -57,11 +61,41 @@ export default function CarteraClient({ vehiculos }: { vehiculos: any[] }) {
     return Math.max(0, Math.floor(diff / (1000 * 60 * 60 * 24)));
   }
 
+  function getMesClave(fecha: any) {
+    if (!fecha) return '';
+    const fechaObj = new Date(fecha);
+    if (Number.isNaN(fechaObj.getTime())) return '';
+    const year = fechaObj.getFullYear();
+    const month = String(fechaObj.getMonth() + 1).padStart(2, '0');
+    return `${year}-${month}`;
+  }
+
+  function getMesEtiqueta(claveMes: string) {
+    const [year, month] = claveMes.split('-').map(Number);
+    if (!year || !month) return claveMes;
+    const fecha = new Date(year, month - 1, 1);
+    return fecha.toLocaleDateString('es-CO', { month: 'long', year: 'numeric' });
+  }
+
+  const opcionesMeses = Array.from(
+    new Set(
+      vehiculos
+        .flatMap((vehiculo) => vehiculo.planillas || [])
+        .filter((planilla: any) => getDiasAntiguedad(planilla.fecha) >= 30)
+        .map((planilla: any) => getMesClave(planilla.fecha))
+        .filter(Boolean)
+    )
+  ).sort((a, b) => b.localeCompare(a));
+
   function cumpleFiltroAntiguedad(fecha: any) {
     const dias = getDiasAntiguedad(fecha);
     if (filtroAntiguedad === 'ultimos15') return dias <= 15;
     if (filtroAntiguedad === 'mas15') return dias > 15 && dias < 30;
-    if (filtroAntiguedad === 'meses') return dias >= 30;
+    if (filtroAntiguedad === 'meses') {
+      if (dias < 30) return false;
+      if (mesSeleccionado === 'todos') return true;
+      return getMesClave(fecha) === mesSeleccionado;
+    }
     return true;
   }
 
@@ -188,6 +222,24 @@ export default function CarteraClient({ vehiculos }: { vehiculos: any[] }) {
                 Meses
               </button>
             </div>
+
+            {filtroAntiguedad === 'meses' && (
+              <div className="mt-3 max-w-sm">
+                <label className="mb-1 block text-xs font-semibold uppercase tracking-[0.18em] text-white/70">Seleccione mes</label>
+                <select
+                  value={mesSeleccionado}
+                  onChange={(e) => setMesSeleccionado(e.target.value)}
+                  className="w-full rounded-xl border border-white/20 bg-white/10 px-3 py-2.5 text-sm text-white outline-none transition focus:border-white/40 focus:ring-2 focus:ring-white/20"
+                >
+                  <option value="todos" className="text-slate-900">Todos los meses</option>
+                  {opcionesMeses.map((mes) => (
+                    <option key={mes} value={mes} className="text-slate-900">
+                      {getMesEtiqueta(mes)}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
           </div>
         </section>
 
