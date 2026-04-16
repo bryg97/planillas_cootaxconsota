@@ -307,7 +307,6 @@ export default function DashboardClient({ user, rol, modulos, metricas }: { user
               </div>
             </div>
           </aside>
-          </div>
         </section>
 
         {/* Módulos disponibles */}
