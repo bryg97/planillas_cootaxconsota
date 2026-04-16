@@ -63,12 +63,26 @@ export default function LiquidacionesClient({
     if (!autoPrintPending) return;
 
     const timer = window.setTimeout(() => {
-      handleImprimir();
+      const autoPrintIdRaw = sessionStorage.getItem('liquidaciones:lastCreatedId');
+      const autoPrintId = autoPrintIdRaw ? Number(autoPrintIdRaw) : NaN;
+
+      if (Number.isFinite(autoPrintId)) {
+        const liquidacionReciente = liquidacionesHistorico.find((liq: any) => liq.id === autoPrintId);
+        if (liquidacionReciente) {
+          handleImprimirLiquidacion(liquidacionReciente);
+        } else {
+          handleImprimir();
+        }
+      } else {
+        handleImprimir();
+      }
+
+      sessionStorage.removeItem('liquidaciones:lastCreatedId');
       setAutoPrintPending(false);
     }, 250);
 
     return () => window.clearTimeout(timer);
-  }, [autoPrintPending]);
+  }, [autoPrintPending, liquidacionesHistorico]);
 
 
 
@@ -128,6 +142,9 @@ export default function LiquidacionesClient({
           setMessage("Liquidación creada y aprobada correctamente.");
           setPlanillasSeleccionadas([]);
           sessionStorage.setItem('liquidaciones:autoPrint', '1');
+          if (result.liquidacionId) {
+            sessionStorage.setItem('liquidaciones:lastCreatedId', String(result.liquidacionId));
+          }
           setTimeout(() => window.location.reload(), 1200);
         }
       } catch (e) {
@@ -300,6 +317,103 @@ export default function LiquidacionesClient({
           </body>
         </html>
       `);
+      ventana.document.close();
+      ventana.focus();
+      setTimeout(() => {
+        ventana.print();
+        ventana.close();
+      }, 300);
+    }
+
+    function handleImprimirLiquidacion(liquidacion: any) {
+      const ventana = window.open('', '', 'height=700,width=1000');
+      if (!ventana) return;
+
+      const detalles = liquidacion?.detalles || [];
+      const totalCalculado = detalles.reduce((sum: number, d: any) => sum + (parseFloat(String(d.monto)) || 0), 0);
+
+      ventana.document.write(`
+        <html>
+          <head>
+            <title>Liquidación #${liquidacion?.id || ''}</title>
+            <style>
+              @page { size: A4 landscape; margin: 12mm; }
+              * { box-sizing: border-box; }
+              body { font-family: Arial, Helvetica, sans-serif; margin: 0; color: #111827; font-size: 12px; }
+              .report { padding: 0; }
+              .header { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 2px solid #111827; padding-bottom: 12px; margin-bottom: 16px; }
+              .title { font-size: 20px; font-weight: 700; margin: 0 0 4px; }
+              .subtitle { color: #6b7280; margin: 0; }
+              .meta { text-align: right; font-size: 11px; color: #374151; }
+              .summary { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 16px; }
+              .box { border: 1px solid #d1d5db; border-radius: 10px; padding: 10px 12px; background: #f9fafb; }
+              .label { font-size: 10px; text-transform: uppercase; letter-spacing: .04em; color: #6b7280; margin-bottom: 4px; }
+              .value { font-size: 18px; font-weight: 700; color: #111827; }
+              .section-title { font-size: 14px; font-weight: 700; margin: 0 0 8px; }
+              table { width: 100%; border-collapse: collapse; margin-top: 8px; }
+              th, td { border: 1px solid #d1d5db; padding: 6px 8px; text-align: left; font-size: 11px; }
+              th { background: #f3f4f6; }
+              .right { text-align: right; }
+              .empty { color: #6b7280; font-style: italic; }
+            </style>
+          </head>
+          <body>
+            <div class="report">
+              <div class="header">
+                <div>
+                  <h1 class="title">Liquidación #${liquidacion?.id || ''}</h1>
+                  <p class="subtitle">Sistema de Planillas Cootaxconsota</p>
+                </div>
+                <div class="meta">
+                  <div>Generado: ${new Date().toLocaleString('es-CO')}</div>
+                  <div>Operador: ${liquidacion?.operador_nombre || liquidacion?.usuario || 'Desconocido'}</div>
+                  <div>Fecha liquidación: ${formatFechaColombia(liquidacion?.fecha)}</div>
+                </div>
+              </div>
+
+              <div class="summary">
+                <div class="box">
+                  <div class="label">Liquidación</div>
+                  <div class="value">#${liquidacion?.id || ''}</div>
+                </div>
+                <div class="box">
+                  <div class="label">Planillas liquidadas</div>
+                  <div class="value">${detalles.length}</div>
+                </div>
+                <div class="box">
+                  <div class="label">Total</div>
+                  <div class="value">$${totalCalculado.toLocaleString('es-CO')}</div>
+                </div>
+              </div>
+
+              <div>
+                <div class="section-title">Relación de planillas liquidadas</div>
+                ${detalles.length === 0 ? '<p class="empty">No hay planillas registradas para esta liquidación.</p>' : `
+                  <table>
+                    <thead>
+                      <tr>
+                        <th>N° Planilla</th>
+                        <th>Vehículo</th>
+                        <th class="right">Monto</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      ${detalles.map((detalle: any) => `
+                        <tr>
+                          <td>${detalle.numero_planilla || 'Sin número'}</td>
+                          <td>${detalle.codigo_vehiculo || 'Sin vehículo'}</td>
+                          <td class="right">$${(parseFloat(String(detalle.monto)) || 0).toLocaleString('es-CO')}</td>
+                        </tr>
+                      `).join('')}
+                    </tbody>
+                  </table>
+                `}
+              </div>
+            </div>
+          </body>
+        </html>
+      `);
+
       ventana.document.close();
       ventana.focus();
       setTimeout(() => {
@@ -624,12 +738,20 @@ export default function LiquidacionesClient({
                                   ${totalCalculado.toLocaleString('es-CO')}
                                 </td>
                                 <td className="px-4 py-3 text-right">
-                                  <button
-                                    onClick={() => setLiquidacionHistoricoDetalle(liquidacion)}
-                                    className="rounded-lg bg-slate-100 px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:bg-slate-200"
-                                  >
-                                    Ver detalle
-                                  </button>
+                                  <div className="flex justify-end gap-2">
+                                    <button
+                                      onClick={() => handleImprimirLiquidacion(liquidacion)}
+                                      className="rounded-lg bg-emerald-100 px-3 py-1.5 text-xs font-semibold text-emerald-700 transition hover:bg-emerald-200"
+                                    >
+                                      Reimprimir
+                                    </button>
+                                    <button
+                                      onClick={() => setLiquidacionHistoricoDetalle(liquidacion)}
+                                      className="rounded-lg bg-slate-100 px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:bg-slate-200"
+                                    >
+                                      Ver detalle
+                                    </button>
+                                  </div>
                                 </td>
                               </tr>
                             );
