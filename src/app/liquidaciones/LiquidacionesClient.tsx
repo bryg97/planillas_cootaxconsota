@@ -401,9 +401,6 @@ export default function LiquidacionesClient({
                     <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                       <div>
                         <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Planillas para liquidar</p>
-                        <h2 className="mt-2 text-2xl font-bold text-slate-900">
-                          {rol === 'administrador' ? 'Todas las planillas' : 'Mis planillas'}
-                        </h2>
                         <p className="mt-2 text-sm text-slate-600">
                           Seleccione las planillas de contado o crédito ya recaudado.
                         </p>
@@ -558,7 +555,7 @@ export default function LiquidacionesClient({
                           </div>
                         </div>
                         <div className="rounded-2xl border border-white/10 bg-white/5 p-4 text-sm text-slate-200">
-                          Revise que las planillas estén recaudadas antes de crear la liquidación.
+                          Revise que las planillas estén seleccionadas antes de crear la liquidación.
                         </div>
                       </div>
                     </div>
@@ -573,103 +570,6 @@ export default function LiquidacionesClient({
                   </aside>
                 </section>
               )}
-
-              {(rol === 'operador' || rol === 'tesorera' || rol === 'administrador') && (
-                <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-                  <div className="mb-5 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
-                    <div>
-                      <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Liquidaciones</p>
-                      <h2 className="mt-2 text-2xl font-bold text-slate-900">Pendientes de aprobación</h2>
-                    </div>
-                    <p className="text-sm text-slate-500">{liquidacionesPendientes.length} registro(s)</p>
-                  </div>
-
-                  {liquidacionesPendientes.length === 0 ? (
-                    <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-6 py-10 text-center text-slate-500">
-                      No hay liquidaciones pendientes.
-                    </div>
-                  ) : (
-                    <div className="grid gap-4 xl:grid-cols-2">
-                      {liquidacionesPendientes.map((liquidacion) => {
-                        const totalCalculado = (liquidacion.detalles || []).reduce((sum: number, d: any) => sum + (parseFloat(String(d.monto)) || 0), 0);
-
-                        return (
-                          <div key={liquidacion.id} className="rounded-2xl border border-slate-200 bg-slate-50 p-5 transition hover:border-slate-300 hover:shadow-sm">
-                            <div className="flex items-start justify-between gap-4">
-                              <div>
-                                <div className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Operador</div>
-                                <h3 className="mt-1 text-lg font-semibold text-slate-900">{liquidacion.operador_nombre || liquidacion.usuario}</h3>
-                                <p className="mt-1 text-sm text-slate-500">Fecha: {formatFechaColombia(liquidacion.fecha)}</p>
-                              </div>
-                              <div className="rounded-2xl bg-emerald-100 px-4 py-3 text-right">
-                                <div className="text-xs uppercase tracking-wide text-emerald-700">Total</div>
-                                <div className="text-xl font-bold text-emerald-800">${totalCalculado.toLocaleString('es-CO')}</div>
-                              </div>
-                            </div>
-
-                            <div className="mt-4 rounded-2xl bg-white p-4">
-                              <p className="mb-3 text-sm font-semibold text-slate-700">Planillas incluidas</p>
-                              <div className="space-y-2">
-                                {(liquidacion.detalles || []).map((detalle: any, idx: number) => (
-                                  <div key={idx} className="flex items-center justify-between rounded-xl bg-slate-50 px-3 py-2 text-sm">
-                                    <span className="text-slate-700">N° {detalle.numero_planilla} - {detalle.codigo_vehiculo}</span>
-                                    <span className="font-semibold text-slate-900">${(parseFloat(String(detalle.monto)) || 0).toLocaleString('es-CO')}</span>
-                                  </div>
-                                ))}
-                              </div>
-                            </div>
-
-                            <button onClick={() => handleAprobarLiquidacion(liquidacion.id)} disabled={loading} className="mt-4 w-full rounded-2xl bg-emerald-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-emerald-500 disabled:cursor-not-allowed disabled:opacity-50">
-                              {loading ? 'Procesando...' : 'Confirmar recepción'}
-                            </button>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  )}
-                </section>
-              )}
-
-              <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-                <div className="mb-4 flex items-center justify-between">
-                  <div>
-                    <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Resumen</p>
-                    <h2 className="mt-2 text-2xl font-bold text-slate-900">Liquidaciones registradas</h2>
-                  </div>
-                  <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-slate-600">
-                    {liquidacionesPendientes.length} total
-                  </span>
-                </div>
-
-                {liquidacionesPendientes.length === 0 ? (
-                  <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-6 py-10 text-center text-slate-500">
-                    No hay liquidaciones para mostrar.
-                  </div>
-                ) : (
-                  <div className="grid gap-4 md:grid-cols-2">
-                    {liquidacionesPendientes.map((liquidacion) => {
-                      const totalCalculado = (liquidacion.detalles || []).reduce((sum: number, d: any) => sum + (parseFloat(String(d.monto)) || 0), 0);
-
-                      return (
-                        <div key={liquidacion.id} className="rounded-2xl border border-slate-200 bg-slate-50 p-5">
-                          <div className="flex items-start justify-between gap-4">
-                            <div>
-                              <div className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Operador</div>
-                              <h3 className="mt-1 text-lg font-semibold text-slate-900">{liquidacion.operador_nombre || liquidacion.usuario}</h3>
-                              <p className="mt-1 text-sm text-slate-500">Fecha: {formatFechaColombia(liquidacion.fecha)}</p>
-                              <p className="mt-1 text-sm text-slate-500">Estado: {liquidacion.estado}</p>
-                            </div>
-                            <div className="text-right">
-                              <div className="text-xs uppercase tracking-wide text-slate-500">Total</div>
-                              <div className="text-2xl font-bold text-slate-900">${totalCalculado.toLocaleString('es-CO')}</div>
-                            </div>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
-              </section>
 
               <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
                 <div className="mb-4 flex items-center justify-between">
