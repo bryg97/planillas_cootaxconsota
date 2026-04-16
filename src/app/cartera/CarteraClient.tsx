@@ -78,119 +78,148 @@ export default function CarteraClient({ vehiculos }: { vehiculos: any[] }) {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <header className="bg-white shadow">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
-          <h1 className="text-2xl font-bold text-gray-900">Cartera - Planillas Pendientes</h1>
-          <a href="/dashboard" className="text-blue-600 hover:text-blue-800">
-            ← Volver al Dashboard
-          </a>
-        </div>
-      </header>
-
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {message && (
-          <div className="bg-green-50 text-green-700 p-4 rounded mb-6">
-            {message}
-          </div>
-        )}
-
-        {error && (
-          <div className="bg-red-50 text-red-700 p-4 rounded mb-6">
-            {error}
-          </div>
-        )}
-
-        {/* Buscador de vehículos */}
-        <div className="mb-6 max-w-md">
-          <input
-            type="text"
-            placeholder="Buscar vehículo por código..."
-            value={searchTerm}
-            onChange={e => setSearchTerm(e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-          />
-        </div>
-        {vehiculos.filter(v => v.codigo_vehiculo.toLowerCase().includes(searchTerm.toLowerCase())).length === 0 ? (
-          <div className="bg-white rounded-lg shadow p-8 text-center">
-            <p className="text-gray-500">No hay vehículos con planillas pendientes</p>
-          </div>
-        ) : (
-          <div className="space-y-4">
-            {vehiculos
-              .filter(v => v.codigo_vehiculo.toLowerCase().includes(searchTerm.toLowerCase()))
-              .map((vehiculo) => (
-              <div key={vehiculo.vehiculo_id} className="bg-white rounded-lg shadow">
-                <div
-                  className="p-4 cursor-pointer hover:bg-gray-50 flex justify-between items-center"
-                  onClick={() => toggleVehiculo(vehiculo.vehiculo_id)}
-                >
-                  <div>
-                    <h3 className="text-lg font-semibold">
-                      🚖 Vehículo: {vehiculo.codigo_vehiculo}
-                    </h3>
-                    <p className="text-sm text-gray-600">
-                      {vehiculo.planillas.length} planilla(s) pendiente(s)
-                    </p>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-xl font-bold text-red-600">
-                      ${(parseFloat(String(vehiculo.total)) || 0).toLocaleString('es-CO')}
-                    </p>
-                    <p className="text-sm text-gray-500">Total adeudado</p>
-                  </div>
-                </div>
-
-                {vehiculoExpandido === vehiculo.vehiculo_id && (
-                  <div className="border-t p-4 bg-gray-50">
-                    <div className="space-y-2 mb-4">
-                      {vehiculo.planillas.map((planilla: any) => (
-                        <label
-                          key={planilla.id}
-                          className="flex items-center p-3 bg-white rounded border hover:bg-blue-50 cursor-pointer"
-                        >
-                          <input
-                            type="checkbox"
-                            checked={planillasSeleccionadas.includes(planilla.id)}
-                            onChange={() => togglePlanilla(planilla.id)}
-                            className="mr-3 h-4 w-4"
-                          />
-                          <div className="flex-1">
-                            <p className="font-medium">N° {planilla.numero_planilla}</p>
-                            <p className="text-sm text-gray-600">
-                              {planilla.conductor} - {formatFechaColombia(planilla.fecha)}
-                            </p>
-                          </div>
-                          <p className="font-bold">${(parseFloat(String(planilla.valor)) || 0).toLocaleString('es-CO')}</p>
-                        </label>
-                      ))}
-                    </div>
-
-                    {planillasSeleccionadas.length > 0 && (
-                      <div className="flex justify-between items-center pt-4 border-t">
-                        <p className="text-lg font-semibold">
-                          Total seleccionado: $
-                          {vehiculo.planillas
-                            .filter((p: any) => planillasSeleccionadas.includes(p.id))
-                            .reduce((sum: number, p: any) => sum + (parseFloat(String(p.valor)) || 0), 0)
-                            .toLocaleString('es-CO')}
-                        </p>
-                        <button
-                          onClick={() => handleProcesarPago(vehiculo.vehiculo_id)}
-                          disabled={loading}
-                          className="bg-green-600 text-white px-6 py-2 rounded hover:bg-green-700 disabled:opacity-50"
-                        >
-                          {loading ? 'Procesando...' : 'Procesar Pago'}
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                )}
+    <main className="min-h-screen bg-slate-100 py-8">
+      <div className="max-w-7xl mx-auto space-y-6 px-4 sm:px-6 lg:px-8">
+        <section className="overflow-hidden rounded-3xl bg-gradient-to-r from-slate-900 via-slate-800 to-blue-900 text-white shadow-2xl">
+          <div className="flex flex-col gap-6 px-6 py-8 sm:px-8 lg:flex-row lg:items-end lg:justify-between">
+            <div className="max-w-2xl">
+              <div className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-xs font-medium uppercase tracking-[0.2em] text-white/80">
+                Cartera
               </div>
-            ))}
+              <h1 className="mt-4 text-3xl font-bold tracking-tight">Planillas de crédito pendientes</h1>
+              <p className="mt-2 text-sm text-white/80">Gestione recaudos por vehículo y procese pagos parciales o totales.</p>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-3">
+              {nombreOperador && (
+                <span className="rounded-full border border-white/20 bg-white/10 px-4 py-2 text-sm font-medium text-white/90">
+                  Operador: {nombreOperador}
+                </span>
+              )}
+              <a href="/dashboard" className="rounded-full border border-white/20 bg-white/5 px-4 py-2 text-sm font-medium text-white transition hover:bg-white/10">
+                Volver
+              </a>
+            </div>
+          </div>
+        </section>
+
+        {(error || message) && (
+          <div className={`rounded-2xl border px-4 py-3 text-sm shadow-sm ${error ? 'border-red-200 bg-red-50 text-red-700' : 'border-emerald-200 bg-emerald-50 text-emerald-700'}`}>
+            {error || message}
           </div>
         )}
-      </main>
-    </div>
+
+        <section className="grid gap-4 md:grid-cols-3">
+          <article className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Vehículos con deuda</p>
+            <p className="mt-2 text-3xl font-bold text-slate-900">{vehiculos.length}</p>
+          </article>
+          <article className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Planillas pendientes</p>
+            <p className="mt-2 text-3xl font-bold text-slate-900">{vehiculos.reduce((sum, v) => sum + (v.planillas?.length || 0), 0)}</p>
+          </article>
+          <article className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Total adeudado</p>
+            <p className="mt-2 text-3xl font-bold text-red-600">
+              ${vehiculos.reduce((sum, v) => sum + (parseFloat(String(v.total)) || 0), 0).toLocaleString('es-CO')}
+            </p>
+          </article>
+        </section>
+
+        <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Búsqueda</p>
+              <h2 className="mt-2 text-2xl font-bold text-slate-900">Vehículos en cartera</h2>
+            </div>
+            <div className="w-full sm:max-w-md">
+              <input
+                type="text"
+                placeholder="Buscar vehículo por código..."
+                value={searchTerm}
+                onChange={e => setSearchTerm(e.target.value)}
+                className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+              />
+            </div>
+          </div>
+
+          {vehiculos.filter(v => v.codigo_vehiculo.toLowerCase().includes(searchTerm.toLowerCase())).length === 0 ? (
+            <div className="mt-6 rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-6 py-12 text-center">
+              <p className="text-sm font-medium text-slate-700">No hay vehículos con planillas pendientes</p>
+              <p className="mt-1 text-sm text-slate-500">Ajuste el filtro o espere nuevos registros.</p>
+            </div>
+          ) : (
+            <div className="mt-6 space-y-4">
+              {vehiculos
+                .filter(v => v.codigo_vehiculo.toLowerCase().includes(searchTerm.toLowerCase()))
+                .map((vehiculo) => {
+                  const totalSeleccionado = vehiculo.planillas
+                    .filter((p: any) => planillasSeleccionadas.includes(p.id))
+                    .reduce((sum: number, p: any) => sum + (parseFloat(String(p.valor)) || 0), 0);
+
+                  return (
+                    <div key={vehiculo.vehiculo_id} className="overflow-hidden rounded-2xl border border-slate-200 bg-slate-50">
+                      <button
+                        type="button"
+                        className="flex w-full items-center justify-between gap-4 px-5 py-4 text-left transition hover:bg-slate-100"
+                        onClick={() => toggleVehiculo(vehiculo.vehiculo_id)}
+                      >
+                        <div>
+                          <h3 className="text-lg font-semibold text-slate-900">Vehículo {vehiculo.codigo_vehiculo}</h3>
+                          <p className="mt-1 text-sm text-slate-600">{vehiculo.planillas.length} planilla(s) pendiente(s)</p>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-2xl font-bold text-red-600">${(parseFloat(String(vehiculo.total)) || 0).toLocaleString('es-CO')}</p>
+                          <p className="text-sm text-slate-500">Total adeudado</p>
+                        </div>
+                      </button>
+
+                      {vehiculoExpandido === vehiculo.vehiculo_id && (
+                        <div className="border-t border-slate-200 bg-white p-5">
+                          <div className="space-y-2">
+                            {vehiculo.planillas.map((planilla: any) => (
+                              <label
+                                key={planilla.id}
+                                className="flex cursor-pointer items-center gap-3 rounded-xl border border-slate-200 bg-slate-50 p-3 transition hover:border-slate-300"
+                              >
+                                <input
+                                  type="checkbox"
+                                  checked={planillasSeleccionadas.includes(planilla.id)}
+                                  onChange={() => togglePlanilla(planilla.id)}
+                                  className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+                                />
+                                <div className="min-w-0 flex-1">
+                                  <p className="font-medium text-slate-900">N° {planilla.numero_planilla}</p>
+                                  <p className="text-sm text-slate-600">{planilla.conductor} - {formatFechaColombia(planilla.fecha)}</p>
+                                </div>
+                                <p className="text-sm font-bold text-slate-900">${(parseFloat(String(planilla.valor)) || 0).toLocaleString('es-CO')}</p>
+                              </label>
+                            ))}
+                          </div>
+
+                          {planillasSeleccionadas.length > 0 && (
+                            <div className="mt-4 flex flex-col gap-3 border-t border-slate-200 pt-4 sm:flex-row sm:items-center sm:justify-between">
+                              <p className="text-lg font-semibold text-slate-900">
+                                Total seleccionado: ${totalSeleccionado.toLocaleString('es-CO')}
+                              </p>
+                              <button
+                                onClick={() => handleProcesarPago(vehiculo.vehiculo_id)}
+                                disabled={loading}
+                                className="rounded-2xl bg-emerald-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-emerald-500 disabled:cursor-not-allowed disabled:opacity-50"
+                              >
+                                {loading ? 'Procesando...' : 'Procesar pago'}
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+            </div>
+          )}
+        </section>
+      </div>
+    </main>
   );
 }
