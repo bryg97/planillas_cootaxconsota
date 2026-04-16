@@ -22,6 +22,7 @@ export default function CarteraClient({ vehiculos }: { vehiculos: any[] }) {
   const [planillasSeleccionadas, setPlanillasSeleccionadas] = useState<number[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [nombreOperador, setNombreOperador] = useState('');
+  const [filtroAntiguedad, setFiltroAntiguedad] = useState<'todos' | 'ultimos15' | 'mas15' | 'meses'>('todos');
 
   // Obtener nombre del operador desde localStorage
   useEffect(() => {
@@ -37,6 +38,59 @@ export default function CarteraClient({ vehiculos }: { vehiculos: any[] }) {
       }
     }
   }, []);
+
+  useEffect(() => {
+    setVehiculoExpandido(null);
+    setPlanillasSeleccionadas([]);
+  }, [filtroAntiguedad]);
+
+  function getDiasAntiguedad(fecha: any) {
+    if (!fecha) return 0;
+    const fechaObj = new Date(fecha);
+    if (Number.isNaN(fechaObj.getTime())) return 0;
+
+    const hoy = new Date();
+    hoy.setHours(0, 0, 0, 0);
+    fechaObj.setHours(0, 0, 0, 0);
+
+    const diff = hoy.getTime() - fechaObj.getTime();
+    return Math.max(0, Math.floor(diff / (1000 * 60 * 60 * 24)));
+  }
+
+  function cumpleFiltroAntiguedad(fecha: any) {
+    const dias = getDiasAntiguedad(fecha);
+    if (filtroAntiguedad === 'ultimos15') return dias <= 15;
+    if (filtroAntiguedad === 'mas15') return dias > 15 && dias < 30;
+    if (filtroAntiguedad === 'meses') return dias >= 30;
+    return true;
+  }
+
+  const vehiculosFiltradosAntiguedad = vehiculos
+    .map((vehiculo) => {
+      const planillasFiltradas = (vehiculo.planillas || []).filter((planilla: any) => cumpleFiltroAntiguedad(planilla.fecha));
+      const totalFiltrado = planillasFiltradas.reduce((sum: number, planilla: any) => sum + (parseFloat(String(planilla.valor)) || 0), 0);
+
+      return {
+        ...vehiculo,
+        planillas: planillasFiltradas,
+        total: totalFiltrado
+      };
+    })
+    .filter((vehiculo) => vehiculo.planillas.length > 0);
+
+  const vehiculosVisibles = vehiculosFiltradosAntiguedad.filter((vehiculo) =>
+    vehiculo.codigo_vehiculo.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  const totalPlanillasPendientes = vehiculosFiltradosAntiguedad.reduce(
+    (sum, vehiculo) => sum + (vehiculo.planillas?.length || 0),
+    0
+  );
+
+  const totalAdeudado = vehiculosFiltradosAntiguedad.reduce(
+    (sum, vehiculo) => sum + (parseFloat(String(vehiculo.total)) || 0),
+    0
+  );
 
   function toggleVehiculo(vehiculoId: number) {
     setVehiculoExpandido(vehiculoExpandido === vehiculoId ? null : vehiculoId);
@@ -101,6 +155,40 @@ export default function CarteraClient({ vehiculos }: { vehiculos: any[] }) {
               </a>
             </div>
           </div>
+
+          <div className="border-t border-white/10 px-6 pb-6 pt-4 sm:px-8">
+            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-white/70">Filtro por antiguedad de deuda</p>
+            <div className="mt-3 flex flex-wrap gap-2">
+              <button
+                type="button"
+                onClick={() => setFiltroAntiguedad('todos')}
+                className={`rounded-full px-4 py-2 text-sm font-semibold transition ${filtroAntiguedad === 'todos' ? 'bg-white text-slate-900' : 'bg-white/10 text-white hover:bg-white/20'}`}
+              >
+                Todos
+              </button>
+              <button
+                type="button"
+                onClick={() => setFiltroAntiguedad('ultimos15')}
+                className={`rounded-full px-4 py-2 text-sm font-semibold transition ${filtroAntiguedad === 'ultimos15' ? 'bg-white text-slate-900' : 'bg-white/10 text-white hover:bg-white/20'}`}
+              >
+                Ultimos 15 dias
+              </button>
+              <button
+                type="button"
+                onClick={() => setFiltroAntiguedad('mas15')}
+                className={`rounded-full px-4 py-2 text-sm font-semibold transition ${filtroAntiguedad === 'mas15' ? 'bg-white text-slate-900' : 'bg-white/10 text-white hover:bg-white/20'}`}
+              >
+                Mas de 15 dias
+              </button>
+              <button
+                type="button"
+                onClick={() => setFiltroAntiguedad('meses')}
+                className={`rounded-full px-4 py-2 text-sm font-semibold transition ${filtroAntiguedad === 'meses' ? 'bg-white text-slate-900' : 'bg-white/10 text-white hover:bg-white/20'}`}
+              >
+                Meses
+              </button>
+            </div>
+          </div>
         </section>
 
         {(error || message) && (
@@ -112,16 +200,16 @@ export default function CarteraClient({ vehiculos }: { vehiculos: any[] }) {
         <section className="grid gap-4 md:grid-cols-3">
           <article className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
             <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Vehículos con deuda</p>
-            <p className="mt-2 text-3xl font-bold text-slate-900">{vehiculos.length}</p>
+            <p className="mt-2 text-3xl font-bold text-slate-900">{vehiculosFiltradosAntiguedad.length}</p>
           </article>
           <article className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
             <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Planillas pendientes</p>
-            <p className="mt-2 text-3xl font-bold text-slate-900">{vehiculos.reduce((sum, v) => sum + (v.planillas?.length || 0), 0)}</p>
+            <p className="mt-2 text-3xl font-bold text-slate-900">{totalPlanillasPendientes}</p>
           </article>
           <article className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
             <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Total adeudado</p>
             <p className="mt-2 text-3xl font-bold text-red-600">
-              ${vehiculos.reduce((sum, v) => sum + (parseFloat(String(v.total)) || 0), 0).toLocaleString('es-CO')}
+              ${totalAdeudado.toLocaleString('es-CO')}
             </p>
           </article>
         </section>
@@ -143,16 +231,14 @@ export default function CarteraClient({ vehiculos }: { vehiculos: any[] }) {
             </div>
           </div>
 
-          {vehiculos.filter(v => v.codigo_vehiculo.toLowerCase().includes(searchTerm.toLowerCase())).length === 0 ? (
+          {vehiculosVisibles.length === 0 ? (
             <div className="mt-6 rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-6 py-12 text-center">
               <p className="text-sm font-medium text-slate-700">No hay vehículos con planillas pendientes</p>
-              <p className="mt-1 text-sm text-slate-500">Ajuste el filtro o espere nuevos registros.</p>
+              <p className="mt-1 text-sm text-slate-500">Ajuste el filtro de busqueda o antiguedad.</p>
             </div>
           ) : (
             <div className="mt-6 space-y-4">
-              {vehiculos
-                .filter(v => v.codigo_vehiculo.toLowerCase().includes(searchTerm.toLowerCase()))
-                .map((vehiculo) => {
+              {vehiculosVisibles.map((vehiculo) => {
                   const totalSeleccionado = vehiculo.planillas
                     .filter((p: any) => planillasSeleccionadas.includes(p.id))
                     .reduce((sum: number, p: any) => sum + (parseFloat(String(p.valor)) || 0), 0);
