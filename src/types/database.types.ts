@@ -132,6 +132,7 @@ export interface Database {
       viajes: {
         Row: {
           id: number
+          planilla_id: number | null
           vehiculo_id: number
           conductor: string
           convenio_id: number
@@ -149,6 +150,7 @@ export interface Database {
           created_at: string
         }
         Insert: {
+          planilla_id?: number | null
           vehiculo_id: number
           conductor: string
           convenio_id: number
@@ -166,6 +168,7 @@ export interface Database {
           created_at?: string
         }
         Update: {
+          planilla_id?: number | null
           vehiculo_id?: number
           conductor?: string
           convenio_id?: number

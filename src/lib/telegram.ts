@@ -44,6 +44,7 @@ interface RecaudoCredito {
 interface NuevoViaje {
   operador: string;
   lateral: string;
+  numeroPlanilla: string;
   conductor: string;
   convenio: string;
   origen: string;
@@ -178,6 +179,7 @@ export async function notificarNuevoViaje(data: NuevoViaje) {
 
 👤 Operador: ${data.operador}
 🚕 Lateral: ${data.lateral}
+📄 Planilla: ${data.numeroPlanilla}
 🧑 Conductor: ${data.conductor}
 🏢 Convenio: ${data.convenio}
 📍 Origen: ${data.origen}

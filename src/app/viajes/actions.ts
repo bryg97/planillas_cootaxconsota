@@ -295,6 +295,7 @@ export async function crearViaje(formData: FormData) {
     }
 
     const vehiculoId = parseInt(formData.get('vehiculo_id') as string, 10);
+    const planillaId = parseInt(formData.get('planilla_id') as string, 10);
     const conductor = ((formData.get('conductor') as string) || '').trim();
     const convenioId = parseInt(formData.get('convenio_id') as string, 10);
     const origen = ((formData.get('origen') as string) || '').trim();
@@ -306,7 +307,7 @@ export async function crearViaje(formData: FormData) {
     const omiteConsecutivo = formData.get('omite_consecutivo') === '1';
     const motivoOmision = ((formData.get('motivo_omision') as string) || '').trim();
 
-    if (!vehiculoId || !conductor || !convenioId || !origen || !destino || !medioContacto || !autorizadorOperadorId || !cedulaAutorizador || !respuestaAutorizacion) {
+    if (!vehiculoId || !planillaId || !conductor || !convenioId || !origen || !destino || !medioContacto || !autorizadorOperadorId || !cedulaAutorizador || !respuestaAutorizacion) {
       return { error: 'Todos los campos del viaje son obligatorios' };
     }
 
@@ -341,6 +342,27 @@ export async function crearViaje(formData: FormData) {
       return { error: 'La validación de autorización no coincide. Verifique operador, cédula y código de seguridad.' };
     }
 
+    const planilla = await queryOne<{
+      id: number;
+      numero_planilla: string;
+      vehiculo_id: number;
+      codigo_vehiculo: string;
+    }>(
+      `SELECT p.id, p.numero_planilla, p.vehiculo_id, v.codigo_vehiculo
+       FROM planillas p
+       INNER JOIN vehiculos v ON v.id = p.vehiculo_id
+       WHERE p.id = $1`,
+      [planillaId]
+    );
+
+    if (!planilla) {
+      return { error: 'La planilla seleccionada no existe.' };
+    }
+
+    if (planilla.vehiculo_id !== vehiculoId) {
+      return { error: `La planilla ${planilla.numero_planilla} no pertenece al lateral seleccionado.` };
+    }
+
     const ultimoViaje = await queryOne<UltimoViaje>(
       `SELECT vi.id, vi.vehiculo_id, v.codigo_vehiculo
        FROM viajes vi
@@ -367,6 +389,7 @@ export async function crearViaje(formData: FormData) {
 
     const viaje = await queryOne<{ id: number }>(
       `INSERT INTO viajes (
+        planilla_id,
         vehiculo_id,
         conductor,
         convenio_id,
@@ -381,9 +404,10 @@ export async function crearViaje(formData: FormData) {
         autorizador_operador_nombre,
         cedula_autorizador,
         respuesta_autorizacion
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
       RETURNING id`,
       [
+        planillaId,
         vehiculoId,
         conductor,
         convenioId,
@@ -407,7 +431,7 @@ export async function crearViaje(formData: FormData) {
       [
         usuario.usuario,
         'INSERT',
-        `Registró viaje ID ${viaje?.id || 'N/A'} con lateral ${lateral?.codigo_vehiculo || vehiculoId} (omite consecutivo: ${omiteConsecutivo ? 'sí' : 'no'})`
+        `Registró viaje ID ${viaje?.id || 'N/A'} con lateral ${lateral?.codigo_vehiculo || vehiculoId}, planilla ${planilla.numero_planilla} (omite consecutivo: ${omiteConsecutivo ? 'sí' : 'no'})`
       ]
     );
 
@@ -426,6 +450,7 @@ export async function crearViaje(formData: FormData) {
       lateral: lateral?.codigo_vehiculo || String(vehiculoId),
       conductor,
       convenio: convenio?.nombre || String(convenioId),
+      numeroPlanilla: planilla.numero_planilla,
       origen,
       destino,
       medioContacto,
@@ -440,6 +465,7 @@ export async function crearViaje(formData: FormData) {
       lateral: lateral?.codigo_vehiculo || String(vehiculoId),
       conductor,
       convenio: convenio?.nombre || String(convenioId),
+      numeroPlanilla: planilla.numero_planilla,
       origen,
       destino,
       medioContacto,

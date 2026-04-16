@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { crearConvenio, crearViaje, eliminarConvenio, guardarValidacionAutorizador, eliminarValidacionAutorizador, eliminarViajesPorLateral } from './actions';
 
 type Vehiculo = {
@@ -46,6 +46,17 @@ type ViajeListado = {
   creado_por_usuario: string;
   autorizador_operador_nombre: string | null;
   cedula_autorizador: string | null;
+  numero_planilla: string | null;
+};
+
+type PlanillaDisponible = {
+  id: number;
+  numero_planilla: string;
+  vehiculo_id: number | null;
+  codigo_vehiculo: string | null;
+  fecha: string;
+  estado: string;
+  conductor: string | null;
 };
 
 function formatearMedioContacto(medio: string) {
@@ -66,7 +77,8 @@ export default function ViajesClient({
   autorizadores,
   validacionesAutorizador,
   ultimoViaje,
-  viajes
+  viajes,
+  planillasDisponibles
 }: {
   rol: string;
   vehiculos: Vehiculo[];
@@ -75,7 +87,9 @@ export default function ViajesClient({
   validacionesAutorizador: ValidacionAutorizador[];
   ultimoViaje: UltimoViaje;
   viajes: ViajeListado[];
+  planillasDisponibles: PlanillaDisponible[];
 }) {
+  const formViajeRef = useRef<HTMLFormElement>(null);
   const [loadingViaje, setLoadingViaje] = useState(false);
   const [loadingConvenio, setLoadingConvenio] = useState(false);
   const [loadingEliminarConvenio, setLoadingEliminarConvenio] = useState<number | null>(null);
@@ -95,6 +109,9 @@ export default function ViajesClient({
   const [editandoValidacionOperadorId, setEditandoValidacionOperadorId] = useState<number | null>(null);
   const [lateralEliminarId, setLateralEliminarId] = useState('');
   const [errorEliminarViajes, setErrorEliminarViajes] = useState('');
+  const [mostrarModalPlanilla, setMostrarModalPlanilla] = useState(false);
+  const [planillaSeleccionadaId, setPlanillaSeleccionadaId] = useState('');
+  const [errorPlanilla, setErrorPlanilla] = useState('');
 
   const vehiculoBloqueado = useMemo(() => {
     if (!ultimoViaje || omiteConsecutivo) return null;
@@ -107,10 +124,29 @@ export default function ViajesClient({
     return vehiculos.filter((v) => normalizarBusqueda(v.codigo_vehiculo).includes(busqueda));
   }, [vehiculos, lateralBusqueda]);
 
+  const planillasDelLateral = useMemo(() => {
+    const lateralId = parseInt(vehiculoId, 10);
+    if (!lateralId) return [];
+
+    return planillasDisponibles.filter((p) => p.vehiculo_id === lateralId);
+  }, [planillasDisponibles, vehiculoId]);
+
+  const planillaSeleccionada = useMemo(
+    () => planillasDisponibles.find((p) => String(p.id) === planillaSeleccionadaId),
+    [planillasDisponibles, planillaSeleccionadaId]
+  );
+
   async function handleCrearViaje(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setLoadingViaje(true);
     setError('');
+    setErrorPlanilla('');
+
+    if (!planillaSeleccionadaId) {
+      setMostrarModalPlanilla(true);
+      setLoadingViaje(false);
+      return;
+    }
 
     const formData = new FormData(e.currentTarget);
     if (omiteConsecutivo) {
@@ -125,6 +161,21 @@ export default function ViajesClient({
     }
 
     window.location.reload();
+  }
+
+  function confirmarPlanillaYRegistrar() {
+    if (!vehiculoId) {
+      setErrorPlanilla('Primero seleccione un lateral para poder elegir su planilla.');
+      return;
+    }
+
+    if (!planillaSeleccionadaId) {
+      setErrorPlanilla('Seleccione una planilla para continuar con el registro.');
+      return;
+    }
+
+    setMostrarModalPlanilla(false);
+    formViajeRef.current?.requestSubmit();
   }
 
   async function handleCrearConvenio(e: React.FormEvent<HTMLFormElement>) {
@@ -324,7 +375,8 @@ export default function ViajesClient({
               </div>
             )}
 
-            <form onSubmit={handleCrearViaje} className="space-y-6">
+            <form ref={formViajeRef} onSubmit={handleCrearViaje} className="space-y-6">
+              <input type="hidden" name="planilla_id" value={planillaSeleccionadaId} />
               <div className="space-y-4">
                 <h4 className="text-sm font-semibold text-slate-900 uppercase tracking-[0.15em]">Información del viaje</h4>
                 
@@ -341,7 +393,10 @@ export default function ViajesClient({
                     <select
                       name="vehiculo_id"
                       value={vehiculoId}
-                      onChange={(e) => setVehiculoId(e.target.value)}
+                      onChange={(e) => {
+                        setVehiculoId(e.target.value);
+                        setPlanillaSeleccionadaId('');
+                      }}
                       required
                       className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
                     >
@@ -356,6 +411,23 @@ export default function ViajesClient({
                         </option>
                       ))}
                     </select>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setErrorPlanilla('');
+                        setMostrarModalPlanilla(true);
+                      }}
+                      className="mt-3 w-full rounded-xl border border-blue-300 bg-blue-50 px-4 py-2.5 text-sm font-semibold text-blue-700 transition hover:bg-blue-100"
+                    >
+                      {planillaSeleccionada ? 'Cambiar planilla seleccionada' : 'Seleccionar planilla del lateral'}
+                    </button>
+                    {planillaSeleccionada ? (
+                      <div className="mt-2 rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs text-emerald-800">
+                        Planilla seleccionada: <span className="font-bold">{planillaSeleccionada.numero_planilla}</span>
+                      </div>
+                    ) : (
+                      <p className="mt-2 text-xs text-slate-500">Debe seleccionar una planilla antes de registrar el viaje.</p>
+                    )}
                   </div>
 
                   <div>
@@ -496,7 +568,11 @@ export default function ViajesClient({
                 disabled={loadingViaje}
                 className="w-full rounded-2xl bg-blue-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-blue-500 disabled:cursor-not-allowed disabled:opacity-50"
               >
-                {loadingViaje ? 'Registrando viaje...' : 'Registrar viaje'}
+                {loadingViaje
+                  ? 'Registrando viaje...'
+                  : planillaSeleccionada
+                    ? 'Registrar viaje'
+                    : 'Seleccionar planilla y registrar viaje'}
               </button>
             </form>
           </div>
@@ -802,6 +878,7 @@ export default function ViajesClient({
                     <tr>
                       <th className="px-4 py-3 text-left font-semibold text-slate-600 uppercase tracking-[0.12em] text-xs">Fecha</th>
                       <th className="px-4 py-3 text-left font-semibold text-slate-600 uppercase tracking-[0.12em] text-xs">Lateral</th>
+                      <th className="px-4 py-3 text-left font-semibold text-slate-600 uppercase tracking-[0.12em] text-xs">Planilla</th>
                       <th className="px-4 py-3 text-left font-semibold text-slate-600 uppercase tracking-[0.12em] text-xs">Conductor</th>
                       <th className="px-4 py-3 text-left font-semibold text-slate-600 uppercase tracking-[0.12em] text-xs">Convenio</th>
                       <th className="px-4 py-3 text-left font-semibold text-slate-600 uppercase tracking-[0.12em] text-xs">Ruta</th>
@@ -823,6 +900,15 @@ export default function ViajesClient({
                           })}
                         </td>
                         <td className="px-4 py-3 font-semibold text-slate-900">{v.codigo_vehiculo}</td>
+                        <td className="px-4 py-3 text-slate-700">
+                          {v.numero_planilla ? (
+                            <span className="inline-flex items-center rounded-full bg-blue-50 px-2.5 py-1 text-xs font-semibold text-blue-700">
+                              {v.numero_planilla}
+                            </span>
+                          ) : (
+                            <span className="text-xs text-slate-400">Sin planilla</span>
+                          )}
+                        </td>
                         <td className="px-4 py-3 text-slate-700">{v.conductor}</td>
                         <td className="px-4 py-3 text-slate-600">{v.convenio_nombre}</td>
                         <td className="px-4 py-3 text-slate-700">
@@ -854,6 +940,89 @@ export default function ViajesClient({
           )}
         </section>
       </main>
+
+      {mostrarModalPlanilla && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 p-4">
+          <div className="w-full max-w-2xl overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-2xl">
+            <div className="border-b border-slate-200 bg-slate-50 px-6 py-4">
+              <h3 className="text-lg font-bold text-slate-900">Seleccionar planilla del lateral</h3>
+              <p className="mt-1 text-sm text-slate-600">Este paso es obligatorio antes de registrar el viaje.</p>
+            </div>
+
+            <div className="max-h-[60vh] overflow-auto px-6 py-5">
+              {errorPlanilla && (
+                <div className="mb-4 rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+                  {errorPlanilla}
+                </div>
+              )}
+
+              {!vehiculoId && (
+                <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
+                  Seleccione primero un lateral en el formulario para listar sus planillas disponibles.
+                </div>
+              )}
+
+              {vehiculoId && planillasDelLateral.length === 0 && (
+                <div className="space-y-3 rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                  <p className="text-sm text-slate-700">
+                    No hay planillas registradas para este lateral. Debe crear una planilla antes de continuar.
+                  </p>
+                  <a
+                    href="/planillas"
+                    className="inline-flex items-center rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-blue-500"
+                  >
+                    Ir a crear planilla
+                  </a>
+                </div>
+              )}
+
+              {vehiculoId && planillasDelLateral.length > 0 && (
+                <div className="space-y-2">
+                  {planillasDelLateral.map((planilla) => (
+                    <label
+                      key={planilla.id}
+                      className="flex cursor-pointer items-start gap-3 rounded-2xl border border-slate-200 bg-white p-3 transition hover:border-blue-300 hover:bg-blue-50"
+                    >
+                      <input
+                        type="radio"
+                        name="planilla_modal"
+                        value={planilla.id}
+                        checked={planillaSeleccionadaId === String(planilla.id)}
+                        onChange={(e) => setPlanillaSeleccionadaId(e.target.value)}
+                        className="mt-1 h-4 w-4"
+                      />
+                      <div className="min-w-0">
+                        <p className="text-sm font-semibold text-slate-900">Planilla {planilla.numero_planilla}</p>
+                        <p className="text-xs text-slate-600">
+                          Lateral {planilla.codigo_vehiculo || 'N/A'} • {new Date(planilla.fecha).toLocaleDateString('es-CO')} • Estado {planilla.estado}
+                        </p>
+                        {planilla.conductor && <p className="mt-1 text-xs text-slate-500">Conductor: {planilla.conductor}</p>}
+                      </div>
+                    </label>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <div className="flex flex-wrap justify-end gap-2 border-t border-slate-200 bg-slate-50 px-6 py-4">
+              <button
+                type="button"
+                onClick={() => setMostrarModalPlanilla(false)}
+                className="rounded-xl border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-100"
+              >
+                Cerrar
+              </button>
+              <button
+                type="button"
+                onClick={confirmarPlanillaYRegistrar}
+                className="rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-blue-500"
+              >
+                Confirmar y registrar viaje
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

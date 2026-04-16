@@ -41,6 +41,17 @@ type ViajeListado = {
   creado_por_usuario: string;
   autorizador_operador_nombre: string | null;
   cedula_autorizador: string | null;
+  numero_planilla: string | null;
+};
+
+type PlanillaDisponible = {
+  id: number;
+  numero_planilla: string;
+  vehiculo_id: number | null;
+  codigo_vehiculo: string | null;
+  fecha: string;
+  estado: string;
+  conductor: string | null;
 };
 
 type UltimoViaje = {
@@ -112,12 +123,32 @@ export default async function ViajesPage() {
       ce.nombre AS convenio_nombre,
       vi.creado_por_usuario,
       vi.autorizador_operador_nombre,
-      vi.cedula_autorizador
+      vi.cedula_autorizador,
+      p.numero_planilla
     FROM viajes vi
     INNER JOIN vehiculos v ON v.id = vi.vehiculo_id
     INNER JOIN convenios_empresariales ce ON ce.id = vi.convenio_id
+    LEFT JOIN planillas p ON p.id = vi.planilla_id
     ORDER BY vi.created_at DESC
     LIMIT 100`
+  );
+
+  const planillasDisponibles = await query<PlanillaDisponible>(
+    `SELECT
+      p.id,
+      p.numero_planilla,
+      p.vehiculo_id,
+      v.codigo_vehiculo,
+      p.fecha,
+      p.estado,
+      p.conductor
+    FROM planillas p
+    LEFT JOIN vehiculos v ON v.id = p.vehiculo_id
+    WHERE p.numero_planilla IS NOT NULL
+      AND p.vehiculo_id IS NOT NULL
+      AND p.estado IN ('pendiente', 'recaudada')
+    ORDER BY p.fecha DESC, p.created_at DESC
+    LIMIT 500`
   );
 
   return (
@@ -129,6 +160,7 @@ export default async function ViajesPage() {
       validacionesAutorizador={validacionesAutorizador}
       ultimoViaje={ultimoViaje}
       viajes={viajes}
+      planillasDisponibles={planillasDisponibles}
     />
   );
 }
