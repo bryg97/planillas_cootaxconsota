@@ -15,12 +15,13 @@ export default async function HistoricoPage() {
     SELECT 
       p.*,
       v.codigo_vehiculo,
-      u.usuario as operador_usuario
+      u.usuario as operador_usuario,
+      COALESCE(NULLIF(TRIM(p.operador), ''), u.usuario, 'Sin operador') as operador_nombre
     FROM planillas p
     LEFT JOIN vehiculos v ON p.vehiculo_id = v.id
     LEFT JOIN usuarios u ON p.operador_id = u.id
     WHERE p.estado IN ('liquidada', 'pagada', 'aprobada')
-    ORDER BY p.fecha DESC
+    ORDER BY p.created_at DESC NULLS LAST, p.fecha DESC
     LIMIT 100
   `);
 
