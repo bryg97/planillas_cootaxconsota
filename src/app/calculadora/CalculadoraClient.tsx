@@ -231,7 +231,6 @@ export default function CalculadoraClient({
                 <li>Menos de 1 hora (0-60 min): cobra hora completa.</li>
                 <li>Desde 1 hora: cobra horas completas más minutos 1-40.</li>
                 <li>Minutos 41-59: cobra hora adicional completa.</li>
-                <li>Si la hora fin es menor, se asume cruce de medianoche.</li>
               </ul>
             </div>
           </div>
