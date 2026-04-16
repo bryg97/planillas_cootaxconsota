@@ -4,6 +4,7 @@ import { revalidatePath } from 'next/cache';
 import { execute, queryOne } from '@/lib/db';
 import { getSession } from '@/lib/auth-helper';
 import { notificarNuevoViaje } from '@/lib/telegram';
+import { notificarNuevoViajeCorreo } from '@/lib/email';
 
 type UsuarioRol = {
   id: number;
@@ -433,6 +434,32 @@ export async function crearViaje(formData: FormData) {
       omiteConsecutivo,
       motivoOmision: omiteConsecutivo ? motivoOmision : null
     });
+
+    const notificacionCorreo = await notificarNuevoViajeCorreo({
+      operador: usuario.usuario,
+      lateral: lateral?.codigo_vehiculo || String(vehiculoId),
+      conductor,
+      convenio: convenio?.nombre || String(convenioId),
+      origen,
+      destino,
+      medioContacto,
+      autorizador: autorizador.nombre,
+      fecha,
+      omiteConsecutivo,
+      motivoOmision: omiteConsecutivo ? motivoOmision : null,
+    });
+
+    if (!notificacionCorreo.success) {
+      await execute(
+        `INSERT INTO auditoria (usuario, accion, detalles)
+         VALUES ($1, $2, $3)`,
+        [
+          usuario.usuario,
+          'WARN',
+          `Viaje ID ${viaje?.id || 'N/A'} registrado, pero fallo envio de correo: ${notificacionCorreo.error || 'Error desconocido'}`,
+        ]
+      );
+    }
 
     revalidatePath('/viajes');
     return { success: true, data: viaje };

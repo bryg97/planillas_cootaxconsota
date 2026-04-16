@@ -58,6 +58,9 @@ Crea un archivo `.env.local` en la raíz:
 NEXT_PUBLIC_SUPABASE_URL=tu_url_de_supabase
 NEXT_PUBLIC_SUPABASE_ANON_KEY=tu_anon_key
 SUPABASE_SERVICE_ROLE_KEY=tu_service_role_key
+RESEND_API_KEY=tu_resend_api_key
+RESEND_FROM_EMAIL=notificaciones@tu-dominio.com
+RESEND_TO_EMAIL=destino1@correo.com,destino2@correo.com
 ```
 
 ### 5. Ejecutar el proyecto
