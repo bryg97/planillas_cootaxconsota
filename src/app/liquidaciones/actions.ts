@@ -41,6 +41,11 @@ type DetalleRow = {
   monto: number;
   numero_planilla: string;
   codigo_vehiculo?: string | null;
+  fecha?: string | null;
+  conductor?: string | null;
+  operador?: string | null;
+  tipo_pago?: string | null;
+  estado?: string | null;
 };
 
 export async function getPlanillasParaLiquidar() {
@@ -219,7 +224,11 @@ export async function getLiquidacionesPendientes() {
             ld.planilla_id,
             ld.monto,
             p.numero_planilla,
+            p.fecha,
+            p.conductor,
             p.operador,
+            p.tipo_pago,
+            p.estado,
             v.codigo_vehiculo
           FROM liquidaciones_detalle ld
           LEFT JOIN planillas p ON ld.planilla_id = p.id
@@ -269,7 +278,11 @@ export async function getLiquidacionesHistorico() {
             ld.planilla_id,
             ld.monto,
             p.numero_planilla,
+            p.fecha,
+            p.conductor,
             p.operador,
+            p.tipo_pago,
+            p.estado,
             v.codigo_vehiculo
           FROM liquidaciones_detalle ld
           LEFT JOIN planillas p ON ld.planilla_id = p.id

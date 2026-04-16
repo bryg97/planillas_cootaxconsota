@@ -393,7 +393,12 @@ export default function LiquidacionesClient({
                     <thead>
                       <tr>
                         <th>N° Planilla</th>
+                        <th>Fecha</th>
                         <th>Vehículo</th>
+                        <th>Conductor</th>
+                        <th>Operador</th>
+                        <th>Tipo pago</th>
+                        <th>Estado</th>
                         <th class="right">Monto</th>
                       </tr>
                     </thead>
@@ -401,7 +406,12 @@ export default function LiquidacionesClient({
                       ${detalles.map((detalle: any) => `
                         <tr>
                           <td>${detalle.numero_planilla || 'Sin número'}</td>
+                          <td>${detalle.fecha ? formatFechaColombia(detalle.fecha) : ''}</td>
                           <td>${detalle.codigo_vehiculo || 'Sin vehículo'}</td>
+                          <td>${detalle.conductor || ''}</td>
+                          <td>${detalle.operador || liquidacion?.operador_nombre || liquidacion?.usuario || 'Desconocido'}</td>
+                          <td>${detalle.tipo_pago || ''}</td>
+                          <td>${detalle.estado || ''}</td>
                           <td class="right">$${(parseFloat(String(detalle.monto)) || 0).toLocaleString('es-CO')}</td>
                         </tr>
                       `).join('')}
