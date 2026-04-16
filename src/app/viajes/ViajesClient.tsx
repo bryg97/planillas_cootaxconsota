@@ -238,210 +238,253 @@ export default function ViajesClient({
 
   return (
     <div className="min-h-screen bg-slate-100">
-      <header className="bg-white border-b border-slate-200 shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
-          <div>
-            <h1 className="text-2xl font-bold text-slate-900">Viajes</h1>
-            <p className="text-sm text-slate-600">Gestión de solicitudes con protocolo de asignación consecutiva</p>
+      <section className="overflow-hidden rounded-none bg-gradient-to-r from-slate-900 via-slate-800 to-blue-900 text-white shadow-2xl">
+        <div className="flex flex-col gap-6 px-6 py-8 sm:px-8 lg:flex-row lg:items-end lg:justify-between">
+          <div className="max-w-2xl">
+            <div className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-xs font-medium uppercase tracking-[0.2em] text-white/80">
+              Viajes
+            </div>
+            <h1 className="mt-4 text-3xl font-bold">Gestión de solicitudes</h1>
+            <p className="mt-2 text-base text-white/90">Protocolo de asignación consecutiva para laterales con trazabilidad completa</p>
           </div>
-          <a href="/dashboard" className="text-sm font-medium text-blue-700 hover:text-blue-900">
-            Volver al Dashboard
-          </a>
+
+          <div className="flex flex-wrap gap-3">
+            <a href="/dashboard" className="rounded-full border border-white/20 bg-white/5 px-4 py-2 text-sm font-medium text-white transition hover:bg-white/10">
+              Volver
+            </a>
+          </div>
         </div>
-      </header>
+      </section>
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
-        <section className="bg-white border border-amber-200 rounded-xl p-5 shadow-sm">
-          <h2 className="text-lg font-semibold text-amber-900 mb-2">Descargo de responsabilidad y protocolo para asignación de servicios con cotización</h2>
-          <p className="text-sm text-slate-700 mb-3">
-            A partir de la fecha, los operadores de la central de despacho están autorizados para gestionar directamente los servicios que requieran cotización. No obstante, es obligatorio cumplir estrictamente con el siguiente protocolo:
-          </p>
-          <ol className="list-decimal pl-5 text-sm text-slate-700 space-y-1">
-            <li>Validar que el conductor cuente con la aplicación de despacho satelital activa.</li>
-            <li>Realizar el proceso de contacto en orden consecutivo, iniciando desde el lateral 001 en adelante.</li>
-            <li>En caso de que los laterales contactados (ejemplo: del 001 al 040) no respondan o no cuenten con la aplicación, se deberá dejar constancia detallada del proceso realizado.</li>
-            <li>Una vez se logre contacto efectivo (ejemplo: lateral 041), el operador deberá coordinar directamente con el conductor la prestación del servicio.</li>
-          </ol>
-          <p className="text-sm text-slate-700 mt-3">
-            Es importante aclarar que la correcta ejecución y registro de este procedimiento es responsabilidad exclusiva del operador que gestiona el servicio, garantizando transparencia, trazabilidad y cumplimiento de los lineamientos establecidos por la central.
-          </p>
-          <p className="text-sm text-slate-700 mt-3">
-            Atentamente,
-          </p>
-          <p className="text-sm text-slate-700">
-            Brayan Arroyave Coordinador de Comunicaciones
-          </p>
+        <section className="overflow-hidden rounded-3xl bg-gradient-to-r from-amber-50 via-white to-amber-50 border border-amber-200 shadow-sm">
+          <div className="p-6 sm:p-8">
+            <div className="flex items-start gap-4 mb-4">
+              <svg className="h-6 w-6 text-amber-600 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+              </svg>
+              <div>
+                <h2 className="text-lg font-semibold text-amber-900">Protocolo obligatorio para asignación con cotización</h2>
+                <p className="mt-1 text-sm text-amber-800">Descargo de responsabilidad y procedimiento reglamentario</p>
+              </div>
+            </div>
+            <p className="text-sm text-slate-700 mb-4">
+              A partir de la fecha, los operadores de la central de despacho están autorizados para gestionar directamente los servicios que requieran cotización. No obstante, es obligatorio cumplir estrictamente con el siguiente protocolo:
+            </p>
+            <ol className="list-decimal pl-5 text-sm text-slate-700 space-y-2 mb-4">
+              <li>Validar que el conductor cuente con la aplicación de despacho satelital activa.</li>
+              <li>Realizar el proceso de contacto en orden consecutivo, iniciando desde el lateral 001 en adelante.</li>
+              <li>En caso de que los laterales contactados (ejemplo: del 001 al 040) no respondan o no cuenten con la aplicación, se deberá dejar constancia detallada del proceso realizado.</li>
+              <li>Una vez se logre contacto efectivo (ejemplo: lateral 041), el operador deberá coordinar directamente con el conductor la prestación del servicio.</li>
+            </ol>
+            <p className="text-sm text-slate-700 mb-3">
+              Es importante aclarar que la correcta ejecución y registro de este procedimiento es responsabilidad exclusiva del operador que gestiona el servicio, garantizando transparencia, trazabilidad y cumplimiento de los lineamientos establecidos por la central.
+            </p>
+            <div className="pt-4 border-t border-amber-200">
+              <p className="text-xs font-medium text-slate-600 mb-1">Brayan Arroyave</p>
+              <p className="text-xs text-slate-600">Coordinador de Comunicaciones</p>
+            </div>
+          </div>
         </section>
 
         {ultimoViaje && (
-          <section className="bg-blue-50 border border-blue-200 rounded-xl p-4 shadow-sm">
-            <p className="text-sm text-blue-900">
-              Último lateral asignado: <span className="font-bold">{ultimoViaje.codigo_vehiculo}</span>. La siguiente solicitud debe continuar con otro lateral, salvo omisión justificada.
-            </p>
+          <section className="overflow-hidden rounded-3xl bg-gradient-to-r from-blue-50 to-blue-100 border border-blue-300 shadow-sm">
+            <div className="p-4 sm:p-6">
+              <div className="flex items-start gap-3">
+                <svg className="h-5 w-5 text-blue-600 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M18 5v8a2 2 0 01-2 2h-5l-5 4v-4H4a2 2 0 01-2-2V5a2 2 0 012-2h12a2 2 0 012 2zm-11-1a1 1 0 10-2 0 1 1 0 002 0z" clipRule="evenodd" />
+                </svg>
+                <div>
+                  <p className="text-sm font-semibold text-blue-900">Último lateral asignado: <span className="font-bold text-lg">{ultimoViaje.codigo_vehiculo}</span></p>
+                  <p className="text-sm text-blue-800 mt-1">La siguiente solicitud debe continuar con otro lateral, salvo omisión justificada.</p>
+                </div>
+              </div>
+            </div>
           </section>
         )}
 
-        <section className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-2 bg-white rounded-xl border border-slate-200 shadow-sm p-6">
-            <h3 className="text-lg font-semibold text-slate-900 mb-4">Nuevo viaje</h3>
+        <section className="grid gap-6 lg:grid-cols-3">
+          <div className="lg:col-span-2 rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+            <div className="mb-6">
+              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Crear viaje</p>
+              <h3 className="mt-2 text-2xl font-bold text-slate-900">Registrar nueva solicitud</h3>
+              <p className="mt-1 text-sm text-slate-600">
+                Complete los datos de la solicitud respetando el protocolo de asignación consecutiva de laterales.
+              </p>
+            </div>
 
             {error && (
-              <div className="mb-4 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">
-                {error}
+              <div className="mb-4 rounded-2xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">
+                <div className="flex gap-3">
+                  <svg className="h-5 w-5 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                  </svg>
+                  <span>{error}</span>
+                </div>
               </div>
             )}
 
-            <form onSubmit={handleCrearViaje} className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Lateral *</label>
-                  <input
-                    type="text"
-                    value={lateralBusqueda}
-                    onChange={(e) => setLateralBusqueda(e.target.value)}
-                    className="mb-2 w-full rounded-lg border border-slate-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder="Buscar lateral por coincidencia..."
-                  />
-                  <select
-                    name="vehiculo_id"
-                    value={vehiculoId}
-                    onChange={(e) => setVehiculoId(e.target.value)}
-                    required
-                    className="w-full rounded-lg border border-slate-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  >
-                    <option value="">Seleccione un lateral</option>
-                    {lateralesFiltrados.map((v) => (
-                      <option
-                        key={v.id}
-                        value={v.id}
-                        disabled={vehiculoBloqueado === v.id}
-                      >
-                        {v.codigo_vehiculo}{vehiculoBloqueado === v.id ? ' (bloqueado por consecutivo)' : ''}
-                      </option>
-                    ))}
-                  </select>
+            <form onSubmit={handleCrearViaje} className="space-y-6">
+              <div className="space-y-4">
+                <h4 className="text-sm font-semibold text-slate-900 uppercase tracking-[0.15em]">Información del viaje</h4>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-semibold text-slate-700 mb-2">Lateral *</label>
+                    <input
+                      type="text"
+                      value={lateralBusqueda}
+                      onChange={(e) => setLateralBusqueda(e.target.value)}
+                      className="mb-3 w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                      placeholder="Buscar lateral..."
+                    />
+                    <select
+                      name="vehiculo_id"
+                      value={vehiculoId}
+                      onChange={(e) => setVehiculoId(e.target.value)}
+                      required
+                      className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                    >
+                      <option value="">Seleccione un lateral</option>
+                      {lateralesFiltrados.map((v) => (
+                        <option
+                          key={v.id}
+                          value={v.id}
+                          disabled={vehiculoBloqueado === v.id}
+                        >
+                          {v.codigo_vehiculo}{vehiculoBloqueado === v.id ? ' (bloqueado por consecutivo)' : ''}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-semibold text-slate-700 mb-2">Conductor *</label>
+                    <input
+                      type="text"
+                      name="conductor"
+                      required
+                      className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                      placeholder="Nombre del conductor"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-semibold text-slate-700 mb-2">Convenio empresarial *</label>
+                    <select
+                      name="convenio_id"
+                      required
+                      className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                    >
+                      <option value="">Seleccione un convenio</option>
+                      {convenios.map((c) => (
+                        <option key={c.id} value={c.id}>{c.nombre}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-semibold text-slate-700 mb-2">Medio de contacto *</label>
+                    <select
+                      name="medio_contacto"
+                      required
+                      className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                    >
+                      <option value="">Seleccione</option>
+                      <option value="llamada_telefonica">Llamada telefónica</option>
+                      <option value="whatsapp">WhatsApp</option>
+                      <option value="mensajeria_app">Mensajería de la aplicación</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-semibold text-slate-700 mb-2">Origen *</label>
+                    <input
+                      type="text"
+                      name="origen"
+                      required
+                      className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                      placeholder="Punto de recogida"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-semibold text-slate-700 mb-2">Destino *</label>
+                    <input
+                      type="text"
+                      name="destino"
+                      required
+                      className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                      placeholder="Punto de llegada"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div className="space-y-4">
+                <h4 className="text-sm font-semibold text-slate-900 uppercase tracking-[0.15em]">Autorización</h4>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-semibold text-slate-700 mb-2">Autoriza (operador) *</label>
+                    <select
+                      name="autorizador_operador_id"
+                      required
+                      className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                    >
+                      <option value="">Seleccione operador</option>
+                      {autorizadores.map((u) => (
+                        <option key={u.id} value={u.id}>{u.nombre}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-semibold text-slate-700 mb-2">Cédula del autorizador *</label>
+                    <input
+                      type="text"
+                      name="cedula_autorizador"
+                      required
+                      className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                      placeholder="Documento validado"
+                    />
+                  </div>
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Conductor *</label>
-                  <input
-                    type="text"
-                    name="conductor"
-                    required
-                    className="w-full rounded-lg border border-slate-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder="Nombre del conductor"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Convenio empresarial *</label>
-                  <select
-                    name="convenio_id"
-                    required
-                    className="w-full rounded-lg border border-slate-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  >
-                    <option value="">Seleccione un convenio</option>
-                    {convenios.map((c) => (
-                      <option key={c.id} value={c.id}>{c.nombre}</option>
-                    ))}
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Medio de contacto *</label>
-                  <select
-                    name="medio_contacto"
-                    required
-                    className="w-full rounded-lg border border-slate-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  >
-                    <option value="">Seleccione</option>
-                    <option value="llamada_telefonica">Llamada telefónica</option>
-                    <option value="whatsapp">WhatsApp</option>
-                    <option value="mensajeria_app">Mensajería de la aplicación</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Origen *</label>
-                  <input
-                    type="text"
-                    name="origen"
-                    required
-                    className="w-full rounded-lg border border-slate-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder="Punto de recogida"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Destino *</label>
-                  <input
-                    type="text"
-                    name="destino"
-                    required
-                    className="w-full rounded-lg border border-slate-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder="Punto de llegada"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Autoriza (operador) *</label>
-                  <select
-                    name="autorizador_operador_id"
-                    required
-                    className="w-full rounded-lg border border-slate-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  >
-                    <option value="">Seleccione operador</option>
-                    {autorizadores.map((u) => (
-                      <option key={u.id} value={u.id}>{u.nombre}</option>
-                    ))}
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Cédula del autorizador *</label>
-                  <input
-                    type="text"
-                    name="cedula_autorizador"
-                    required
-                    className="w-full rounded-lg border border-slate-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder="Documento validado"
-                  />
-                </div>
-
-                <div className="md:col-span-2">
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Código de seguridad *</label>
+                  <label className="block text-sm font-semibold text-slate-700 mb-2">Código de seguridad *</label>
                   <input
                     type="text"
                     name="respuesta_autorizacion"
                     required
-                    className="w-full rounded-lg border border-slate-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder="Código de seguridad previamente configurado por administrador"
+                    className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                    placeholder="Código previamente configurado por administrador"
                   />
                 </div>
               </div>
 
-              <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
-                <label className="flex items-center gap-2 text-sm font-medium text-slate-800">
+              <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4">
+                <label className="flex items-start gap-3 text-sm font-medium text-amber-900">
                   <input
                     type="checkbox"
                     checked={omiteConsecutivo}
                     onChange={(e) => setOmiteConsecutivo(e.target.checked)}
-                    className="h-4 w-4"
+                    className="h-5 w-5 rounded mt-0.5"
                   />
-                  Omitir regla de consecutivo para esta solicitud
+                  <span>Omitir regla de consecutivo para esta solicitud</span>
                 </label>
-                <p className="text-xs text-slate-600 mt-1">
+                <p className="text-xs text-amber-800 mt-2 ml-8">
                   Solo úselo en casos excepcionales. Debe quedar registro del porqué.
                 </p>
 
                 {omiteConsecutivo && (
-                  <div className="mt-3">
-                    <label className="block text-sm font-medium text-slate-700 mb-1">Justificación de omisión *</label>
+                  <div className="mt-3 ml-8">
+                    <label className="block text-sm font-semibold text-amber-900 mb-2">Justificación de omisión *</label>
                     <textarea
                       name="motivo_omision"
                       required={omiteConsecutivo}
-                      className="w-full rounded-lg border border-slate-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      rows={3}
+                      className="w-full rounded-xl border border-amber-300 bg-white px-4 py-3 text-sm outline-none transition focus:border-amber-600 focus:ring-2 focus:ring-amber-100"
+                      rows={2}
                       placeholder="Ejemplo: fue el único conductor que contestó"
                     />
                   </div>
@@ -451,86 +494,142 @@ export default function ViajesClient({
               <button
                 type="submit"
                 disabled={loadingViaje}
-                className="w-full md:w-auto rounded-lg bg-slate-900 text-white px-5 py-2.5 font-medium hover:bg-slate-800 disabled:opacity-50"
+                className="w-full rounded-2xl bg-blue-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-blue-500 disabled:cursor-not-allowed disabled:opacity-50"
               >
-                {loadingViaje ? 'Guardando...' : 'Registrar viaje'}
+                {loadingViaje ? 'Registrando viaje...' : 'Registrar viaje'}
               </button>
             </form>
           </div>
 
-          <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-6">
-            <h3 className="text-lg font-semibold text-slate-900 mb-4">Convenios empresariales</h3>
-            <p className="text-sm text-slate-600 mb-4">
-              {rol === 'administrador'
-                ? 'Como administrador puede crear y mantener la lista de convenios.'
-                : 'Lista de convenios disponible para asignación de viajes.'}
-            </p>
+          <aside className="space-y-4 lg:sticky lg:top-6 lg:self-start">
+            <div className="rounded-3xl bg-gradient-to-br from-slate-900 to-slate-800 p-6 text-white shadow-lg">
+              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">Información de ayuda</p>
+              <div className="mt-5 space-y-4">
+                <div>
+                  <div className="text-xs uppercase tracking-wide text-slate-400">Protocolo</div>
+                  <div className="mt-2 text-sm text-slate-200">Respete el orden consecutivo de laterales. Cada nuevo viaje debe asignarse al siguiente lateral disponible.</div>
+                </div>
+                <div className="rounded-2xl border border-white/10 bg-white/5 p-4 text-sm text-slate-300">
+                  <p className="font-medium mb-2">Puntos clave:</p>
+                  <ul className="space-y-1 text-xs">
+                    <li>✓ Validar app satelital activa</li>
+                    <li>✓ Contacto en orden consecutivo</li>
+                    <li>✓ Registrar intentos fallidos</li>
+                    <li>✓ Documentar omisiones</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+
+            <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+              <h3 className="text-sm font-semibold text-slate-900 uppercase tracking-[0.15em]">Estado del consecutivo</h3>
+              <p className="mt-2 text-xs text-slate-600 mb-4">
+                Sistema automático de control de laterales
+              </p>
+              {ultimoViaje ? (
+                <div className="rounded-2xl bg-slate-50 p-3">
+                  <div className="text-xs text-slate-600 mb-1">Último lateral:</div>
+                  <div className="text-lg font-bold text-slate-900">{ultimoViaje.codigo_vehiculo}</div>
+                </div>
+              ) : (
+                <div className="rounded-2xl bg-slate-50 p-3 text-xs text-slate-600 text-center">
+                  Sin registros previos
+                </div>
+              )}
+            </div>
+          </aside>
+        </section>
+
+        <section className="grid gap-6 lg:grid-cols-2">
+          <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+            <div className="mb-4">
+              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Configuración</p>
+              <h3 className="mt-2 text-xl font-bold text-slate-900">Convenios empresariales</h3>
+              <p className="mt-1 text-sm text-slate-600">
+                {rol === 'administrador'
+                  ? 'Cree y mantenga la lista de convenios para asignación de viajes.'
+                  : 'Lista de convenios disponible para asignación de viajes.'}
+              </p>
+            </div>
 
             {rol === 'administrador' && (
-              <form onSubmit={handleCrearConvenio} className="space-y-3 mb-4">
+              <form onSubmit={handleCrearConvenio} className="mb-6 p-4 rounded-2xl border border-blue-200 bg-blue-50">
                 {convenioError && (
-                  <div className="rounded-lg border border-red-200 bg-red-50 p-2 text-xs text-red-700">
+                  <div className="rounded-lg border border-red-200 bg-red-50 p-2 text-xs text-red-700 mb-3">
                     {convenioError}
                   </div>
                 )}
-                <input
-                  type="text"
-                  value={nuevoConvenio}
-                  onChange={(e) => setNuevoConvenio(e.target.value)}
-                  className="w-full rounded-lg border border-slate-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="Nuevo convenio empresarial"
-                  required
-                />
-                <button
-                  type="submit"
-                  disabled={loadingConvenio}
-                  className="w-full rounded-lg bg-blue-700 text-white px-4 py-2 font-medium hover:bg-blue-800 disabled:opacity-50"
-                >
-                  {loadingConvenio ? 'Creando...' : 'Agregar convenio'}
-                </button>
+                <div className="space-y-3">
+                  <div>
+                    <label className="block text-xs font-semibold text-blue-900 mb-2">Nuevo convenio</label>
+                    <input
+                      type="text"
+                      value={nuevoConvenio}
+                      onChange={(e) => setNuevoConvenio(e.target.value)}
+                      className="w-full rounded-xl border border-blue-300 bg-white px-4 py-3 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                      placeholder="Nombre del convenio"
+                      required
+                    />
+                  </div>
+                  <button
+                    type="submit"
+                    disabled={loadingConvenio}
+                    className="w-full rounded-xl bg-blue-600 text-white px-4 py-2.5 font-medium transition hover:bg-blue-500 disabled:opacity-50"
+                  >
+                    {loadingConvenio ? 'Creando...' : '+ Agregar convenio'}
+                  </button>
+                </div>
               </form>
             )}
 
-            <ul className="space-y-2 max-h-72 overflow-y-auto">
+            <div className="space-y-2 max-h-64 overflow-y-auto">
               {convenios.length > 0 ? (
                 convenios.map((c) => (
-                  <li key={c.id} className="rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-700 flex items-center justify-between gap-2">
-                    <span>{c.nombre}</span>
+                  <div key={c.id} className="flex items-center justify-between rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
+                    <span className="text-sm font-medium text-slate-900">{c.nombre}</span>
                     {rol === 'administrador' && (
                       <button
                         type="button"
                         onClick={() => handleEliminarConvenio(c.id)}
-                        className="text-xs rounded bg-red-600 text-white px-2 py-1 hover:bg-red-700 disabled:opacity-50"
+                        className="text-xs rounded-lg bg-red-100 text-red-700 px-2.5 py-1.5 font-medium hover:bg-red-200 transition disabled:opacity-50"
                         disabled={loadingEliminarConvenio === c.id}
                       >
                         {loadingEliminarConvenio === c.id ? 'Eliminando...' : 'Eliminar'}
                       </button>
                     )}
-                  </li>
+                  </div>
                 ))
               ) : (
-                <li className="text-sm text-slate-500">No hay convenios registrados.</li>
+                <div className="rounded-2xl border border-dashed border-slate-300 bg-white px-4 py-6 text-center text-sm text-slate-500">
+                  No hay convenios registrados
+                </div>
               )}
-            </ul>
+            </div>
+          </div>
 
-            {rol === 'administrador' && (
-              <div className="mt-6 pt-5 border-t border-slate-200">
-                <h4 className="text-sm font-semibold text-slate-900 mb-2">Vincular validación por operador</h4>
-                <p className="text-xs text-slate-600 mb-3">
-                  Configure por operador la cédula y código de seguridad que se validarán al autorizar viajes.
+          {rol === 'administrador' && (
+            <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+              <div className="mb-4">
+                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Seguridad</p>
+                <h3 className="mt-2 text-xl font-bold text-slate-900">Validaciones de autorizadores</h3>
+                <p className="mt-1 text-sm text-slate-600">
+                  Configure cédula y código de seguridad por operador autorizador.
                 </p>
+              </div>
 
-                {validacionError && (
-                  <div className="rounded-lg border border-red-200 bg-red-50 p-2 text-xs text-red-700 mb-3">
-                    {validacionError}
-                  </div>
-                )}
+              {validacionError && (
+                <div className="mb-4 rounded-2xl border border-red-200 bg-red-50 p-3 text-xs text-red-700">
+                  {validacionError}
+                </div>
+              )}
 
-                <form onSubmit={handleGuardarValidacion} className="space-y-2">
+              <form onSubmit={handleGuardarValidacion} className="mb-6 p-4 rounded-2xl border border-slate-200 bg-slate-50 space-y-3">
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 mb-2">Operador autorizador</label>
                   <select
                     value={autorizadorIdConfig}
                     onChange={(e) => setAutorizadorIdConfig(e.target.value)}
-                    className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
                     required
                   >
                     <option value="">Seleccione operador</option>
@@ -538,25 +637,35 @@ export default function ViajesClient({
                       <option key={u.id} value={u.id}>{u.nombre}</option>
                     ))}
                   </select>
-                  <input
-                    type="text"
-                    value={cedulaConfig}
-                    onChange={(e) => setCedulaConfig(e.target.value)}
-                    className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder="Cédula"
-                    required
-                  />
-                  <input
-                    type="text"
-                    value={respuestaConfig}
-                    onChange={(e) => setRespuestaConfig(e.target.value)}
-                    className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder="Código de seguridad"
-                    required
-                  />
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-700 mb-2">Cédula</label>
+                    <input
+                      type="text"
+                      value={cedulaConfig}
+                      onChange={(e) => setCedulaConfig(e.target.value)}
+                      className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                      placeholder="Documento"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-700 mb-2">Código de seguridad</label>
+                    <input
+                      type="text"
+                      value={respuestaConfig}
+                      onChange={(e) => setRespuestaConfig(e.target.value)}
+                      className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                      placeholder="PIN o código"
+                      required
+                    />
+                  </div>
+                </div>
+                <div className="flex gap-2">
                   <button
                     type="submit"
-                    className="w-full rounded-lg bg-slate-900 text-white px-3 py-2 text-sm font-medium hover:bg-slate-800 disabled:opacity-50"
+                    className="flex-1 rounded-xl bg-blue-600 text-white px-4 py-2.5 text-sm font-medium transition hover:bg-blue-500 disabled:opacity-50"
                     disabled={loadingValidacion}
                   >
                     {loadingValidacion
@@ -569,69 +678,95 @@ export default function ViajesClient({
                     <button
                       type="button"
                       onClick={handleCancelarEdicionValidacion}
-                      className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+                      className="flex-1 rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
                     >
-                      Cancelar edición
+                      Cancelar
                     </button>
                   )}
-                </form>
+                </div>
+              </form>
 
-                <div className="mt-4 max-h-40 overflow-y-auto space-y-2">
-                  {validacionesAutorizador.length > 0 ? (
-                    validacionesAutorizador.map((v) => (
-                      <div key={v.operador_id} className="rounded border border-slate-200 p-2 text-xs text-slate-700">
-                        <p><span className="font-semibold">Operador:</span> {v.operador_nombre}</p>
-                        <p><span className="font-semibold">Cédula:</span> {v.cedula}</p>
-                        <p><span className="font-semibold">Código de seguridad:</span> {v.respuesta}</p>
-                        <div className="mt-2">
+              <div className="space-y-2 max-h-56 overflow-y-auto">
+                {validacionesAutorizador.length > 0 ? (
+                  validacionesAutorizador.map((v) => (
+                    <div key={v.operador_id} className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                      <div className="flex items-start justify-between mb-3">
+                        <div>
+                          <p className="text-sm font-bold text-slate-900">{v.operador_nombre}</p>
+                          <p className="text-xs text-slate-600 mt-1">CC: {v.cedula}</p>
+                        </div>
+                        <div className="flex gap-1.5">
                           <button
                             type="button"
                             onClick={() => handleEditarValidacion(v)}
-                            className="mr-2 rounded bg-blue-600 px-2 py-1 text-white hover:bg-blue-700"
+                            className="rounded-lg bg-blue-100 text-blue-700 px-3 py-1.5 text-xs font-medium hover:bg-blue-200 transition"
                           >
-                            Editar código de seguridad
+                            Editar
                           </button>
                           <button
                             type="button"
                             onClick={() => handleEliminarValidacion(v.operador_id)}
-                            className="rounded bg-red-600 px-2 py-1 text-white hover:bg-red-700 disabled:opacity-50"
+                            className="rounded-lg bg-red-100 text-red-700 px-3 py-1.5 text-xs font-medium hover:bg-red-200 transition disabled:opacity-50"
                             disabled={loadingEliminarValidacion === v.operador_id}
                           >
-                            {loadingEliminarValidacion === v.operador_id ? 'Eliminando...' : 'Eliminar código de seguridad'}
+                            {loadingEliminarValidacion === v.operador_id ? 'Eliminando...' : 'Eliminar'}
                           </button>
                         </div>
                       </div>
-                    ))
-                  ) : (
-                    <p className="text-xs text-slate-500">Sin validaciones configuradas.</p>
-                  )}
-                </div>
+                      <div className="rounded-lg bg-white px-3 py-2">
+                        <p className="text-xs text-slate-600">Código:</p>
+                        <p className="text-sm font-mono font-semibold text-slate-900 mt-0.5">{v.respuesta}</p>
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <div className="rounded-2xl border border-dashed border-slate-300 bg-white px-4 py-6 text-center text-sm text-slate-500">
+                    Sin validaciones configuradas
+                  </div>
+                )}
               </div>
-            )}
-          </div>
+            </div>
+          )}
         </section>
 
-        <section className="bg-white rounded-xl border border-slate-200 shadow-sm p-6">
-          <h3 className="text-lg font-semibold text-slate-900 mb-4">Últimos viajes registrados</h3>
+        <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+          <div className="mb-6 flex items-center justify-between">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Histórico</p>
+              <h2 className="mt-2 text-2xl font-bold text-slate-900">Viajes registrados</h2>
+            </div>
+            <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-slate-600">
+              {viajes.length} registros
+            </span>
+          </div>
 
           {rol === 'administrador' && (
-            <div className="mb-4 rounded-lg border border-red-200 bg-red-50 p-4">
-              <p className="text-sm font-semibold text-red-900 mb-2">Administración de histórico por lateral</p>
-              <p className="text-xs text-red-800 mb-3">
-                Esta opción elimina todos los registros de viajes del lateral seleccionado.
-              </p>
+            <div className="mb-6 rounded-2xl border border-red-200 bg-red-50 p-4">
+              <div className="flex items-start gap-3 mb-4">
+                <svg className="h-5 w-5 text-red-600 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                </svg>
+                <div>
+                  <p className="text-sm font-bold text-red-900">Administración de histórico por lateral</p>
+                  <p className="text-xs text-red-800 mt-1">
+                    Elimina todos los registros de viajes del lateral seleccionado. Esta acción no se puede deshacer.
+                  </p>
+                </div>
+              </div>
+              
               {errorEliminarViajes && (
-                <div className="mb-3 rounded border border-red-300 bg-white p-2 text-xs text-red-700">
+                <div className="mb-3 rounded-lg border border-red-300 bg-white p-2 text-xs text-red-700">
                   {errorEliminarViajes}
                 </div>
               )}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-2 items-end">
+              
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3 items-end">
                 <div className="md:col-span-2">
-                  <label className="block text-xs font-medium text-red-900 mb-1">Lateral</label>
+                  <label className="block text-xs font-semibold text-red-900 mb-2">Lateral a eliminar</label>
                   <select
                     value={lateralEliminarId}
                     onChange={(e) => setLateralEliminarId(e.target.value)}
-                    className="w-full rounded-lg border border-red-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-500"
+                    className="w-full rounded-xl border border-red-300 bg-white px-4 py-3 text-sm outline-none transition focus:border-red-500 focus:ring-2 focus:ring-red-100"
                   >
                     <option value="">Seleccione lateral</option>
                     {vehiculos.map((v) => (
@@ -642,7 +777,7 @@ export default function ViajesClient({
                 <button
                   type="button"
                   onClick={handleEliminarViajesPorLateral}
-                  className="rounded-lg bg-red-700 px-4 py-2 text-sm font-medium text-white hover:bg-red-800 disabled:opacity-50"
+                  className="rounded-xl bg-red-700 text-white px-4 py-3 text-sm font-medium transition hover:bg-red-800 disabled:opacity-50"
                   disabled={loadingEliminarViajes}
                 >
                   {loadingEliminarViajes ? 'Eliminando...' : 'Eliminar registros'}
@@ -651,56 +786,72 @@ export default function ViajesClient({
             </div>
           )}
 
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-slate-200">
-              <thead className="bg-slate-50">
-                <tr>
-                  <th className="px-3 py-2 text-left text-xs font-semibold text-slate-600 uppercase">Fecha</th>
-                  <th className="px-3 py-2 text-left text-xs font-semibold text-slate-600 uppercase">Lateral</th>
-                  <th className="px-3 py-2 text-left text-xs font-semibold text-slate-600 uppercase">Conductor</th>
-                  <th className="px-3 py-2 text-left text-xs font-semibold text-slate-600 uppercase">Convenio</th>
-                  <th className="px-3 py-2 text-left text-xs font-semibold text-slate-600 uppercase">Ruta</th>
-                  <th className="px-3 py-2 text-left text-xs font-semibold text-slate-600 uppercase">Contacto</th>
-                  <th className="px-3 py-2 text-left text-xs font-semibold text-slate-600 uppercase">Autorizó</th>
-                  <th className="px-3 py-2 text-left text-xs font-semibold text-slate-600 uppercase">Registro</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100 bg-white">
-                {viajes.length > 0 ? (
-                  viajes.map((v) => (
-                    <tr key={v.id}>
-                      <td className="px-3 py-2 text-sm text-slate-700 whitespace-nowrap">
-                        {new Date(v.created_at).toLocaleString('es-CO')}
-                      </td>
-                      <td className="px-3 py-2 text-sm font-semibold text-slate-900">{v.codigo_vehiculo}</td>
-                      <td className="px-3 py-2 text-sm text-slate-700">{v.conductor}</td>
-                      <td className="px-3 py-2 text-sm text-slate-700">{v.convenio_nombre}</td>
-                      <td className="px-3 py-2 text-sm text-slate-700">{v.origen} → {v.destino}</td>
-                      <td className="px-3 py-2 text-sm text-slate-700">
-                        {formatearMedioContacto(v.medio_contacto)}
-                        {v.omite_consecutivo && (
-                          <span className="block text-xs text-amber-700 mt-1">
-                            Omisión: {v.motivo_omision || 'Sin detalle'}
-                          </span>
-                        )}
-                      </td>
-                      <td className="px-3 py-2 text-sm text-slate-700">
-                        <span className="font-medium">{v.autorizador_operador_nombre || 'N/A'}</span>
-                        <span className="block text-xs text-slate-500">CC: {v.cedula_autorizador || 'N/A'}</span>
-                      </td>
-                      <td className="px-3 py-2 text-sm text-slate-700">{v.creado_por_usuario}</td>
+          {viajes.length === 0 ? (
+            <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-6 py-12 text-center">
+              <svg className="mx-auto mb-4 h-12 w-12 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+              <p className="text-sm font-medium text-slate-700">Aún no hay viajes registrados</p>
+              <p className="mt-1 text-sm text-slate-500">Los nuevos registros aparecerán aquí</p>
+            </div>
+          ) : (
+            <div className="overflow-hidden rounded-2xl border border-slate-200">
+              <div className="max-h-[28rem] overflow-auto">
+                <table className="min-w-full divide-y divide-slate-200 text-sm">
+                  <thead className="sticky top-0 bg-slate-50">
+                    <tr>
+                      <th className="px-4 py-3 text-left font-semibold text-slate-600 uppercase tracking-[0.12em] text-xs">Fecha</th>
+                      <th className="px-4 py-3 text-left font-semibold text-slate-600 uppercase tracking-[0.12em] text-xs">Lateral</th>
+                      <th className="px-4 py-3 text-left font-semibold text-slate-600 uppercase tracking-[0.12em] text-xs">Conductor</th>
+                      <th className="px-4 py-3 text-left font-semibold text-slate-600 uppercase tracking-[0.12em] text-xs">Convenio</th>
+                      <th className="px-4 py-3 text-left font-semibold text-slate-600 uppercase tracking-[0.12em] text-xs">Ruta</th>
+                      <th className="px-4 py-3 text-left font-semibold text-slate-600 uppercase tracking-[0.12em] text-xs">Contacto</th>
+                      <th className="px-4 py-3 text-left font-semibold text-slate-600 uppercase tracking-[0.12em] text-xs">Autorizó</th>
+                      <th className="px-4 py-3 text-left font-semibold text-slate-600 uppercase tracking-[0.12em] text-xs">Usuario</th>
                     </tr>
-                  ))
-                ) : (
-                  <tr>
-                    <td colSpan={8} className="px-3 py-4 text-center text-sm text-slate-500">
-                      Aún no hay viajes registrados.
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100 bg-white">
+                    {viajes.map((v) => (
+                      <tr key={v.id} className="hover:bg-slate-50">
+                        <td className="px-4 py-3 text-slate-700 whitespace-nowrap">
+                          {new Date(v.created_at).toLocaleString('es-CO', {
+                            year: '2-digit',
+                            month: '2-digit',
+                            day: '2-digit',
+                            hour: '2-digit',
+                            minute: '2-digit'
+                          })}
+                        </td>
+                        <td className="px-4 py-3 font-semibold text-slate-900">{v.codigo_vehiculo}</td>
+                        <td className="px-4 py-3 text-slate-700">{v.conductor}</td>
+                        <td className="px-4 py-3 text-slate-600">{v.convenio_nombre}</td>
+                        <td className="px-4 py-3 text-slate-700">
+                          <span className="text-xs">
+                            {v.origen} → {v.destino}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3 text-slate-700">
+                          <span className="inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium bg-slate-100 text-slate-700">
+                            {formatearMedioContacto(v.medio_contacto)}
+                          </span>
+                          {v.omite_consecutivo && (
+                            <span className="block mt-1 text-xs text-amber-700 bg-amber-50 px-2 py-1 rounded">
+                              ⚠ Omisión: {v.motivo_omision || 'Sin detalle'}
+                            </span>
+                          )}
+                        </td>
+                        <td className="px-4 py-3 text-slate-700">
+                          <span className="font-medium text-slate-900">{v.autorizador_operador_nombre || 'N/A'}</span>
+                          <span className="block text-xs text-slate-500">CC: {v.cedula_autorizador || 'N/A'}</span>
+                        </td>
+                        <td className="px-4 py-3 text-slate-600 text-xs">{v.creado_por_usuario}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
         </section>
       </main>
     </div>
