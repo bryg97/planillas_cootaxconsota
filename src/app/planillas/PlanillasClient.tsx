@@ -1,6 +1,7 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
 import ImportarPlanillasModal from './ImportarPlanillasModal';
 import FormPlanilla from './FormPlanilla';
 import VerPlanilla from './VerPlanilla';
@@ -22,10 +23,18 @@ function formatFechaColombia(fecha: any): string {
 
 export default function PlanillasClient({ planillas, vehiculos, operadores, valorDefecto, rol }: { planillas: any[]; vehiculos: any[]; operadores: any[]; valorDefecto?: number; rol: string }) {
   const [showForm, setShowForm] = useState(false);
+  const searchParams = useSearchParams();
   const [planillaVer, setPlanillaVer] = useState<any>(null);
   const [planillaEditar, setPlanillaEditar] = useState<any>(null);
   const [showImport, setShowImport] = useState(false);
   const [busqueda, setBusqueda] = useState('');
+
+  useEffect(() => {
+    const abrirNueva = searchParams.get('nueva');
+    if (abrirNueva === '1') {
+      setShowForm(true);
+    }
+  }, [searchParams]);
 
   async function handleEliminar(planillaId: number, numeroPlanilla: string) {
     if (!confirm(`¿Estás seguro de eliminar la planilla N° ${numeroPlanilla}? Esta acción no se puede deshacer.`)) {

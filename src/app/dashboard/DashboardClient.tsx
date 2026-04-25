@@ -10,7 +10,6 @@ export default function DashboardClient({ user, rol, modulos, metricas }: { user
   const [operadores, setOperadores] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [pinValidado, setPinValidado] = useState(false);
-  const [showDashboard, setShowDashboard] = useState(false);
   const [favoritos, setFavoritos] = useState<string[]>([]);
   const [usuariosEnLinea, setUsuariosEnLinea] = useState<number>(Number(metricas.usuariosEnLinea) || 0);
   const [usuariosEnLineaLista, setUsuariosEnLineaLista] = useState<string[]>(
@@ -141,31 +140,6 @@ export default function DashboardClient({ user, rol, modulos, metricas }: { user
     };
   }, []);
 
-  useEffect(() => {
-    if (loading) {
-      setShowDashboard(false);
-      return;
-    }
-
-    if (requierePin && !pinValidado) {
-      setShowDashboard(false);
-      return;
-    }
-
-    if (!operador && operadores.length > 1) {
-      setShowDashboard(false);
-      return;
-    }
-
-    const timer = window.setTimeout(() => {
-      setShowDashboard(true);
-    }, 30);
-
-    return () => {
-      window.clearTimeout(timer);
-    };
-  }, [loading, operador, operadores.length, pinValidado, requierePin]);
-
   if (loading) return <div className="p-8 text-center">Cargando...</div>;
 
   if (requierePin && !pinValidado) {
@@ -220,7 +194,7 @@ export default function DashboardClient({ user, rol, modulos, metricas }: { user
       <div className="pointer-events-none absolute -left-28 top-24 h-80 w-80 rounded-full bg-cyan-400/20 blur-3xl" />
       <div className="pointer-events-none absolute right-[-7rem] top-[18rem] h-96 w-96 rounded-full bg-emerald-400/10 blur-3xl" />
 
-      <main className={`relative mx-auto max-w-7xl px-4 py-8 transition-all duration-700 ease-out sm:px-6 lg:px-8 ${showDashboard ? 'translate-y-0 opacity-100' : 'translate-y-3 opacity-0'}`}>
+      <main className="dashboard-enter relative mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
         <section className="mb-8 overflow-hidden rounded-[2rem] border border-white/10 bg-white/8 text-white shadow-[0_30px_90px_rgba(2,6,23,0.45)] backdrop-blur-xl">
           <div className="grid gap-6 px-6 py-7 sm:px-8 lg:grid-cols-[1.2fr_0.8fr] lg:items-end">
             <div>
@@ -334,7 +308,15 @@ export default function DashboardClient({ user, rol, modulos, metricas }: { user
         {/* Métricas secundarias */}
         <section className="mb-8 grid gap-6 lg:grid-cols-3">
           <div className="rounded-2xl border border-white/15 bg-white/95 p-6 shadow-xl shadow-slate-950/20 lg:col-span-2">
-            <h4 className="text-sm font-semibold uppercase tracking-[0.18em] text-slate-500">Indicadores operativos</h4>
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <h4 className="text-sm font-semibold uppercase tracking-[0.18em] text-slate-500">Indicadores operativos</h4>
+              <a
+                href="/planillas?nueva=1"
+                className="inline-flex items-center justify-center rounded-full bg-slate-950 px-4 py-2 text-xs font-semibold uppercase tracking-[0.12em] text-white transition hover:bg-slate-800"
+              >
+                + Nueva planilla
+              </a>
+            </div>
             <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
             {/* Planillas hoy */}
             <div className="rounded-xl border border-slate-200 bg-slate-50 p-6">
