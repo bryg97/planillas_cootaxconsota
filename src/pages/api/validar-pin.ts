@@ -8,6 +8,8 @@ type PinUser = {
   rol: string;
   activo: boolean;
   pin_acceso_hash: string | null;
+  pin_dinamico_hash?: string | null;
+  pin_dinamico_expira_en?: string | null;
 };
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
@@ -52,6 +54,63 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     if (!user.activo) {
       return res.status(403).json({ ok: false, error: 'Usuario inhabilitado' });
+    }
+
+    if (user.rol === 'administrador') {
+      const hasDynamicPinHashColumn = await query<{ exists: boolean }>(
+        `SELECT EXISTS (
+          SELECT 1
+          FROM information_schema.columns
+          WHERE table_name = 'usuarios'
+            AND column_name = 'pin_dinamico_hash'
+        ) AS exists`
+      );
+
+      const hasDynamicPinExpireColumn = await query<{ exists: boolean }>(
+        `SELECT EXISTS (
+          SELECT 1
+          FROM information_schema.columns
+          WHERE table_name = 'usuarios'
+            AND column_name = 'pin_dinamico_expira_en'
+        ) AS exists`
+      );
+
+      if (!hasDynamicPinHashColumn?.[0]?.exists || !hasDynamicPinExpireColumn?.[0]?.exists) {
+        return res.status(400).json({
+          ok: false,
+          error: 'Falta configurar PIN dinamico en BD. Ejecuta la migracion neon-add-admin-dynamic-pin.sql',
+        });
+      }
+
+      const adminRows = await query<PinUser>(
+        'SELECT id, pin_dinamico_hash, pin_dinamico_expira_en FROM usuarios WHERE id = $1 LIMIT 1',
+        [user.id]
+      );
+
+      const adminData = adminRows[0];
+      if (!adminData?.pin_dinamico_hash || !adminData?.pin_dinamico_expira_en) {
+        return res.status(400).json({
+          ok: false,
+          error: 'No hay un PIN dinamico vigente. Solicita un nuevo codigo.',
+        });
+      }
+
+      const expiraEn = new Date(adminData.pin_dinamico_expira_en);
+      if (Number.isNaN(expiraEn.getTime()) || expiraEn.getTime() < Date.now()) {
+        return res.status(401).json({ ok: false, error: 'El PIN dinamico ha expirado. Solicita uno nuevo.' });
+      }
+
+      const isDynamicValid = await bcrypt.compare(pin, adminData.pin_dinamico_hash);
+      if (!isDynamicValid) {
+        return res.status(401).json({ ok: false, error: 'PIN dinamico incorrecto' });
+      }
+
+      await query(
+        'UPDATE usuarios SET pin_dinamico_hash = NULL, pin_dinamico_expira_en = NULL WHERE id = $1',
+        [user.id]
+      );
+
+      return res.status(200).json({ ok: true });
     }
 
     if (!user.pin_acceso_hash) {

@@ -190,3 +190,14 @@ export async function notificarNuevoViaje(data: NuevoViaje) {
 
   return await enviarMensajeTelegram(mensaje);
 }
+
+export async function enviarPinDinamicoAdminTelegram(data: {
+  usuario: string;
+  pin: string;
+  minutosVigencia?: number;
+}) {
+  const vigencia = data.minutosVigencia || 10;
+  const mensaje = `🔐 <b>PIN dinamico de administrador</b>\n\n👤 Usuario: ${data.usuario}\n🔢 Codigo: <b>${data.pin}</b>\n⏳ Vigencia: ${vigencia} minutos`;
+
+  return await enviarMensajeTelegram(mensaje);
+}

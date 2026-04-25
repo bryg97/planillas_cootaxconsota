@@ -15,7 +15,7 @@ export default function DashboardClient({ user, rol, modulos, metricas }: { user
   const [usuariosEnLineaLista, setUsuariosEnLineaLista] = useState<string[]>(
     Array.isArray(metricas.usuariosEnLineaLista) ? metricas.usuariosEnLineaLista : []
   );
-  const requierePin = rol !== 'administrador';
+  const requierePin = true;
 
   const colorClasses: Record<string, { bg: string; text: string; ring: string }> = {
     blue: { bg: 'bg-blue-100', text: 'text-blue-700', ring: 'ring-blue-200' },
@@ -146,6 +146,7 @@ export default function DashboardClient({ user, rol, modulos, metricas }: { user
     return (
       <ValidarPinModal
         email={user.email}
+        rol={rol}
         onValidated={() => {
           sessionStorage.setItem(`pinValidado:${user.email}`, '1');
           setPinValidado(true);

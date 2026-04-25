@@ -156,3 +156,55 @@ export async function notificarNuevoViajeCorreo(data: NuevoViajeEmail) {
     return { success: false, error: message };
   }
 }
+
+export async function enviarPinDinamicoAdminCorreo(emailDestino: string, pin: string, minutosVigencia = 10) {
+  const apiKey = process.env.RESEND_API_KEY;
+  const fromEmail = process.env.RESEND_FROM_EMAIL;
+
+  if (!apiKey || !fromEmail) {
+    return {
+      success: false,
+      error: 'Resend no configurado. Defina RESEND_API_KEY y RESEND_FROM_EMAIL.',
+    };
+  }
+
+  const resend = new Resend(apiKey);
+  const subject = 'PIN dinamico de acceso (Administrador)';
+  const html = `
+    <div style="background:#f1f5f9; margin:0; padding:24px; font-family:Arial, Helvetica, sans-serif; color:#0f172a;">
+      <div style="max-width:560px; margin:0 auto; background:#ffffff; border:1px solid #e2e8f0; border-radius:16px; overflow:hidden;">
+        <div style="background:linear-gradient(135deg,#0f172a,#1e3a8a); padding:20px 24px; color:#ffffff;">
+          <p style="margin:0; font-size:11px; letter-spacing:0.14em; text-transform:uppercase; opacity:0.9;">Seguridad de acceso</p>
+          <h2 style="margin:8px 0 0; font-size:22px; line-height:1.2;">PIN dinamico para administrador</h2>
+        </div>
+        <div style="padding:24px;">
+          <p style="margin:0; font-size:14px; color:#334155;">Usa este codigo para finalizar el ingreso al sistema:</p>
+          <p style="margin:14px 0 0; font-size:36px; letter-spacing:0.26em; font-weight:800; color:#0f172a;">${pin}</p>
+          <p style="margin:16px 0 0; font-size:13px; color:#64748b;">Este PIN vence en ${minutosVigencia} minutos.</p>
+        </div>
+      </div>
+    </div>
+  `;
+
+  const text = [
+    'PIN DINAMICO PARA ADMINISTRADOR',
+    `Codigo: ${pin}`,
+    `Vigencia: ${minutosVigencia} minutos`,
+  ].join('\n');
+
+  try {
+    await resend.emails.send({
+      from: fromEmail,
+      to: [emailDestino],
+      subject,
+      html,
+      text,
+    });
+
+    return { success: true };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Error enviando PIN dinamico por correo';
+    console.error('Error enviando PIN dinamico por correo:', message);
+    return { success: false, error: message };
+  }
+}
