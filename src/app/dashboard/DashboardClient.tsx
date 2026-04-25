@@ -189,16 +189,20 @@ export default function DashboardClient({ user, rol, modulos, metricas }: { user
   }
 
   return (
-    <div className="min-h-screen bg-slate-100">
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <section className="mb-8 overflow-hidden rounded-3xl bg-gradient-to-r from-slate-900 via-slate-800 to-blue-900 text-white shadow-2xl">
+    <div className="relative min-h-screen overflow-hidden bg-[#07111f]">
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,_rgba(56,189,248,0.22),_transparent_28%),radial-gradient(circle_at_82%_18%,_rgba(16,185,129,0.14),_transparent_26%),linear-gradient(145deg,_#08111f_0%,_#0d1730_45%,_#101c38_100%)]" />
+      <div className="pointer-events-none absolute -left-28 top-24 h-80 w-80 rounded-full bg-cyan-400/20 blur-3xl" />
+      <div className="pointer-events-none absolute right-[-7rem] top-[18rem] h-96 w-96 rounded-full bg-emerald-400/10 blur-3xl" />
+
+      <main className="relative mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+        <section className="mb-8 overflow-hidden rounded-[2rem] border border-white/10 bg-white/8 text-white shadow-[0_30px_90px_rgba(2,6,23,0.45)] backdrop-blur-xl">
           <div className="grid gap-6 px-6 py-7 sm:px-8 lg:grid-cols-[1.2fr_0.8fr] lg:items-end">
             <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-white/70">Panel principal</p>
-              <h2 className="mt-3 text-3xl font-bold tracking-tight sm:text-4xl">
+              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-cyan-100/80">Panel principal</p>
+              <h2 className="mt-3 text-3xl font-black tracking-tight sm:text-4xl">
                 {saludo()}, {operador ? operador.nombre : user.user_metadata?.full_name || user.email?.split('@')[0]}
               </h2>
-              <p className="mt-2 text-sm text-white/80">
+              <p className="mt-2 text-sm text-slate-200">
                 {bogotaNow.toLocaleDateString('es-CO', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
               </p>
             </div>
@@ -207,11 +211,11 @@ export default function DashboardClient({ user, rol, modulos, metricas }: { user
               <div className="mb-3 flex justify-end">
                 <LogoutButton />
               </div>
-              <div className="rounded-2xl border border-white/15 bg-white/10 p-4">
-              <p className="text-xs uppercase tracking-[0.18em] text-white/70">Planillas por operador (mes actual)</p>
+              <div className="rounded-2xl border border-white/15 bg-slate-950/35 p-4">
+              <p className="text-xs uppercase tracking-[0.18em] text-cyan-100/80">Planillas por operador (mes actual)</p>
 
               {participacionPlanillas.length === 0 ? (
-                <div className="mt-3 rounded-xl bg-white/10 px-3 py-3 text-xs text-white/80">
+                <div className="mt-3 rounded-xl bg-white/10 px-3 py-3 text-xs text-slate-100">
                   Aún no hay planillas registradas este mes.
                 </div>
               ) : (
@@ -219,11 +223,11 @@ export default function DashboardClient({ user, rol, modulos, metricas }: { user
                   {participacionPlanillas.map((item: any) => (
                     <div key={item.operador}>
                       <div className="mb-1 flex items-center justify-between text-xs">
-                        <span className="font-semibold text-white/90">{nombreCortoOperador(item.operador)}</span>
-                        <span className="text-white/80">{item.porcentaje}% · {item.total}</span>
+                        <span className="font-semibold text-white">{nombreCortoOperador(item.operador)}</span>
+                        <span className="text-slate-100">{item.porcentaje}% · {item.total}</span>
                       </div>
-                      <div className="h-2 rounded-full bg-white/20">
-                        <div className="h-2 rounded-full bg-emerald-300 transition-all" style={{ width: `${Math.min(100, Number(item.porcentaje) || 0)}%` }} />
+                      <div className="h-2 rounded-full bg-white/15">
+                        <div className="h-2 rounded-full bg-cyan-300 transition-all" style={{ width: `${Math.min(100, Number(item.porcentaje) || 0)}%` }} />
                       </div>
                     </div>
                   ))}
@@ -237,14 +241,14 @@ export default function DashboardClient({ user, rol, modulos, metricas }: { user
         {/* Métricas principales */}
         <section className="mb-8">
           <div className="mb-4 flex items-center justify-between">
-            <h3 className="text-xl font-semibold text-slate-800">Resumen General</h3>
-            <span className="rounded-full bg-slate-200 px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-slate-600">
+            <h3 className="text-xl font-semibold text-white">Resumen General</h3>
+            <span className="rounded-full border border-white/15 bg-white/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-slate-200">
               Actualizado hoy
             </span>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {/* Dinero sin liquidar */}
-            <div className="bg-white rounded-2xl shadow-sm p-6 border border-slate-200">
+            <div className="rounded-2xl border border-white/15 bg-white/95 p-6 shadow-xl shadow-slate-950/20">
               <div className="flex items-center justify-between mb-2">
                 <h4 className="text-sm font-medium text-slate-600">Dinero Sin Liquidar</h4>
                 <span className="text-lg">💰</span>
@@ -258,7 +262,7 @@ export default function DashboardClient({ user, rol, modulos, metricas }: { user
             </div>
 
             {/* Estado de cartera */}
-            <div className="bg-white rounded-2xl shadow-sm p-6 border border-slate-200">
+            <div className="rounded-2xl border border-white/15 bg-white/95 p-6 shadow-xl shadow-slate-950/20">
               <div className="flex items-center justify-between mb-2">
                 <h4 className="text-sm font-medium text-slate-600">Estado de Cartera</h4>
                 <span className="text-lg">💼</span>
@@ -272,7 +276,7 @@ export default function DashboardClient({ user, rol, modulos, metricas }: { user
             </div>
 
             {/* Liquidaciones pendientes */}
-            <div className="bg-white rounded-2xl shadow-sm p-6 border border-slate-200">
+            <div className="rounded-2xl border border-white/15 bg-white/95 p-6 shadow-xl shadow-slate-950/20">
               <div className="flex items-center justify-between mb-2">
                 <h4 className="text-sm font-medium text-slate-600">Liquidaciones Pendientes</h4>
                 <span className="text-lg">📋</span>
@@ -286,7 +290,7 @@ export default function DashboardClient({ user, rol, modulos, metricas }: { user
             </div>
 
             {/* Recaudado este mes */}
-            <div className="bg-white rounded-2xl shadow-sm p-6 border border-slate-200">
+            <div className="rounded-2xl border border-white/15 bg-white/95 p-6 shadow-xl shadow-slate-950/20">
               <div className="flex items-center justify-between mb-2">
                 <h4 className="text-sm font-medium text-slate-600">Recaudado Este Mes</h4>
                 <span className="text-lg">📊</span>
@@ -303,11 +307,11 @@ export default function DashboardClient({ user, rol, modulos, metricas }: { user
 
         {/* Métricas secundarias */}
         <section className="mb-8 grid gap-6 lg:grid-cols-3">
-          <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm lg:col-span-2">
+          <div className="rounded-2xl border border-white/15 bg-white/95 p-6 shadow-xl shadow-slate-950/20 lg:col-span-2">
             <h4 className="text-sm font-semibold uppercase tracking-[0.18em] text-slate-500">Indicadores operativos</h4>
             <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
             {/* Planillas hoy */}
-            <div className="rounded-xl bg-slate-50 p-6 border border-slate-200">
+            <div className="rounded-xl border border-slate-200 bg-slate-50 p-6">
               <div className="flex items-center justify-between">
                 <div>
                   <h4 className="text-sm font-medium text-slate-600 mb-2">Planillas Creadas Hoy</h4>
@@ -318,7 +322,7 @@ export default function DashboardClient({ user, rol, modulos, metricas }: { user
             </div>
 
             {/* Total vehículos */}
-            <div className="rounded-xl bg-slate-50 p-6 border border-slate-200">
+            <div className="rounded-xl border border-slate-200 bg-slate-50 p-6">
               <div className="flex items-center justify-between">
                 <div>
                   <h4 className="text-sm font-medium text-slate-600 mb-2">Total Vehículos</h4>
@@ -330,7 +334,7 @@ export default function DashboardClient({ user, rol, modulos, metricas }: { user
             </div>
           </div>
 
-          <aside className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+          <aside className="rounded-2xl border border-white/15 bg-white/95 p-6 shadow-xl shadow-slate-950/20">
             <h4 className="text-sm font-semibold uppercase tracking-[0.18em] text-slate-500">Actividad</h4>
             <div className="mt-4 space-y-3 text-sm text-slate-600">
               <div className="rounded-xl bg-slate-50 p-3 ring-1 ring-inset ring-slate-200">
@@ -363,8 +367,8 @@ export default function DashboardClient({ user, rol, modulos, metricas }: { user
         {/* Módulos disponibles */}
         <section className="mb-8">
           <div className="mb-4 flex items-center justify-between">
-            <h3 className="text-xl font-semibold text-slate-800">Accesos rápidos</h3>
-            <p className="text-xs uppercase tracking-[0.16em] text-slate-500">favoritos primero</p>
+            <h3 className="text-xl font-semibold text-white">Accesos rápidos</h3>
+            <p className="text-xs uppercase tracking-[0.16em] text-cyan-100/80">favoritos primero</p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
@@ -375,7 +379,7 @@ export default function DashboardClient({ user, rol, modulos, metricas }: { user
                 <a
                   key={modulo.nombre}
                   href={modulo.ruta}
-                  className="group rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
+                  className="group rounded-2xl border border-white/20 bg-white/95 p-5 shadow-xl shadow-slate-950/20 transition hover:-translate-y-0.5 hover:shadow-2xl"
                 >
                   <div className="flex items-start justify-between">
                     <div className={`inline-flex h-11 w-11 items-center justify-center rounded-xl ${style.bg} ${style.text} ring-1 ${style.ring}`}>
@@ -401,7 +405,7 @@ export default function DashboardClient({ user, rol, modulos, metricas }: { user
           </div>
 
           {otrosModulos.length > 0 && (
-            <div className="mt-6 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+            <div className="mt-6 rounded-2xl border border-white/20 bg-white/95 p-5 shadow-xl shadow-slate-950/20">
               <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Más módulos</p>
               <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                 {otrosModulos.map((modulo) => {
@@ -411,7 +415,7 @@ export default function DashboardClient({ user, rol, modulos, metricas }: { user
                     <a
                       key={modulo.nombre}
                       href={modulo.ruta}
-                      className="flex items-center justify-between gap-3 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 transition hover:border-slate-300 hover:bg-white"
+                      className="flex items-center justify-between gap-3 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 transition hover:border-cyan-200 hover:bg-white"
                     >
                       <div className="flex items-center gap-3">
                         <span className={`inline-flex h-9 w-9 items-center justify-center rounded-lg ${style.bg} ${style.text} ring-1 ${style.ring}`}>
@@ -438,7 +442,7 @@ export default function DashboardClient({ user, rol, modulos, metricas }: { user
           )}
 
           {modulos.length === 0 && (
-            <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-6 py-10 text-center text-slate-500">
+            <div className="rounded-2xl border border-dashed border-white/30 bg-white/10 px-6 py-10 text-center text-slate-200">
               No tienes módulos asignados.
             </div>
           )}
