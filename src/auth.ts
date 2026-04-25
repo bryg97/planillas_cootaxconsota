@@ -2,6 +2,7 @@ import { type NextAuthOptions } from 'next-auth';
 import CredentialsProvider from 'next-auth/providers/credentials';
 import { query } from '@/lib/db';
 import bcrypt from 'bcryptjs';
+import { randomUUID } from 'crypto';
 
 type DbUser = {
   id: number;
@@ -63,11 +64,30 @@ export const authOptions: NextAuthOptions = {
             return null;
           }
 
+          const hasSessionVersionColumn = await query<{ exists: boolean }>(
+            `SELECT EXISTS (
+              SELECT 1
+              FROM information_schema.columns
+              WHERE table_name = 'usuarios'
+                AND column_name = 'session_version'
+            ) AS exists`
+          );
+
+          const sessionVersion = randomUUID();
+
+          if (hasSessionVersionColumn?.[0]?.exists) {
+            await query(
+              'UPDATE usuarios SET session_version = $1 WHERE id = $2',
+              [sessionVersion, user.id]
+            );
+          }
+
           return {
             id: user.id.toString(),
             email: user.usuario,
             name: user.usuario,
-            role: user.rol
+            role: user.rol,
+            sessionVersion
           };
         } catch (error) {
           console.error('Auth error:', error);
@@ -81,6 +101,7 @@ export const authOptions: NextAuthOptions = {
       if (user) {
         token.id = user.id;
         token.role = user.role;
+        token.sessionVersion = user.sessionVersion;
       }
       return token;
     },
@@ -91,6 +112,9 @@ export const authOptions: NextAuthOptions = {
         }
         if (typeof token.role === 'string') {
           session.user.role = token.role;
+        }
+        if (typeof token.sessionVersion === 'string') {
+          session.user.sessionVersion = token.sessionVersion;
         }
       }
       return session;

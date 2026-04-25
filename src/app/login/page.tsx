@@ -11,6 +11,14 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false)
   const router = useRouter()
 
+  const refreshAuthActivity = (userEmail: string) => {
+    if (typeof window === 'undefined') {
+      return
+    }
+
+    localStorage.setItem(`lastActivity:${userEmail}`, String(Date.now()))
+  }
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
     setError(null)
@@ -28,6 +36,7 @@ export default function LoginPage() {
         return
       }
 
+      refreshAuthActivity(email)
       router.push('/dashboard')
       router.refresh()
     } catch (error: any) {

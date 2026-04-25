@@ -5,6 +5,7 @@ import { signOut, useSession } from 'next-auth/react';
 import { ReactNode, useEffect, useRef } from 'react';
 
 const IDLE_TIMEOUT_MS = 6 * 60 * 60 * 1000;
+const SESSION_CHECK_INTERVAL_MS = 30 * 1000;
 
 function IdleSessionHandler() {
   const { status, data: session } = useSession();
@@ -69,10 +70,84 @@ function IdleSessionHandler() {
   return null;
 }
 
+function SingleSessionHandler() {
+  const { status, data: session } = useSession();
+
+  useEffect(() => {
+    if (status !== 'authenticated' || !session?.user?.email) {
+      return;
+    }
+
+    const storageKey = `activeSessionVersion:${session.user.email}`;
+    const currentSessionVersion = session.user.sessionVersion || '';
+    let cancelled = false;
+
+    const clearAndSignOut = async () => {
+      if (cancelled) {
+        return;
+      }
+
+      cancelled = true;
+      await signOut({ redirect: true, callbackUrl: '/login' });
+    };
+
+    const syncCurrentSession = () => {
+      localStorage.setItem(storageKey, currentSessionVersion);
+    };
+
+    const checkStoredVersion = () => {
+      const storedVersion = localStorage.getItem(storageKey);
+      if (storedVersion && storedVersion !== currentSessionVersion) {
+        void clearAndSignOut();
+      }
+    };
+
+    const validateWithServer = async () => {
+      try {
+        const response = await fetch('/api/auth/session-check', {
+          cache: 'no-store',
+          credentials: 'same-origin'
+        });
+
+        if (!response.ok) {
+          await clearAndSignOut();
+        }
+      } catch {
+        await clearAndSignOut();
+      }
+    };
+
+    syncCurrentSession();
+    checkStoredVersion();
+    void validateWithServer();
+
+    const intervalId = window.setInterval(() => {
+      void validateWithServer();
+    }, SESSION_CHECK_INTERVAL_MS);
+
+    const handleStorage = (event: StorageEvent) => {
+      if (event.key === storageKey && event.newValue && event.newValue !== currentSessionVersion) {
+        void clearAndSignOut();
+      }
+    };
+
+    window.addEventListener('storage', handleStorage);
+
+    return () => {
+      cancelled = true;
+      window.clearInterval(intervalId);
+      window.removeEventListener('storage', handleStorage);
+    };
+  }, [session?.user?.email, session?.user?.sessionVersion, status]);
+
+  return null;
+}
+
 export default function SessionProviderWrapper({ children }: { children: ReactNode }) {
   return (
     <SessionProvider>
       <IdleSessionHandler />
+      <SingleSessionHandler />
       {children}
     </SessionProvider>
   );

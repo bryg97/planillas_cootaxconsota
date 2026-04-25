@@ -6,19 +6,32 @@ import { signOut } from 'next-auth/react'
 export default function LogoutButton() {
   const router = useRouter()
 
-  const handleLogout = async () => {
-    // Limpiar operador seleccionado al cerrar sesión
-    if (typeof window !== 'undefined') {
-      localStorage.removeItem('operadorSeleccionado');
-      for (let i = sessionStorage.length - 1; i >= 0; i--) {
-        const key = sessionStorage.key(i);
-        if (key && key.startsWith('pinValidado:')) {
-          sessionStorage.removeItem(key);
-        }
+  const clearAuthStorage = () => {
+    if (typeof window === 'undefined') {
+      return
+    }
+
+    localStorage.removeItem('operadorSeleccionado')
+
+    for (let i = localStorage.length - 1; i >= 0; i--) {
+      const key = localStorage.key(i)
+      if (key && key.startsWith('lastActivity:')) {
+        localStorage.removeItem(key)
       }
     }
+
+    for (let i = sessionStorage.length - 1; i >= 0; i--) {
+      const key = sessionStorage.key(i)
+      if (key && key.startsWith('pinValidado:')) {
+        sessionStorage.removeItem(key)
+      }
+    }
+  }
+
+  const handleLogout = async () => {
+    clearAuthStorage()
     await signOut({ redirect: false })
-    router.push('/login')
+    router.replace('/login')
     router.refresh()
   }
 
