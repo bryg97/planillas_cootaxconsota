@@ -8,6 +8,7 @@ CREATE TABLE IF NOT EXISTS usuarios (
     clave VARCHAR(255) NOT NULL,
     pin_acceso_hash VARCHAR(255),
     session_version VARCHAR(36),
+    last_seen_at TIMESTAMP,
     rol VARCHAR(50) DEFAULT 'operador',
     activo BOOLEAN NOT NULL DEFAULT true,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP

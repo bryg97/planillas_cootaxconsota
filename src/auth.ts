@@ -73,12 +73,28 @@ export const authOptions: NextAuthOptions = {
             ) AS exists`
           );
 
+          const hasLastSeenColumn = await query<{ exists: boolean }>(
+            `SELECT EXISTS (
+              SELECT 1
+              FROM information_schema.columns
+              WHERE table_name = 'usuarios'
+                AND column_name = 'last_seen_at'
+            ) AS exists`
+          );
+
           const sessionVersion = randomUUID();
 
           if (hasSessionVersionColumn?.[0]?.exists) {
             await query(
               'UPDATE usuarios SET session_version = $1 WHERE id = $2',
               [sessionVersion, user.id]
+            );
+          }
+
+          if (hasLastSeenColumn?.[0]?.exists) {
+            await query(
+              'UPDATE usuarios SET last_seen_at = NOW() WHERE id = $1',
+              [user.id]
             );
           }
 

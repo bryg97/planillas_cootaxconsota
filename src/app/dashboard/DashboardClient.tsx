@@ -11,6 +11,10 @@ export default function DashboardClient({ user, rol, modulos, metricas }: { user
   const [loading, setLoading] = useState(true);
   const [pinValidado, setPinValidado] = useState(false);
   const [favoritos, setFavoritos] = useState<string[]>([]);
+  const [usuariosEnLinea, setUsuariosEnLinea] = useState<number>(Number(metricas.usuariosEnLinea) || 0);
+  const [usuariosEnLineaLista, setUsuariosEnLineaLista] = useState<string[]>(
+    Array.isArray(metricas.usuariosEnLineaLista) ? metricas.usuariosEnLineaLista : []
+  );
   const requierePin = rol !== 'administrador';
 
   const colorClasses: Record<string, { bg: string; text: string; ring: string }> = {
@@ -136,6 +140,44 @@ export default function DashboardClient({ user, rol, modulos, metricas }: { user
   const participacionPlanillas = Array.isArray(metricas.participacionPlanillas)
     ? metricas.participacionPlanillas
     : [];
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const syncOnlineUsers = async () => {
+      try {
+        const response = await fetch('/api/dashboard/online-users', {
+          cache: 'no-store',
+          credentials: 'same-origin'
+        });
+
+        if (!response.ok) {
+          return;
+        }
+
+        const data = await response.json();
+
+        if (cancelled) {
+          return;
+        }
+
+        setUsuariosEnLinea(Number(data.usuariosEnLinea) || 0);
+        setUsuariosEnLineaLista(Array.isArray(data.usuariosEnLineaLista) ? data.usuariosEnLineaLista : []);
+      } catch {
+        // Ignorar errores de red intermitentes en este panel.
+      }
+    };
+
+    void syncOnlineUsers();
+    const intervalId = window.setInterval(() => {
+      void syncOnlineUsers();
+    }, 30 * 1000);
+
+    return () => {
+      cancelled = true;
+      window.clearInterval(intervalId);
+    };
+  }, []);
 
   function nombreCortoOperador(operador: string) {
     if (!operador) return 'Sin operador';
@@ -302,6 +344,17 @@ export default function DashboardClient({ user, rol, modulos, metricas }: { user
               <div className="rounded-xl bg-slate-50 p-3 ring-1 ring-inset ring-slate-200">
                 <p className="text-xs uppercase tracking-wide text-slate-500">Módulos habilitados</p>
                 <p className="mt-1 font-semibold text-slate-900">{modulos.length}</p>
+              </div>
+              <div className="rounded-xl bg-slate-50 p-3 ring-1 ring-inset ring-slate-200">
+                <p className="text-xs uppercase tracking-wide text-slate-500">Usuarios en línea</p>
+                <p className="mt-1 font-semibold text-emerald-700">{usuariosEnLinea}</p>
+                {usuariosEnLineaLista.length > 0 ? (
+                  <p className="mt-2 text-xs text-slate-500">
+                    {usuariosEnLineaLista.map((usuario: string) => usuario.split('@')[0]).join(', ')}
+                  </p>
+                ) : (
+                  <p className="mt-2 text-xs text-slate-500">Sin actividad reciente</p>
+                )}
               </div>
             </div>
           </aside>

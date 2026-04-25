@@ -4,6 +4,8 @@ import { query } from '@/lib/db';
 import { redirect } from 'next/navigation';
 
 type RolRow = { rol: string };
+type OnlineUsersCountRow = { count: string };
+type OnlineUserRow = { usuario: string };
 
 export default async function DashboardPage() {
   const user = await getCurrentUser();
@@ -93,6 +95,42 @@ async function obtenerMetricasDashboard() {
     `);
     const totalVehiculos = parseInt(vehiculos?.[0]?.count || '0', 10);
 
+    const hasLastSeenColumn = await query<{ exists: boolean }>(
+      `SELECT EXISTS (
+        SELECT 1
+        FROM information_schema.columns
+        WHERE table_name = 'usuarios'
+          AND column_name = 'last_seen_at'
+      ) AS exists`
+    );
+
+    let usuariosEnLinea = 0;
+    let usuariosEnLineaLista: string[] = [];
+
+    if (hasLastSeenColumn?.[0]?.exists) {
+      const usuariosEnLineaCount = await query<OnlineUsersCountRow>(`
+        SELECT COUNT(*)::text AS count
+        FROM usuarios
+        WHERE activo = true
+          AND last_seen_at IS NOT NULL
+          AND last_seen_at >= NOW() - INTERVAL '3 minutes'
+      `);
+
+      usuariosEnLinea = parseInt(usuariosEnLineaCount?.[0]?.count || '0', 10);
+
+      const usuariosEnLineaRows = await query<OnlineUserRow>(`
+        SELECT usuario
+        FROM usuarios
+        WHERE activo = true
+          AND last_seen_at IS NOT NULL
+          AND last_seen_at >= NOW() - INTERVAL '3 minutes'
+        ORDER BY last_seen_at DESC
+        LIMIT 5
+      `);
+
+      usuariosEnLineaLista = usuariosEnLineaRows.map((row) => row.usuario);
+    }
+
     // Distribución de planillas registradas por operador (mes actual, por fecha de registro)
     const planillasPorOperador = await query<{ operador: string; total: string }>(`
       SELECT
@@ -125,6 +163,8 @@ async function obtenerMetricasDashboard() {
       totalRecaudadoMes,
       numPlanillasHoy,
       totalVehiculos,
+      usuariosEnLinea,
+      usuariosEnLineaLista,
       participacionPlanillas,
     };
   } catch (error) {
@@ -137,6 +177,8 @@ async function obtenerMetricasDashboard() {
       totalRecaudadoMes: 0,
       numPlanillasHoy: 0,
       totalVehiculos: 0,
+      usuariosEnLinea: 0,
+      usuariosEnLineaLista: [],
       participacionPlanillas: [],
     };
   }
