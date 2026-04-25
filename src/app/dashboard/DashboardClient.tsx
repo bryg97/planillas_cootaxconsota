@@ -102,6 +102,44 @@ export default function DashboardClient({ user, rol, modulos, metricas }: { user
     localStorage.setItem(favoritosStorageKey, JSON.stringify(favoritos));
   }, [favoritos, favoritosStorageKey]);
 
+  useEffect(() => {
+    let cancelled = false;
+
+    const syncOnlineUsers = async () => {
+      try {
+        const response = await fetch('/api/dashboard/online-users', {
+          cache: 'no-store',
+          credentials: 'same-origin'
+        });
+
+        if (!response.ok) {
+          return;
+        }
+
+        const data = await response.json();
+
+        if (cancelled) {
+          return;
+        }
+
+        setUsuariosEnLinea(Number(data.usuariosEnLinea) || 0);
+        setUsuariosEnLineaLista(Array.isArray(data.usuariosEnLineaLista) ? data.usuariosEnLineaLista : []);
+      } catch {
+        // Ignorar errores de red intermitentes en este panel.
+      }
+    };
+
+    void syncOnlineUsers();
+    const intervalId = window.setInterval(() => {
+      void syncOnlineUsers();
+    }, 30 * 1000);
+
+    return () => {
+      cancelled = true;
+      window.clearInterval(intervalId);
+    };
+  }, []);
+
   if (loading) return <div className="p-8 text-center">Cargando...</div>;
 
   if (requierePin && !pinValidado) {
@@ -140,44 +178,6 @@ export default function DashboardClient({ user, rol, modulos, metricas }: { user
   const participacionPlanillas = Array.isArray(metricas.participacionPlanillas)
     ? metricas.participacionPlanillas
     : [];
-
-  useEffect(() => {
-    let cancelled = false;
-
-    const syncOnlineUsers = async () => {
-      try {
-        const response = await fetch('/api/dashboard/online-users', {
-          cache: 'no-store',
-          credentials: 'same-origin'
-        });
-
-        if (!response.ok) {
-          return;
-        }
-
-        const data = await response.json();
-
-        if (cancelled) {
-          return;
-        }
-
-        setUsuariosEnLinea(Number(data.usuariosEnLinea) || 0);
-        setUsuariosEnLineaLista(Array.isArray(data.usuariosEnLineaLista) ? data.usuariosEnLineaLista : []);
-      } catch {
-        // Ignorar errores de red intermitentes en este panel.
-      }
-    };
-
-    void syncOnlineUsers();
-    const intervalId = window.setInterval(() => {
-      void syncOnlineUsers();
-    }, 30 * 1000);
-
-    return () => {
-      cancelled = true;
-      window.clearInterval(intervalId);
-    };
-  }, []);
 
   function nombreCortoOperador(operador: string) {
     if (!operador) return 'Sin operador';

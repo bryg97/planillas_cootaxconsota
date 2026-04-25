@@ -61,7 +61,7 @@ export default function LoginPage() {
               Sistema de Planillas
             </div>
             <h1 className="mt-6 text-5xl font-black tracking-tight text-white xl:text-6xl">
-              Accede a tu panel con una experiencia más limpia y rápida.
+              Bienvenido al sistema de planillas.
             </h1>
             <p className="mt-5 max-w-lg text-base leading-8 text-slate-300">
               Gestiona planillas, viajes, vehículos y reportes desde un acceso más claro, con sesión protegida y cierre automático por inactividad.
