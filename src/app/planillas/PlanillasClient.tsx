@@ -30,7 +30,7 @@ export default function PlanillasClient({ planillas, vehiculos, operadores, valo
   const [busqueda, setBusqueda] = useState('');
 
   useEffect(() => {
-    const abrirNueva = searchParams.get('nueva');
+    const abrirNueva = searchParams?.get('nueva');
     if (abrirNueva === '1') {
       setShowForm(true);
     }
