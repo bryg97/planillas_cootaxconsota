@@ -260,6 +260,9 @@ export default function ViajesClient({
     setError('');
     setErrorPlanilla('');
 
+    const formData = new FormData(e.currentTarget);
+    const motivoOmision = ((formData.get('motivo_omision') as string) || '').trim();
+
     if (!planillaSeleccionadaId) {
       setMostrarModalPlanilla(true);
       return;
