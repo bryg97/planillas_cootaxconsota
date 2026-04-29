@@ -578,6 +578,27 @@ export async function editarViaje(formData: FormData) {
       return { error: 'Convenio no encontrado o inactivo' };
     }
 
+    // Server-side duplicate lateral detection: if the selected lateral already
+    // has any other viaje (excluding the one being edited), require omission
+    // and a justification.
+    const duplicados = await queryOne<{ total: number }>(
+      `SELECT COUNT(1) as total FROM viajes WHERE vehiculo_id = $1 AND id != $2`,
+      [vehiculoId, viajeId]
+    );
+
+    if (duplicados && Number(duplicados.total) > 0) {
+      if (!omiteConsecutivo) {
+        return {
+          error:
+            `El lateral seleccionado ya tiene viajes registrados en el histórico. Si desea usarlo, marque la omisión de consecutivo y deje una justificación.`
+        };
+      }
+
+      if (omiteConsecutivo && motivoOmision.length < 10) {
+        return { error: 'Debe dejar una justificación clara (mínimo 10 caracteres) para omitir el consecutivo' };
+      }
+    }
+
     const viajeActualizado = await queryOne<{ id: number }>(
       `UPDATE viajes SET
          planilla_id = $1,

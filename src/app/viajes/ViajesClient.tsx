@@ -154,6 +154,7 @@ export default function ViajesClient({
   const [mostrarModalConfirmarEliminacion, setMostrarModalConfirmarEliminacion] = useState(false);
   const [mostrarModalConfirmarOmision, setMostrarModalConfirmarOmision] = useState(false);
   const [modalExito, setModalExito] = useState<{ titulo: string; detalle: string[] } | null>(null);
+  const [mostrarModalViajesLateral, setMostrarModalViajesLateral] = useState(false);
 
   const vehiculoBloqueado = useMemo(() => {
     if (!ultimoViaje || omiteConsecutivo) return null;
@@ -1233,6 +1234,16 @@ export default function ViajesClient({
                   {lateralEditTieneViajesPrevios && (
                     <div className="mt-2 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">
                       <span className="font-semibold">⚠️ Advertencia:</span> Este lateral ya tiene viajes registrados. Al editar debe marcar omisión de consecutivo con justificación.
+                      <div className="mt-2 flex items-center justify-between gap-3">
+                        <div>Para ver los viajes previos, abra el historial.</div>
+                        <button
+                          type="button"
+                          onClick={() => setMostrarModalViajesLateral(true)}
+                          className="ml-3 rounded-lg bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-800 hover:bg-slate-200"
+                        >
+                          Ver viajes previos
+                        </button>
+                      </div>
                     </div>
                   )}
                 </div>
@@ -1546,6 +1557,56 @@ export default function ViajesClient({
                 className="rounded-xl bg-amber-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-amber-500"
               >
                 Entendido
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {mostrarModalViajesLateral && (
+        <div className="fixed inset-0 z-[86] flex items-center justify-center bg-slate-950/65 p-4">
+          <div className="w-full max-w-3xl overflow-auto rounded-3xl border border-slate-200 bg-white shadow-2xl">
+            <div className="border-b border-slate-200 bg-slate-50 px-6 py-4">
+              <h3 className="text-lg font-bold text-slate-900">Viajes previos del lateral</h3>
+              <p className="mt-1 text-sm text-slate-600">Listado de viajes registrados para este lateral (excluye el que está editando).</p>
+            </div>
+
+            <div className="px-6 py-5">
+              {(!editVehiculoId || viajes.filter((v) => String(v.vehiculo_id) === editVehiculoId && String(v.id) !== editViajeId).length === 0) ? (
+                <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-700">No se encontraron viajes previos para este lateral.</div>
+              ) : (
+                <table className="w-full table-auto text-sm">
+                  <thead>
+                    <tr className="text-left text-xs text-slate-600">
+                      <th className="pb-2">ID</th>
+                      <th className="pb-2">Fecha</th>
+                      <th className="pb-2">Conductor</th>
+                      <th className="pb-2">Planilla</th>
+                      <th className="pb-2">Motivo omisión</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {viajes.filter((v) => String(v.vehiculo_id) === editVehiculoId && String(v.id) !== editViajeId).map((v) => (
+                      <tr key={v.id} className="border-t border-slate-100">
+                        <td className="py-2">{v.id}</td>
+                        <td className="py-2">{new Date(v.created_at).toLocaleString('es-CO')}</td>
+                        <td className="py-2">{v.conductor || '-'}</td>
+                        <td className="py-2">{v.planilla_id || '-'}</td>
+                        <td className="py-2">{v.motivo_omision || '-'}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+            </div>
+
+            <div className="flex justify-end border-t border-slate-100 px-6 py-4">
+              <button
+                type="button"
+                onClick={() => setMostrarModalViajesLateral(false)}
+                className="rounded-xl bg-slate-700 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-600"
+              >
+                Cerrar
               </button>
             </div>
           </div>
