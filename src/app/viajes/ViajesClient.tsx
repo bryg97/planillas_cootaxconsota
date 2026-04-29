@@ -156,10 +156,11 @@ export default function ViajesClient({
   const [modalExito, setModalExito] = useState<{ titulo: string; detalle: string[] } | null>(null);
   const [mostrarModalViajesLateral, setMostrarModalViajesLateral] = useState(false);
 
-  const vehiculoBloqueado = useMemo(() => {
-    if (!ultimoViaje || omiteConsecutivo) return null;
-    return ultimoViaje.vehiculo_id;
-  }, [ultimoViaje, omiteConsecutivo]);
+  const lateralConsecutivoSeleccionado = useMemo(() => {
+    const lateralId = parseInt(vehiculoId, 10);
+    if (!lateralId || !ultimoViaje || omiteConsecutivo) return false;
+    return lateralId === ultimoViaje.vehiculo_id;
+  }, [vehiculoId, ultimoViaje, omiteConsecutivo]);
 
   const lateralesFiltrados = useMemo(() => {
     const busqueda = normalizarBusqueda(lateralBusqueda.trim());
@@ -254,6 +255,11 @@ export default function ViajesClient({
 
     if (!planillaSeleccionadaId) {
       setMostrarModalPlanilla(true);
+      return;
+    }
+
+    if (lateralConsecutivoSeleccionado && !omiteConsecutivo) {
+      setError(`No se puede repetir consecutivamente el lateral ${ultimoViaje?.codigo_vehiculo || ''}. Si debe usarlo, active la omisión y justifique el motivo.`);
       return;
     }
 
@@ -628,12 +634,8 @@ export default function ViajesClient({
                     >
                       <option value="">Seleccione un lateral</option>
                       {lateralesFiltrados.map((v) => (
-                        <option
-                          key={v.id}
-                          value={v.id}
-                          disabled={vehiculoBloqueado === v.id}
-                        >
-                          {v.codigo_vehiculo}{vehiculoBloqueado === v.id ? ' (bloqueado por consecutivo)' : ''}
+                        <option key={v.id} value={v.id}>
+                          {v.codigo_vehiculo}
                         </option>
                       ))}
                     </select>
@@ -647,6 +649,11 @@ export default function ViajesClient({
                     >
                       {planillaSeleccionada ? 'Cambiar planilla seleccionada' : 'Seleccionar planilla del lateral'}
                     </button>
+                    {lateralConsecutivoSeleccionado && (
+                      <div className="mt-2 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">
+                        <span className="font-semibold">⚠️ Alerta de consecutivo:</span> El lateral {ultimoViaje?.codigo_vehiculo || ''} fue el último registrado. Si desea usarlo de nuevo, marque la omisión y escriba un motivo.
+                      </div>
+                    )}
                     {planillaSeleccionada ? (
                       <div className="mt-2 rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs text-emerald-800">
                         Planilla seleccionada: <span className="font-bold">{planillaSeleccionada.numero_planilla}</span>
