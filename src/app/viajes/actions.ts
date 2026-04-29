@@ -358,6 +358,17 @@ export async function crearViaje(formData: FormData) {
       return { error: `La planilla ${planilla.numero_planilla} no pertenece al lateral seleccionado.` };
     }
 
+    const historialLateral = await queryOne<{ total: number }>(
+      `SELECT COUNT(1)::int AS total FROM viajes WHERE vehiculo_id = $1`,
+      [vehiculoId]
+    );
+
+    if (historialLateral && Number(historialLateral.total) > 0 && !omiteConsecutivo) {
+      return {
+        error: 'El lateral seleccionado ya tiene historial de viajes. Debe activar omisión de consecutivo y registrar un motivo para continuar.'
+      };
+    }
+
     const ultimoViaje = await queryOne<UltimoViaje>(
       `SELECT vi.id, vi.vehiculo_id, v.codigo_vehiculo
        FROM viajes vi
