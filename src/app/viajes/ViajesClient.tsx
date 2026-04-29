@@ -221,17 +221,6 @@ export default function ViajesClient({
     [vehiculos, lateralEliminarId]
   );
 
-  const lateralTieneViajesPrevios = useMemo(() => {
-    const lateralId = parseInt(vehiculoId, 10);
-    if (!lateralId) return false;
-    return viajes.some((v) => v.vehiculo_id === lateralId);
-  }, [vehiculoId, viajes]);
-
-  const lateralSeleccionadoActual = useMemo(
-    () => vehiculos.find((v) => String(v.id) === vehiculoId),
-    [vehiculos, vehiculoId]
-  );
-
   function handlePlanillaCreada(planilla: PlanillaCreada) {
     const vehiculoCreado = vehiculos.find((v) => v.id === planilla.vehiculo_id);
 
@@ -265,11 +254,6 @@ export default function ViajesClient({
 
     if (!planillaSeleccionadaId) {
       setMostrarModalPlanilla(true);
-      return;
-    }
-
-    if (lateralTieneViajesPrevios && !omiteConsecutivo) {
-      setMostrarModalConfirmarOmision(true);
       return;
     }
 
@@ -663,11 +647,6 @@ export default function ViajesClient({
                     >
                       {planillaSeleccionada ? 'Cambiar planilla seleccionada' : 'Seleccionar planilla del lateral'}
                     </button>
-                                        {lateralTieneViajesPrevios && (
-                                          <div className="mt-2 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">
-                                            <span className="font-semibold">⚠️ Advertencia:</span> Este lateral ya tiene viajes registrados. Debe marcar omisión de consecutivo con justificación.
-                                          </div>
-                                        )}
                     {planillaSeleccionada ? (
                       <div className="mt-2 rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs text-emerald-800">
                         Planilla seleccionada: <span className="font-bold">{planillaSeleccionada.numero_planilla}</span>
@@ -1539,7 +1518,7 @@ export default function ViajesClient({
             </div>
             <div className="space-y-4 px-6 py-5 text-sm text-slate-700">
               <p className="font-medium">
-                El lateral <span className="font-bold text-slate-900">{lateralSeleccionadoEdicion?.codigo_vehiculo || lateralSeleccionadoActual?.codigo_vehiculo || 'seleccionado'}</span> ya tiene viajes registrados.
+                El lateral <span className="font-bold text-slate-900">{lateralSeleccionadoEdicion?.codigo_vehiculo || 'seleccionado'}</span> ya tiene viajes registrados.
               </p>
               <p>
                 Para continuar, debe marcar la opción &quot;Omitir regla de consecutivo&quot; y proporcionar una justificación clara.
