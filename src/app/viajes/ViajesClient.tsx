@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo, useRef, useState } from 'react';
-import { crearConvenio, crearViaje, eliminarConvenio, guardarValidacionAutorizador, eliminarValidacionAutorizador, eliminarViajesPorLateral } from './actions';
+import { crearConvenio, crearViaje, editarViaje, eliminarConvenio, guardarValidacionAutorizador, eliminarValidacionAutorizador, eliminarViajesPorLateral } from './actions';
 import FormPlanilla from '../planillas/FormPlanilla';
 
 type Vehiculo = {
@@ -36,6 +36,9 @@ type UltimoViaje = {
 type ViajeListado = {
   id: number;
   created_at: string;
+  planilla_id: number | null;
+  vehiculo_id: number;
+  convenio_id: number;
   conductor: string;
   origen: string;
   destino: string;
@@ -45,8 +48,10 @@ type ViajeListado = {
   codigo_vehiculo: string;
   convenio_nombre: string;
   creado_por_usuario: string;
+  autorizador_operador_id: number | null;
   autorizador_operador_nombre: string | null;
   cedula_autorizador: string | null;
+  respuesta_autorizacion: string | null;
   numero_planilla: string | null;
 };
 
@@ -124,8 +129,28 @@ export default function ViajesClient({
   const [mostrarModalPlanilla, setMostrarModalPlanilla] = useState(false);
   const [mostrarFormularioPlanilla, setMostrarFormularioPlanilla] = useState(false);
   const [planillaSeleccionadaId, setPlanillaSeleccionadaId] = useState('');
+  const [planillaBusqueda, setPlanillaBusqueda] = useState('');
   const [errorPlanilla, setErrorPlanilla] = useState('');
   const [planillasDisponiblesState, setPlanillasDisponiblesState] = useState(planillasDisponibles);
+  const [mostrarModalEditarViaje, setMostrarModalEditarViaje] = useState(false);
+  const [loadingEditarViaje, setLoadingEditarViaje] = useState(false);
+  const [errorEditarViaje, setErrorEditarViaje] = useState('');
+  const [editViajeId, setEditViajeId] = useState('');
+  const [editVehiculoId, setEditVehiculoId] = useState('');
+  const [editPlanillaId, setEditPlanillaId] = useState('');
+  const [editConductor, setEditConductor] = useState('');
+  const [editConvenioId, setEditConvenioId] = useState('');
+  const [editOrigen, setEditOrigen] = useState('');
+  const [editDestino, setEditDestino] = useState('');
+  const [editMedioContacto, setEditMedioContacto] = useState('');
+  const [editAutorizadorId, setEditAutorizadorId] = useState('');
+  const [editCedulaAutorizador, setEditCedulaAutorizador] = useState('');
+  const [editRespuestaAutorizacion, setEditRespuestaAutorizacion] = useState('');
+  const [editOmiteConsecutivo, setEditOmiteConsecutivo] = useState(false);
+  const [editMotivoOmision, setEditMotivoOmision] = useState('');
+  const [mostrarModalConfirmarEdicion, setMostrarModalConfirmarEdicion] = useState(false);
+  const [mostrarModalConfirmarEliminacion, setMostrarModalConfirmarEliminacion] = useState(false);
+  const [modalExito, setModalExito] = useState<{ titulo: string; detalle: string[] } | null>(null);
 
   const vehiculoBloqueado = useMemo(() => {
     if (!ultimoViaje || omiteConsecutivo) return null;
@@ -145,9 +170,45 @@ export default function ViajesClient({
     return planillasDisponiblesState.filter((p) => p.vehiculo_id === lateralId);
   }, [planillasDisponiblesState, vehiculoId]);
 
+  const planillasDelLateralFiltradas = useMemo(() => {
+    const busqueda = planillaBusqueda.trim().toLowerCase();
+    if (!busqueda) return planillasDelLateral;
+
+    return planillasDelLateral.filter((p) => {
+      const fechaIso = p.fecha ? new Date(p.fecha).toISOString().slice(0, 10) : '';
+      const fechaLocal = p.fecha ? new Date(p.fecha).toLocaleDateString('es-CO') : '';
+      const base = [p.numero_planilla, p.estado, p.conductor || '', fechaIso, fechaLocal]
+        .join(' ')
+        .toLowerCase();
+      return base.includes(busqueda);
+    });
+  }, [planillasDelLateral, planillaBusqueda]);
+
   const planillaSeleccionada = useMemo(
     () => planillasDisponiblesState.find((p) => String(p.id) === planillaSeleccionadaId),
     [planillasDisponiblesState, planillaSeleccionadaId]
+  );
+
+  const planillasEditablesDelLateral = useMemo(() => {
+    const lateralId = parseInt(editVehiculoId, 10);
+    if (!lateralId) return [];
+
+    return planillasDisponiblesState.filter((p) => p.vehiculo_id === lateralId);
+  }, [planillasDisponiblesState, editVehiculoId]);
+
+  const lateralSeleccionadoEdicion = useMemo(
+    () => vehiculos.find((v) => String(v.id) === editVehiculoId),
+    [vehiculos, editVehiculoId]
+  );
+
+  const planillaSeleccionadaEdicion = useMemo(
+    () => planillasDisponiblesState.find((p) => String(p.id) === editPlanillaId),
+    [planillasDisponiblesState, editPlanillaId]
+  );
+
+  const lateralSeleccionadoEliminar = useMemo(
+    () => vehiculos.find((v) => String(v.id) === lateralEliminarId),
+    [vehiculos, lateralEliminarId]
   );
 
   function handlePlanillaCreada(planilla: PlanillaCreada) {
@@ -303,12 +364,16 @@ export default function ViajesClient({
       return;
     }
 
-    const lateral = vehiculos.find((v) => String(v.id) === lateralEliminarId);
-    const confirmar = window.confirm(
-      `Se eliminarán todos los registros de viajes del lateral ${lateral?.codigo_vehiculo || lateralEliminarId}. Esta acción no se puede deshacer.`
-    );
+    setErrorEliminarViajes('');
+    setMostrarModalConfirmarEliminacion(true);
+  }
 
-    if (!confirmar) return;
+  async function confirmarEliminarViajesPorLateral() {
+    if (!lateralEliminarId) {
+      setErrorEliminarViajes('Seleccione un lateral para eliminar sus registros.');
+      setMostrarModalConfirmarEliminacion(false);
+      return;
+    }
 
     setLoadingEliminarViajes(true);
     setErrorEliminarViajes('');
@@ -317,10 +382,94 @@ export default function ViajesClient({
     if (result.error) {
       setErrorEliminarViajes(result.error);
       setLoadingEliminarViajes(false);
+      setMostrarModalConfirmarEliminacion(false);
       return;
     }
 
-    alert(`Se eliminaron ${result.eliminados || 0} registro(s) de viajes.`);
+    setLoadingEliminarViajes(false);
+    setMostrarModalConfirmarEliminacion(false);
+    setModalExito({
+      titulo: 'Registros eliminados',
+      detalle: [
+        `Lateral: ${lateralSeleccionadoEliminar?.codigo_vehiculo || lateralEliminarId}`,
+        `Registros eliminados: ${result.eliminados || 0}`
+      ]
+    });
+  }
+
+  function handleAbrirEditarViaje(viaje: ViajeListado) {
+    setEditViajeId(String(viaje.id));
+    setEditVehiculoId(String(viaje.vehiculo_id));
+    setEditPlanillaId(viaje.planilla_id ? String(viaje.planilla_id) : '');
+    setEditConductor(viaje.conductor || '');
+    setEditConvenioId(String(viaje.convenio_id));
+    setEditOrigen(viaje.origen || '');
+    setEditDestino(viaje.destino || '');
+    setEditMedioContacto(viaje.medio_contacto || '');
+    setEditAutorizadorId(viaje.autorizador_operador_id ? String(viaje.autorizador_operador_id) : '');
+    setEditCedulaAutorizador(viaje.cedula_autorizador || '');
+    setEditRespuestaAutorizacion(viaje.respuesta_autorizacion || '');
+    setEditOmiteConsecutivo(Boolean(viaje.omite_consecutivo));
+    setEditMotivoOmision(viaje.motivo_omision || '');
+    setErrorEditarViaje('');
+    setMostrarModalEditarViaje(true);
+  }
+
+  function handleCerrarEditarViaje() {
+    setMostrarModalEditarViaje(false);
+    setErrorEditarViaje('');
+  }
+
+  async function handleGuardarEdicionViaje(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    setErrorEditarViaje('');
+    setMostrarModalConfirmarEdicion(true);
+  }
+
+  async function confirmarGuardarEdicionViaje() {
+    setLoadingEditarViaje(true);
+    setErrorEditarViaje('');
+
+    const formData = new FormData();
+    formData.set('viaje_id', editViajeId);
+    formData.set('vehiculo_id', editVehiculoId);
+    formData.set('planilla_id', editPlanillaId);
+    formData.set('conductor', editConductor);
+    formData.set('convenio_id', editConvenioId);
+    formData.set('origen', editOrigen);
+    formData.set('destino', editDestino);
+    formData.set('medio_contacto', editMedioContacto);
+    formData.set('autorizador_operador_id', editAutorizadorId);
+    formData.set('cedula_autorizador', editCedulaAutorizador);
+    formData.set('respuesta_autorizacion', editRespuestaAutorizacion);
+    if (editOmiteConsecutivo) {
+      formData.set('omite_consecutivo', '1');
+    }
+    formData.set('motivo_omision', editMotivoOmision);
+
+    const result = await editarViaje(formData);
+    if (result.error) {
+      setErrorEditarViaje(result.error);
+      setLoadingEditarViaje(false);
+      setMostrarModalConfirmarEdicion(false);
+      return;
+    }
+
+    setLoadingEditarViaje(false);
+    setMostrarModalConfirmarEdicion(false);
+    setMostrarModalEditarViaje(false);
+    setModalExito({
+      titulo: 'Viaje actualizado correctamente',
+      detalle: [
+        `ID: ${editViajeId}`,
+        `Lateral: ${lateralSeleccionadoEdicion?.codigo_vehiculo || editVehiculoId}`,
+        `Planilla: ${planillaSeleccionadaEdicion?.numero_planilla || editPlanillaId}`
+      ]
+    });
+  }
+
+  function cerrarModalExitoYRecargar() {
+    setModalExito(null);
     window.location.reload();
   }
 
@@ -922,6 +1071,9 @@ export default function ViajesClient({
                       <th className="px-4 py-3 text-left font-semibold text-slate-600 uppercase tracking-[0.12em] text-xs">Contacto</th>
                       <th className="px-4 py-3 text-left font-semibold text-slate-600 uppercase tracking-[0.12em] text-xs">Autorizó</th>
                       <th className="px-4 py-3 text-left font-semibold text-slate-600 uppercase tracking-[0.12em] text-xs">Usuario</th>
+                      {rol === 'administrador' && (
+                        <th className="px-4 py-3 text-left font-semibold text-slate-600 uppercase tracking-[0.12em] text-xs">Acciones</th>
+                      )}
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100 bg-white">
@@ -968,6 +1120,17 @@ export default function ViajesClient({
                           <span className="block text-xs text-slate-500">CC: {v.cedula_autorizador || 'N/A'}</span>
                         </td>
                         <td className="px-4 py-3 text-slate-600 text-xs">{v.creado_por_usuario}</td>
+                        {rol === 'administrador' && (
+                          <td className="px-4 py-3 text-slate-700 whitespace-nowrap">
+                            <button
+                              type="button"
+                              onClick={() => handleAbrirEditarViaje(v)}
+                              className="rounded-lg bg-blue-100 px-3 py-1.5 text-xs font-semibold text-blue-700 transition hover:bg-blue-200"
+                            >
+                              Editar
+                            </button>
+                          </td>
+                        )}
                       </tr>
                     ))}
                   </tbody>
@@ -977,6 +1140,294 @@ export default function ViajesClient({
           )}
         </section>
       </main>
+
+      {mostrarModalEditarViaje && (
+        <div className="fixed inset-0 z-[70] flex items-center justify-center bg-slate-950/60 p-4">
+          <div className="w-full max-w-3xl overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-2xl">
+            <div className="border-b border-slate-200 bg-slate-50 px-6 py-4">
+              <h3 className="text-lg font-bold text-slate-900">Editar viaje registrado</h3>
+              <p className="mt-1 text-sm text-slate-600">Disponible solo para administradores.</p>
+            </div>
+
+            <form onSubmit={handleGuardarEdicionViaje} className="max-h-[75vh] overflow-auto px-6 py-5">
+              {errorEditarViaje && (
+                <div className="mb-4 rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+                  {errorEditarViaje}
+                </div>
+              )}
+
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                <div>
+                  <label className="mb-2 block text-sm font-semibold text-slate-700">Lateral *</label>
+                  <select
+                    value={editVehiculoId}
+                    onChange={(e) => {
+                      setEditVehiculoId(e.target.value);
+                      setEditPlanillaId('');
+                    }}
+                    required
+                    className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                  >
+                    <option value="">Seleccione un lateral</option>
+                    {vehiculos.map((v) => (
+                      <option key={v.id} value={v.id}>{v.codigo_vehiculo}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="mb-2 block text-sm font-semibold text-slate-700">Planilla *</label>
+                  <select
+                    value={editPlanillaId}
+                    onChange={(e) => setEditPlanillaId(e.target.value)}
+                    required
+                    className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                  >
+                    <option value="">Seleccione una planilla</option>
+                    {planillasEditablesDelLateral.map((p) => (
+                      <option key={p.id} value={p.id}>
+                        {p.numero_planilla} - {new Date(p.fecha).toLocaleDateString('es-CO')} ({p.estado})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="mb-2 block text-sm font-semibold text-slate-700">Conductor *</label>
+                  <input
+                    type="text"
+                    value={editConductor}
+                    onChange={(e) => setEditConductor(e.target.value)}
+                    required
+                    className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                  />
+                </div>
+
+                <div>
+                  <label className="mb-2 block text-sm font-semibold text-slate-700">Convenio *</label>
+                  <select
+                    value={editConvenioId}
+                    onChange={(e) => setEditConvenioId(e.target.value)}
+                    required
+                    className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                  >
+                    <option value="">Seleccione convenio</option>
+                    {convenios.map((c) => (
+                      <option key={c.id} value={c.id}>{c.nombre}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="mb-2 block text-sm font-semibold text-slate-700">Origen *</label>
+                  <input
+                    type="text"
+                    value={editOrigen}
+                    onChange={(e) => setEditOrigen(e.target.value)}
+                    required
+                    className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                  />
+                </div>
+
+                <div>
+                  <label className="mb-2 block text-sm font-semibold text-slate-700">Destino *</label>
+                  <input
+                    type="text"
+                    value={editDestino}
+                    onChange={(e) => setEditDestino(e.target.value)}
+                    required
+                    className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                  />
+                </div>
+
+                <div>
+                  <label className="mb-2 block text-sm font-semibold text-slate-700">Medio de contacto *</label>
+                  <select
+                    value={editMedioContacto}
+                    onChange={(e) => setEditMedioContacto(e.target.value)}
+                    required
+                    className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                  >
+                    <option value="">Seleccione</option>
+                    <option value="llamada_telefonica">Llamada telefónica</option>
+                    <option value="whatsapp">WhatsApp</option>
+                    <option value="mensajeria_app">Mensajería de la aplicación</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="mb-2 block text-sm font-semibold text-slate-700">Autoriza (operador) *</label>
+                  <select
+                    value={editAutorizadorId}
+                    onChange={(e) => setEditAutorizadorId(e.target.value)}
+                    required
+                    className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                  >
+                    <option value="">Seleccione operador</option>
+                    {autorizadores.map((u) => (
+                      <option key={u.id} value={u.id}>{u.nombre}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="mb-2 block text-sm font-semibold text-slate-700">Cédula del autorizador *</label>
+                  <input
+                    type="text"
+                    value={editCedulaAutorizador}
+                    onChange={(e) => setEditCedulaAutorizador(e.target.value)}
+                    required
+                    className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                  />
+                </div>
+
+                <div>
+                  <label className="mb-2 block text-sm font-semibold text-slate-700">Código de seguridad *</label>
+                  <input
+                    type="text"
+                    value={editRespuestaAutorizacion}
+                    onChange={(e) => setEditRespuestaAutorizacion(e.target.value)}
+                    required
+                    className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                  />
+                </div>
+              </div>
+
+              <div className="mt-5 rounded-2xl border border-amber-200 bg-amber-50 p-4">
+                <label className="flex items-start gap-3 text-sm font-medium text-amber-900">
+                  <input
+                    type="checkbox"
+                    checked={editOmiteConsecutivo}
+                    onChange={(e) => setEditOmiteConsecutivo(e.target.checked)}
+                    className="mt-0.5 h-5 w-5 rounded"
+                  />
+                  <span>Omitir regla de consecutivo para este viaje</span>
+                </label>
+
+                {editOmiteConsecutivo && (
+                  <div className="mt-3">
+                    <label className="mb-2 block text-sm font-semibold text-amber-900">Justificación de omisión *</label>
+                    <textarea
+                      value={editMotivoOmision}
+                      onChange={(e) => setEditMotivoOmision(e.target.value)}
+                      required={editOmiteConsecutivo}
+                      rows={2}
+                      className="w-full rounded-xl border border-amber-300 bg-white px-4 py-3 text-sm outline-none transition focus:border-amber-600 focus:ring-2 focus:ring-amber-100"
+                    />
+                  </div>
+                )}
+              </div>
+
+              <div className="mt-5 flex flex-wrap justify-end gap-2 border-t border-slate-200 pt-4">
+                <button
+                  type="button"
+                  onClick={handleCerrarEditarViaje}
+                  className="rounded-xl border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-100"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  disabled={loadingEditarViaje}
+                  className="rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-blue-500 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  {loadingEditarViaje ? 'Guardando cambios...' : 'Guardar cambios'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {mostrarModalConfirmarEdicion && (
+        <div className="fixed inset-0 z-[80] flex items-center justify-center bg-slate-950/65 p-4">
+          <div className="w-full max-w-lg rounded-3xl border border-slate-200 bg-white shadow-2xl">
+            <div className="border-b border-slate-200 bg-slate-50 px-6 py-4">
+              <h3 className="text-lg font-bold text-slate-900">Confirmar cambios del viaje</h3>
+              <p className="mt-1 text-sm text-slate-600">Revise la información antes de guardar.</p>
+            </div>
+            <div className="space-y-2 px-6 py-5 text-sm text-slate-700">
+              <p><span className="font-semibold text-slate-900">ID:</span> {editViajeId}</p>
+              <p><span className="font-semibold text-slate-900">Lateral:</span> {lateralSeleccionadoEdicion?.codigo_vehiculo || editVehiculoId}</p>
+              <p><span className="font-semibold text-slate-900">Planilla:</span> {planillaSeleccionadaEdicion?.numero_planilla || editPlanillaId}</p>
+            </div>
+            <div className="flex flex-wrap justify-end gap-2 border-t border-slate-200 bg-slate-50 px-6 py-4">
+              <button
+                type="button"
+                onClick={() => setMostrarModalConfirmarEdicion(false)}
+                className="rounded-xl border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-100"
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                onClick={confirmarGuardarEdicionViaje}
+                disabled={loadingEditarViaje}
+                className="rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-blue-500 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {loadingEditarViaje ? 'Guardando...' : 'Confirmar y guardar'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {mostrarModalConfirmarEliminacion && (
+        <div className="fixed inset-0 z-[80] flex items-center justify-center bg-slate-950/65 p-4">
+          <div className="w-full max-w-lg rounded-3xl border border-red-200 bg-white shadow-2xl">
+            <div className="border-b border-red-100 bg-red-50 px-6 py-4">
+              <h3 className="text-lg font-bold text-red-900">Confirmar eliminación masiva</h3>
+              <p className="mt-1 text-sm text-red-800">Esta acción no se puede deshacer.</p>
+            </div>
+            <div className="space-y-2 px-6 py-5 text-sm text-slate-700">
+              <p>
+                Se eliminarán todos los viajes del lateral <span className="font-semibold text-slate-900">{lateralSeleccionadoEliminar?.codigo_vehiculo || lateralEliminarId}</span>.
+              </p>
+            </div>
+            <div className="flex flex-wrap justify-end gap-2 border-t border-red-100 bg-red-50 px-6 py-4">
+              <button
+                type="button"
+                onClick={() => setMostrarModalConfirmarEliminacion(false)}
+                className="rounded-xl border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-100"
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                onClick={confirmarEliminarViajesPorLateral}
+                disabled={loadingEliminarViajes}
+                className="rounded-xl bg-red-700 px-4 py-2 text-sm font-semibold text-white transition hover:bg-red-800 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {loadingEliminarViajes ? 'Eliminando...' : 'Confirmar eliminación'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {modalExito && (
+        <div className="fixed inset-0 z-[90] flex items-center justify-center bg-slate-950/65 p-4">
+          <div className="w-full max-w-lg rounded-3xl border border-emerald-200 bg-white shadow-2xl">
+            <div className="border-b border-emerald-100 bg-emerald-50 px-6 py-4">
+              <h3 className="text-lg font-bold text-emerald-900">{modalExito.titulo}</h3>
+            </div>
+            <div className="space-y-2 px-6 py-5 text-sm text-slate-700">
+              {modalExito.detalle.map((linea) => (
+                <p key={linea}>{linea}</p>
+              ))}
+            </div>
+            <div className="flex justify-end border-t border-emerald-100 bg-emerald-50 px-6 py-4">
+              <button
+                type="button"
+                onClick={cerrarModalExitoYRecargar}
+                className="rounded-xl bg-emerald-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-emerald-500"
+              >
+                Aceptar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {mostrarModalPlanilla && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 p-4">
@@ -1019,7 +1470,21 @@ export default function ViajesClient({
 
               {vehiculoId && planillasDelLateral.length > 0 && (
                 <div className="space-y-2">
-                  {planillasDelLateral.map((planilla) => (
+                  <input
+                    type="text"
+                    value={planillaBusqueda}
+                    onChange={(e) => setPlanillaBusqueda(e.target.value)}
+                    className="mb-3 w-full rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                    placeholder="Buscar por número, estado o fecha"
+                  />
+
+                  {planillasDelLateralFiltradas.length === 0 && (
+                    <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-700">
+                      No se encontraron planillas con ese criterio de búsqueda.
+                    </div>
+                  )}
+
+                  {planillasDelLateralFiltradas.map((planilla) => (
                     <label
                       key={planilla.id}
                       className="flex cursor-pointer items-start gap-3 rounded-2xl border border-slate-200 bg-white p-3 transition hover:border-blue-300 hover:bg-blue-50"

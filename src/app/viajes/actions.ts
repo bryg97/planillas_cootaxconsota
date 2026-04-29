@@ -18,11 +18,6 @@ type UltimoViaje = {
   codigo_vehiculo: string;
 };
 
-type UsuarioSimple = {
-  id: number;
-  usuario: string;
-};
-
 type OperadorRegistrado = {
   id: number;
   nombre: string;
@@ -491,6 +486,145 @@ export async function crearViaje(formData: FormData) {
     return { success: true, data: viaje };
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Error al crear viaje';
+    return { error: message };
+  }
+}
+
+export async function editarViaje(formData: FormData) {
+  try {
+    const session = await getSession();
+    if (!session?.user?.email) {
+      return { error: 'Usuario no autenticado' };
+    }
+
+    const usuario = await queryOne<UsuarioRol>(
+      'SELECT id, usuario, rol FROM usuarios WHERE usuario = $1',
+      [session.user.email]
+    );
+
+    if (!usuario || usuario.rol !== 'administrador') {
+      return { error: 'Solo el administrador puede editar viajes' };
+    }
+
+    const viajeId = parseInt(formData.get('viaje_id') as string, 10);
+    const vehiculoId = parseInt(formData.get('vehiculo_id') as string, 10);
+    const planillaId = parseInt(formData.get('planilla_id') as string, 10);
+    const conductor = ((formData.get('conductor') as string) || '').trim();
+    const convenioId = parseInt(formData.get('convenio_id') as string, 10);
+    const origen = ((formData.get('origen') as string) || '').trim();
+    const destino = ((formData.get('destino') as string) || '').trim();
+    const medioContacto = ((formData.get('medio_contacto') as string) || '').trim();
+    const autorizadorOperadorId = parseInt(formData.get('autorizador_operador_id') as string, 10);
+    const cedulaAutorizador = ((formData.get('cedula_autorizador') as string) || '').trim();
+    const respuestaAutorizacion = ((formData.get('respuesta_autorizacion') as string) || '').trim();
+    const omiteConsecutivo = formData.get('omite_consecutivo') === '1';
+    const motivoOmision = ((formData.get('motivo_omision') as string) || '').trim();
+
+    if (!viajeId || !vehiculoId || !planillaId || !conductor || !convenioId || !origen || !destino || !medioContacto || !autorizadorOperadorId || !cedulaAutorizador || !respuestaAutorizacion) {
+      return { error: 'Todos los campos del viaje son obligatorios' };
+    }
+
+    if (!['llamada_telefonica', 'whatsapp', 'mensajeria_app'].includes(medioContacto)) {
+      return { error: 'Medio de contacto no válido' };
+    }
+
+    if (omiteConsecutivo && motivoOmision.length < 10) {
+      return { error: 'Debe dejar una justificación clara (mínimo 10 caracteres) para omitir el consecutivo' };
+    }
+
+    const viajeExistente = await queryOne<{ id: number }>(
+      'SELECT id FROM viajes WHERE id = $1',
+      [viajeId]
+    );
+
+    if (!viajeExistente) {
+      return { error: 'El viaje no existe o fue eliminado' };
+    }
+
+    const planilla = await queryOne<{
+      id: number;
+      numero_planilla: string;
+      vehiculo_id: number;
+    }>(
+      'SELECT id, numero_planilla, vehiculo_id FROM planillas WHERE id = $1',
+      [planillaId]
+    );
+
+    if (!planilla) {
+      return { error: 'La planilla seleccionada no existe.' };
+    }
+
+    if (planilla.vehiculo_id !== vehiculoId) {
+      return { error: `La planilla ${planilla.numero_planilla} no pertenece al lateral seleccionado.` };
+    }
+
+    const autorizador = await queryOne<OperadorRegistrado>(
+      'SELECT id, nombre FROM modulos WHERE descripcion = $1 AND id = $2',
+      ['Operador', autorizadorOperadorId]
+    );
+
+    if (!autorizador) {
+      return { error: 'El operador que autoriza no existe' };
+    }
+
+    const convenio = await queryOne<{ nombre: string }>(
+      'SELECT nombre FROM convenios_empresariales WHERE id = $1 AND activo = true',
+      [convenioId]
+    );
+
+    if (!convenio) {
+      return { error: 'Convenio no encontrado o inactivo' };
+    }
+
+    const viajeActualizado = await queryOne<{ id: number }>(
+      `UPDATE viajes SET
+         planilla_id = $1,
+         vehiculo_id = $2,
+         conductor = $3,
+         convenio_id = $4,
+         origen = $5,
+         destino = $6,
+         medio_contacto = $7,
+         omite_consecutivo = $8,
+         motivo_omision = $9,
+         autorizador_operador_id = $10,
+         autorizador_operador_nombre = $11,
+         cedula_autorizador = $12,
+         respuesta_autorizacion = $13
+       WHERE id = $14
+       RETURNING id`,
+      [
+        planillaId,
+        vehiculoId,
+        conductor,
+        convenioId,
+        origen,
+        destino,
+        medioContacto,
+        omiteConsecutivo,
+        omiteConsecutivo ? motivoOmision : null,
+        autorizadorOperadorId,
+        autorizador.nombre,
+        cedulaAutorizador,
+        respuestaAutorizacion,
+        viajeId
+      ]
+    );
+
+    await execute(
+      `INSERT INTO auditoria (usuario, accion, detalles)
+       VALUES ($1, $2, $3)`,
+      [
+        usuario.usuario,
+        'UPDATE',
+        `Editó viaje ID ${viajeActualizado?.id || viajeId}: lateral ${vehiculoId}, planilla ${planilla.numero_planilla}, convenio ${convenio.nombre}`
+      ]
+    );
+
+    revalidatePath('/viajes');
+    return { success: true };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Error al editar viaje';
     return { error: message };
   }
 }

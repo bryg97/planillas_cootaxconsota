@@ -30,6 +30,9 @@ type ValidacionAutorizador = {
 type ViajeListado = {
   id: number;
   created_at: string;
+  planilla_id: number | null;
+  vehiculo_id: number;
+  convenio_id: number;
   conductor: string;
   origen: string;
   destino: string;
@@ -39,8 +42,10 @@ type ViajeListado = {
   codigo_vehiculo: string;
   convenio_nombre: string;
   creado_por_usuario: string;
+  autorizador_operador_id: number | null;
   autorizador_operador_nombre: string | null;
   cedula_autorizador: string | null;
+  respuesta_autorizacion: string | null;
   numero_planilla: string | null;
 };
 
@@ -117,6 +122,9 @@ export default async function ViajesPage() {
     `SELECT
       vi.id,
       vi.created_at,
+      vi.planilla_id,
+      vi.vehiculo_id,
+      vi.convenio_id,
       vi.conductor,
       vi.origen,
       vi.destino,
@@ -126,8 +134,10 @@ export default async function ViajesPage() {
       v.codigo_vehiculo,
       ce.nombre AS convenio_nombre,
       vi.creado_por_usuario,
+      vi.autorizador_operador_id,
       vi.autorizador_operador_nombre,
       vi.cedula_autorizador,
+      vi.respuesta_autorizacion,
       p.numero_planilla
     FROM viajes vi
     INNER JOIN vehiculos v ON v.id = vi.vehiculo_id
@@ -150,9 +160,8 @@ export default async function ViajesPage() {
     LEFT JOIN vehiculos v ON v.id = p.vehiculo_id
     WHERE p.numero_planilla IS NOT NULL
       AND p.vehiculo_id IS NOT NULL
-      AND p.estado IN ('pendiente', 'recaudada')
     ORDER BY p.fecha DESC, p.created_at DESC
-    LIMIT 500`
+    `
   );
 
   const configuracion = await query<ConfiguracionValorDefecto>(
