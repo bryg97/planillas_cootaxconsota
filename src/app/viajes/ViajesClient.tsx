@@ -152,6 +152,7 @@ export default function ViajesClient({
   const [editUsuario, setEditUsuario] = useState('');
   const [mostrarModalConfirmarEdicion, setMostrarModalConfirmarEdicion] = useState(false);
   const [mostrarModalConfirmarEliminacion, setMostrarModalConfirmarEliminacion] = useState(false);
+  const [mostrarModalConfirmarOmision, setMostrarModalConfirmarOmision] = useState(false);
   const [modalExito, setModalExito] = useState<{ titulo: string; detalle: string[] } | null>(null);
 
   const vehiculoBloqueado = useMemo(() => {
@@ -213,6 +214,17 @@ export default function ViajesClient({
     [vehiculos, lateralEliminarId]
   );
 
+  const lateralTieneViajesPrevios = useMemo(() => {
+    const lateralId = parseInt(vehiculoId, 10);
+    if (!lateralId) return false;
+    return viajes.some((v) => v.vehiculo_id === lateralId);
+  }, [vehiculoId, viajes]);
+
+  const lateralSeleccionadoActual = useMemo(
+    () => vehiculos.find((v) => String(v.id) === vehiculoId),
+    [vehiculos, vehiculoId]
+  );
+
   function handlePlanillaCreada(planilla: PlanillaCreada) {
     const vehiculoCreado = vehiculos.find((v) => v.id === planilla.vehiculo_id);
 
@@ -238,17 +250,32 @@ export default function ViajesClient({
 
   async function handleCrearViaje(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    setLoadingViaje(true);
     setError('');
     setErrorPlanilla('');
 
     if (!planillaSeleccionadaId) {
       setMostrarModalPlanilla(true);
-      setLoadingViaje(false);
       return;
     }
 
-    const formData = new FormData(e.currentTarget);
+    if (lateralTieneViajesPrevios && !omiteConsecutivo) {
+      setMostrarModalConfirmarOmision(true);
+      return;
+    }
+
+    if (omiteConsecutivo && motivoOmision.trim().length < 10) {
+      setError('Debe escribir una justificación clara (mínimo 10 caracteres) para omitir el consecutivo');
+      return;
+    }
+
+    await confirmarYRegistrarViaje();
+  }
+
+  async function confirmarYRegistrarViaje() {
+    setLoadingViaje(true);
+    setError('');
+
+    const formData = new FormData(formViajeRef.current!);
     if (omiteConsecutivo) {
       formData.set('omite_consecutivo', '1');
     }
@@ -615,6 +642,11 @@ export default function ViajesClient({
                     >
                       {planillaSeleccionada ? 'Cambiar planilla seleccionada' : 'Seleccionar planilla del lateral'}
                     </button>
+                                        {lateralTieneViajesPrevios && (
+                                          <div className="mt-2 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">
+                                            <span className="font-semibold">⚠️ Advertencia:</span> Este lateral ya tiene viajes registrados. Debe marcar omisión de consecutivo con justificación.
+                                          </div>
+                                        )}
                     {planillaSeleccionada ? (
                       <div className="mt-2 rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs text-emerald-800">
                         Planilla seleccionada: <span className="font-bold">{planillaSeleccionada.numero_planilla}</span>
@@ -1456,6 +1488,42 @@ export default function ViajesClient({
                 className="rounded-xl bg-emerald-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-emerald-500"
               >
                 Aceptar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {mostrarModalConfirmarOmision && (
+        <div className="fixed inset-0 z-[85] flex items-center justify-center bg-slate-950/65 p-4">
+          <div className="w-full max-w-lg rounded-3xl border border-amber-200 bg-white shadow-2xl">
+            <div className="border-b border-amber-100 bg-amber-50 px-6 py-4">
+              <h3 className="text-lg font-bold text-amber-900">Lateral con viajes previos</h3>
+              <p className="mt-1 text-sm text-amber-800">Este lateral ya tiene viajes registrados en el sistema.</p>
+            </div>
+            <div className="space-y-4 px-6 py-5 text-sm text-slate-700">
+              <p className="font-medium">
+                El lateral <span className="font-bold text-slate-900">{lateralSeleccionadoActual?.codigo_vehiculo || 'seleccionado'}</span> ya tiene viajes registrados.
+              </p>
+              <p>
+                Para continuar, debe marcar la opción &quot;Omitir regla de consecutivo&quot; y proporcionar una justificación clara.
+              </p>
+              <div className="rounded-2xl border border-amber-200 bg-amber-50 p-3">
+                <p className="text-xs font-semibold text-amber-900 mb-2">¿Qué debe hacer?</p>
+                <ol className="text-xs text-amber-800 space-y-1 list-decimal pl-5">
+                  <li>Marque el checkbox de omisión</li>
+                  <li>Escriba la justificación (mínimo 10 caracteres)</li>
+                  <li>Intente registrar nuevamente</li>
+                </ol>
+              </div>
+            </div>
+            <div className="flex justify-end border-t border-amber-100 bg-amber-50 px-6 py-4">
+              <button
+                type="button"
+                onClick={() => setMostrarModalConfirmarOmision(false)}
+                className="rounded-xl bg-amber-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-amber-500"
+              >
+                Entendido
               </button>
             </div>
           </div>
