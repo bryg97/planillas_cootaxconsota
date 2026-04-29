@@ -519,8 +519,10 @@ export async function editarViaje(formData: FormData) {
     const respuestaAutorizacion = ((formData.get('respuesta_autorizacion') as string) || '').trim();
     const omiteConsecutivo = formData.get('omite_consecutivo') === '1';
     const motivoOmision = ((formData.get('motivo_omision') as string) || '').trim();
+    const createdAt = ((formData.get('created_at') as string) || '').trim();
+    const creadoPorUsuario = ((formData.get('creado_por_usuario') as string) || '').trim();
 
-    if (!viajeId || !vehiculoId || !planillaId || !conductor || !convenioId || !origen || !destino || !medioContacto || !autorizadorOperadorId || !cedulaAutorizador || !respuestaAutorizacion) {
+    if (!viajeId || !vehiculoId || !planillaId || !conductor || !convenioId || !origen || !destino || !medioContacto || !autorizadorOperadorId || !cedulaAutorizador || !respuestaAutorizacion || !createdAt || !creadoPorUsuario) {
       return { error: 'Todos los campos del viaje son obligatorios' };
     }
 
@@ -590,8 +592,10 @@ export async function editarViaje(formData: FormData) {
          autorizador_operador_id = $10,
          autorizador_operador_nombre = $11,
          cedula_autorizador = $12,
-         respuesta_autorizacion = $13
-       WHERE id = $14
+         respuesta_autorizacion = $13,
+         created_at = $14,
+         creado_por_usuario = $15
+       WHERE id = $16
        RETURNING id`,
       [
         planillaId,
@@ -607,6 +611,8 @@ export async function editarViaje(formData: FormData) {
         autorizador.nombre,
         cedulaAutorizador,
         respuestaAutorizacion,
+        createdAt,
+        creadoPorUsuario,
         viajeId
       ]
     );

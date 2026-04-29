@@ -148,6 +148,8 @@ export default function ViajesClient({
   const [editRespuestaAutorizacion, setEditRespuestaAutorizacion] = useState('');
   const [editOmiteConsecutivo, setEditOmiteConsecutivo] = useState(false);
   const [editMotivoOmision, setEditMotivoOmision] = useState('');
+  const [editFechaHora, setEditFechaHora] = useState('');
+  const [editUsuario, setEditUsuario] = useState('');
   const [mostrarModalConfirmarEdicion, setMostrarModalConfirmarEdicion] = useState(false);
   const [mostrarModalConfirmarEliminacion, setMostrarModalConfirmarEliminacion] = useState(false);
   const [modalExito, setModalExito] = useState<{ titulo: string; detalle: string[] } | null>(null);
@@ -411,6 +413,10 @@ export default function ViajesClient({
     setEditRespuestaAutorizacion(viaje.respuesta_autorizacion || '');
     setEditOmiteConsecutivo(Boolean(viaje.omite_consecutivo));
     setEditMotivoOmision(viaje.motivo_omision || '');
+    const fechaObj = new Date(viaje.created_at);
+    const fechaIso = fechaObj.toISOString().slice(0, 16);
+    setEditFechaHora(fechaIso);
+    setEditUsuario(viaje.creado_por_usuario || '');
     setErrorEditarViaje('');
     setMostrarModalEditarViaje(true);
   }
@@ -446,6 +452,8 @@ export default function ViajesClient({
       formData.set('omite_consecutivo', '1');
     }
     formData.set('motivo_omision', editMotivoOmision);
+    formData.set('created_at', editFechaHora);
+    formData.set('creado_por_usuario', editUsuario);
 
     const result = await editarViaje(formData);
     if (result.error) {
@@ -1289,6 +1297,31 @@ export default function ViajesClient({
                     onChange={(e) => setEditRespuestaAutorizacion(e.target.value)}
                     required
                     className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                  />
+                </div>
+              </div>
+
+              <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2 rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                <div>
+                  <label className="mb-2 block text-sm font-semibold text-slate-700">Fecha y Hora del Viaje *</label>
+                  <input
+                    type="datetime-local"
+                    value={editFechaHora}
+                    onChange={(e) => setEditFechaHora(e.target.value)}
+                    required
+                    className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                  />
+                </div>
+
+                <div>
+                  <label className="mb-2 block text-sm font-semibold text-slate-700">Usuario que Registró el Viaje *</label>
+                  <input
+                    type="text"
+                    value={editUsuario}
+                    onChange={(e) => setEditUsuario(e.target.value)}
+                    required
+                    className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                    placeholder="Email o nombre de usuario"
                   />
                 </div>
               </div>
