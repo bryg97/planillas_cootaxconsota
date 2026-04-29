@@ -93,6 +93,7 @@ export default function ViajesClient({
   validacionesAutorizador,
   ultimoViaje,
   viajes,
+  historialPorLateral,
   planillasDisponibles,
   valorPlanillaDefecto
 }: {
@@ -103,6 +104,7 @@ export default function ViajesClient({
   validacionesAutorizador: ValidacionAutorizador[];
   ultimoViaje: UltimoViaje;
   viajes: ViajeListado[];
+  historialPorLateral: Record<string, number>;
   planillasDisponibles: PlanillaDisponible[];
   valorPlanillaDefecto?: number;
 }) {
@@ -174,6 +176,11 @@ export default function ViajesClient({
 
     return planillasDisponiblesState.filter((p) => p.vehiculo_id === lateralId);
   }, [planillasDisponiblesState, vehiculoId]);
+
+  const totalViajesHistoricosLateralSeleccionado = useMemo(() => {
+    if (!vehiculoId) return 0;
+    return Number(historialPorLateral[vehiculoId] || 0);
+  }, [vehiculoId, historialPorLateral]);
 
   const planillasDelLateralFiltradas = useMemo(() => {
     const busqueda = planillaBusqueda.trim().toLowerCase();
@@ -652,6 +659,11 @@ export default function ViajesClient({
                     {lateralConsecutivoSeleccionado && (
                       <div className="mt-2 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">
                         <span className="font-semibold">⚠️ Alerta de consecutivo:</span> El lateral {ultimoViaje?.codigo_vehiculo || ''} fue el último registrado. Si desea usarlo de nuevo, marque la omisión y escriba un motivo.
+                      </div>
+                    )}
+                    {totalViajesHistoricosLateralSeleccionado > 0 && (
+                      <div className="mt-2 rounded-xl border border-blue-200 bg-blue-50 px-3 py-2 text-xs text-blue-800">
+                        <span className="font-semibold">ℹ️ Historial detectado:</span> este lateral tiene {totalViajesHistoricosLateralSeleccionado} registro(s) previo(s).
                       </div>
                     )}
                     {planillaSeleccionada ? (

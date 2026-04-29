@@ -70,6 +70,11 @@ type UltimoViaje = {
   created_at: string;
 };
 
+type HistorialPorLateral = {
+  vehiculo_id: number;
+  total: number;
+};
+
 export default async function ViajesPage() {
   const user = await getCurrentUser();
   if (!user) {
@@ -164,6 +169,17 @@ export default async function ViajesPage() {
     `
   );
 
+  const historialPorLateralRows = await query<HistorialPorLateral>(
+    `SELECT vehiculo_id, COUNT(1)::int AS total
+     FROM viajes
+     GROUP BY vehiculo_id`
+  );
+
+  const historialPorLateral = historialPorLateralRows.reduce<Record<string, number>>((acc, row) => {
+    acc[String(row.vehiculo_id)] = Number(row.total || 0);
+    return acc;
+  }, {});
+
   const configuracion = await query<ConfiguracionValorDefecto>(
     'SELECT valor_planilla_defecto FROM configuracion LIMIT 1'
   );
@@ -177,6 +193,7 @@ export default async function ViajesPage() {
       validacionesAutorizador={validacionesAutorizador}
       ultimoViaje={ultimoViaje}
       viajes={viajes}
+      historialPorLateral={historialPorLateral}
       planillasDisponibles={planillasDisponibles}
       valorPlanillaDefecto={configuracion[0]?.valor_planilla_defecto || 0}
     />
